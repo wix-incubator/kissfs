@@ -49,9 +49,6 @@
     "webpack-dev-server": "2.1.0-beta.10"
   },
   "dependencies": {
-    "dashjs": "2.3.0",
-    "eventemitter3": "2.0.2",
-    "hls.js": "0.6.9",
-    "webworkify": "1.4.0"
+    "eventemitter3": "2.0.2"
   }
 }
