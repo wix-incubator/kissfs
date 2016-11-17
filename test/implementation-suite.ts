@@ -1,7 +1,7 @@
 import {expect} from "chai";
 import {FileSystem, FileSystemNode, FileChangeEvent, FileDeleteEvent, Directory} from '../src/types/api';
 import * as Promise from 'bluebird';
-import _ = require('lodash');
+import * as _ from 'lodash';
 
 export function assertContract(fsProvider: () => FileSystem, applyEventTests:boolean) {
     it(`loads and saves a file`, function() {
