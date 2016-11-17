@@ -15,7 +15,7 @@ export function assertContract(fsProvider: () => FileSystem) {
             .then(content => expect(content).to.equal('baz'));
     });
 
-    xit(`provides working directory tree for path`, function() {
+    it(`provides working directory tree for path`, function() {
         const fs = fsProvider();
         return fs.saveFile('src/pages/gaga.html','<html><div>gaga</div></html>')
             .then(() => fs.saveFile('src/pages/baga.html','<html><div>baga</div></html>'))
