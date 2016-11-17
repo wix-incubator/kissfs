@@ -47,7 +47,7 @@ export function assertContract(fsProvider: () => FileSystem) {
             });
     });
 
-    xit(`listens to file changes`, function(done) {
+    it(`listens to file changes`, function(done) {
         this.timeout(1000 * 5);
 
         const fs = fsProvider();
