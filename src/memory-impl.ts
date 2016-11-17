@@ -4,17 +4,15 @@ import {EventEmitter} from 'eventemitter3';
 import {last, map} from 'lodash';
 
 type FakeNode = FakeDir|FakeFile;
-interface FakeDir{
-    name: string;
-    type: 'dir';
-    fullPath: string;
-    children: {[name: string]: FakeNode };
+
+class FakeDir{
+    readonly type = 'dir';
+    constructor(public name: string, public fullPath: string, public children: {[name: string]: FakeNode }){}
 }
-interface FakeFile {
-    name: string;
-    type: 'file';
-    fullPath: string;
-    content: string;
+
+class FakeFile {
+    readonly type = 'file';
+    constructor(public name: string, public fullPath: string, public content: string){}
 }
 
 function isFakeDir(node : FakeNode): node is FakeDir{
@@ -23,12 +21,7 @@ function isFakeDir(node : FakeNode): node is FakeDir{
 
 export class MemoryImpl implements FileSystem {
     public readonly events:EventEmitter = new EventEmitter();
-    private readonly root: FakeDir = {
-        name: '',
-        type: 'dir',
-        fullPath: '',
-        children: {}
-    };
+    private readonly root = new FakeDir('', '', {});
 
     constructor(public baseUrl = 'http://fake') {
         this.baseUrl += '/';
@@ -60,7 +53,7 @@ export class MemoryImpl implements FileSystem {
             } else {
                 return {
                     name: filename,
-                    file: <FakeFile>file,
+                    file: file,
                     parent: parent
                 }
             }
@@ -77,13 +70,7 @@ export class MemoryImpl implements FileSystem {
         if (!res) {
             throw new Error(`file creation error for path '${filename}'`);
         }
-
-        res.parent.children[res.name] = {
-            name: res.name,
-            type: 'file',
-            fullPath: filename,
-            content: source
-        };
+        res.parent.children[res.name] = new FakeFile(res.name, filename, source);
         this.events.emit('fileChanged', {filename, source});
         return Promise.resolve();
     }
@@ -98,12 +85,7 @@ export class MemoryImpl implements FileSystem {
         getPathNodes(dirPath).forEach(dirName => {
             let next = current.children[dirName];
             if (!next) {
-                next = {
-                    name: dirName,
-                    type: 'dir',
-                    fullPath: current.fullPath ? [current.fullPath, dirName].join(pathSeparator) : dirName,
-                    children: {}
-                };
+                next = new FakeDir(dirName, current.fullPath ? [current.fullPath, dirName].join(pathSeparator) : dirName, {});
                 current.children[dirName] = next;
             }
             if (isFakeDir(next)) {
