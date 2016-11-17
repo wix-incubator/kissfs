@@ -4,7 +4,7 @@ import * as Promise from 'bluebird';
 import * as _ from 'lodash';
 
 export function assertContract(fsProvider: () => FileSystem) {
-    xit(`loads and saves a file`, function() {
+    it(`loads and saves a file`, function() {
         const filename = 'foo.txt';
         const fs = fsProvider();
         return fs.saveFile(filename, 'bar')
