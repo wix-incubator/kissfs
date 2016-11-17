@@ -68,15 +68,19 @@ export class MemoryImpl implements FileSystem {
         this.ensureDirectory(parentPath);
         const res = this.getDirAndName(filename);
         if (!res) {
-            throw new Error(`file creation error for path '${filename}'`);
+            return Promise.reject(new Error(`file creation error for path '${filename}'`));
         }
         res.parent.children[res.name] = new FakeFile(res.name, filename, source);
         this.events.emit('fileChanged', {filename, source});
         return Promise.resolve();
     }
 
-    deleteFile(filename):Promise<void> {
-        this.events.emit('fileDeleted', {filename});
+    deleteFile(filename:string):Promise<void> {
+        const res = this.getDirAndName(filename);
+        if (res) {
+            delete res.parent.children[res.name];
+            this.events.emit('fileDeleted', {filename});
+        }
         return Promise.resolve();
     }
 
