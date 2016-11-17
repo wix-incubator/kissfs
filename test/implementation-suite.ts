@@ -3,8 +3,8 @@ import {FileSystem, FileSystemNode, FileChangeEvent, FileDeleteEvent, Directory}
 import * as Promise from 'bluebird';
 import * as _ from 'lodash';
 
-export function assertContract(fsProvider: () => FileSystem, applyEventTests:boolean) {
-    it(`loads and saves a file`, function() {
+export function assertContract(fsProvider: () => FileSystem) {
+    xit(`loads and saves a file`, function() {
         const filename = 'foo.txt';
         const fs = fsProvider();
         return fs.saveFile(filename, 'bar')
@@ -15,7 +15,7 @@ export function assertContract(fsProvider: () => FileSystem, applyEventTests:boo
             .then(content => expect(content).to.equal('baz'));
     });
 
-    it(`provides working directory tree for path`, function() {
+    xit(`provides working directory tree for path`, function() {
         const fs = fsProvider();
         return fs.saveFile('src/pages/gaga.html','<html><div>gaga</div></html>')
             .then(() => fs.saveFile('src/pages/baga.html','<html><div>baga</div></html>'))
@@ -47,41 +47,39 @@ export function assertContract(fsProvider: () => FileSystem, applyEventTests:boo
             });
     });
 
-    if(applyEventTests) {
-        it(`listens to file changes`, function(done) {
-            this.timeout(1000 * 5);
+    xit(`listens to file changes`, function(done) {
+        this.timeout(1000 * 5);
 
-            const fs = fsProvider();
-            const newValue = 'newValue';
-            const expectedFileName = 'index.html';
+        const fs = fsProvider();
+        const newValue = 'newValue';
+        const expectedFileName = 'index.html';
 
-            fs.events.on('fileChanged', function(event:FileChangeEvent) {
-                if (event.source === newValue && event.filename === expectedFileName) {
-                    done();
-                }
-            });
-
-            fs.saveFile(expectedFileName, newValue);
+        fs.events.on('fileChanged', function(event:FileChangeEvent) {
+            if (event.source === newValue && event.filename === expectedFileName) {
+                done();
+            }
         });
 
-        it(`listen to file delete`, function(){
-            const expectedFileName = 'src/file.txt';
-            const fs = fsProvider();
-            return fs.saveFile(expectedFileName,'content')
-                .then(() => {
-                    const gotEvent =  new Promise((resolve, reject) => {
-                        fs.events.on('fileDeleted', function(event:FileDeleteEvent) {
-                            try{
-                                expect(event.filename).to.equal(expectedFileName);
-                                resolve();
-                            } catch(error){
-                                reject(error);
-                            }
-                        });
+        fs.saveFile(expectedFileName, newValue);
+    });
+
+    it(`listen to file delete`, function(){
+        const expectedFileName = 'src/file.txt';
+        const fs = fsProvider();
+        return fs.saveFile(expectedFileName,'content')
+            .then(() => {
+                const gotEvent =  new Promise((resolve, reject) => {
+                    fs.events.on('fileDeleted', function(event:FileDeleteEvent) {
+                        try{
+                            expect(event.filename).to.equal(expectedFileName);
+                            resolve();
+                        } catch(error){
+                            reject(error);
+                        }
                     });
-                    return Promise.all([fs.deleteFile(expectedFileName), gotEvent]);
                 });
-        });
-    }
+                return Promise.all([fs.deleteFile(expectedFileName), gotEvent]);
+            });
+    });
 }
 
