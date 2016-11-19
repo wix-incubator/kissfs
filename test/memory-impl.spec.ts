@@ -1,6 +1,6 @@
-import {assertContract} from './implementation-suite'
+import {assertFileSystemContract} from './implementation-suite'
 import {MemoryImpl} from "../src/memory-impl";
 
 describe('the in memory implementation', function() {
-    assertContract(() => new MemoryImpl());
+    assertFileSystemContract(() => new MemoryImpl());
 });

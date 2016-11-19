@@ -1,8 +1,6 @@
 import * as Promise from 'bluebird';
 import {EventEmitter} from 'eventemitter3';
-
 export const pathSeparator = '/';
-export const modulesPathName= '_node_modules';
 
 export function getPathNodes(path:string):string[]{
 	return path.split(pathSeparator).filter(n => n.length !== 0);
@@ -29,7 +27,7 @@ export function isDir(node : Directory|File): node is Directory{
 
 export interface FileChangeEvent{
 	filename:string,
-	source: string
+	newContent: string
 }
 
 export interface FileDeleteEvent{
@@ -37,8 +35,9 @@ export interface FileDeleteEvent{
 }
 
 export interface FileSystem {
-	saveFile(filePath:string, content:string): Promise<void>;
-    deleteFile(filename):Promise<void>;
+	saveFile(filePath:string, newContent:string): Promise<void>;
+    deleteFile(filename:string):Promise<void>;
+    deleteDirectory(dirName:string, recursive?:boolean):Promise<void>;
     loadTextFile(filePath:string): Promise<string>;
 	loadDirectoryTree(): Promise<Directory>;
 	ensureDirectory(path:string): Promise<void>;

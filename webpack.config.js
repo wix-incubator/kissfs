@@ -31,7 +31,7 @@ module.exports = {
         test: ['./test'],
         webtest: ['mocha!./test']
     },
-    devtool: 'inline-source-map',
+    devtool: 'eval',
     output: output,
     resolve: resolve,
     module: loaders
