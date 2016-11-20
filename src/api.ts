@@ -55,15 +55,14 @@ export interface EventAspect<S,O>{
     /** @internal */ emit(event: S, ...args: Array<any>): boolean;
 }
 
-export module FileSystem {
-    export type EventEmitter =
-        EventAspect<'fileCreated', FileCreatedEvent> &
+export type EventEmitter =
+    EventAspect<'fileCreated', FileCreatedEvent> &
         EventAspect<'fileChanged', FileChangedEvent> &
         EventAspect<'fileDeleted', FileDeletedEvent> &
         EventAspect<'directoryCreated', DirectoryCreatedEvent> &
         EventAspect<'directoryDeleted', DirectoryDeletedEvent> &
         {eventNames(): Array<'fileCreated'|'fileChanged'|'fileDeleted'|'directoryCreated'|'directoryDeleted'>};
-}
+
 
 export interface FileSystem {
     saveFile(filePath:string, newContent:string): Promise<void>;
@@ -72,6 +71,6 @@ export interface FileSystem {
     loadTextFile(filePath:string): Promise<string>;
     loadDirectoryTree(): Promise<Directory>;
     ensureDirectory(path:string): Promise<void>;
-    readonly events:FileSystem.EventEmitter;
+    readonly events:EventEmitter;
     readonly baseUrl: string;
 }
