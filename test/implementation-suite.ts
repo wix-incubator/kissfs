@@ -1,13 +1,15 @@
 import {expect} from "chai";
-import {FileSystem, FileSystemNode, FileChangeEvent, FileDeleteEvent, Directory} from '../src/types/api';
+import {FileSystem, FileSystemNode, FileCreatedEvent, FileDeletedEvent, Directory} from '../src/api';
 import * as Promise from 'bluebird';
 
 export function assertFileSystemContract(fsProvider: () => FileSystem) {
     describe('filesystem contract', () => {
         let fs: FileSystem;
-
+        let events: Array<any>;
         beforeEach(() => {
             fs = fsProvider();
+            events = [];
+           // fs.events.addListener()
         });
 
 // TODO add events expectations
@@ -108,10 +110,10 @@ export function assertFileSystemContract(fsProvider: () => FileSystem) {
             const fileName = 'index.html';
 
             const gotEvent =  new Promise((resolve, reject) => {
-                fs.events.on('fileChanged', function(event:FileChangeEvent) {
+                fs.events.on('fileChanged', function(event:FileCreatedEvent) {
                     try{
                         expect(event.newContent).to.equal(newValue);
-                        expect(event.filename).to.equal(fileName);
+                        expect(event.fullPath).to.equal(fileName);
                         resolve();
                     } catch(error){
                         reject(error);
@@ -127,9 +129,9 @@ export function assertFileSystemContract(fsProvider: () => FileSystem) {
             return fs.saveFile(expectedFileName,'content')
                 .then(() => {
                     const gotEvent =  new Promise((resolve, reject) => {
-                        fs.events.on('fileDeleted', function(event:FileDeleteEvent) {
+                        fs.events.on('fileDeleted', function(event) {
                             try{
-                                expect(event.filename).to.equal(expectedFileName);
+                                expect(event.fullPath).to.equal(expectedFileName);
                                 resolve();
                             } catch(error){
                                 reject(error);

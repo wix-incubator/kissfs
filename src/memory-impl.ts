@@ -1,5 +1,6 @@
 import * as Promise from 'bluebird';
-import {FileSystem, Directory, pathSeparator, getPathNodes, FileSystemNode} from "./types/api";
+import {FileSystem, Directory, pathSeparator, FileSystemNode} from "./api";
+import {getPathNodes} from "./utils";
 import {EventEmitter} from 'eventemitter3';
 import {last, map} from 'lodash';
 
@@ -30,7 +31,7 @@ function isFakeFile(node : FakeNode|null): node is FakeFile{
 const dummyDir = new FakeDir('', '', {});
 
 export class MemoryImpl implements FileSystem {
-    public readonly events:EventEmitter = new EventEmitter();
+    public readonly events:FileSystem.EventEmitter = (new EventEmitter()) as any as FileSystem.EventEmitter;
     private readonly root = new FakeDir('', '', {});
 
     constructor(public baseUrl = 'http://fake') {
@@ -65,34 +66,34 @@ export class MemoryImpl implements FileSystem {
         }
     }
 
-    saveFile(filename:string, newContent:string):Promise<void> {
-        const pathArr = getPathNodes(filename);
+    saveFile(fullPath:string, newContent:string):Promise<void> {
+        const pathArr = getPathNodes(fullPath);
         const name = pathArr.pop();
         if (name) {
             const parentPath = pathArr.join(pathSeparator);
             this.ensureDirectory(parentPath);
-            const res = this.findNode(filename);
+            const res = this.findNode(fullPath);
             if (isFakeDir(res.node)) {
-                return Promise.reject(new Error(`file save error for path '${filename}'`));
+                return Promise.reject(new Error(`file save error for path '${fullPath}'`));
             } else if(res.parent){
-                res.parent.children[name] = new FakeFile(name, filename, newContent);
-                this.events.emit('fileChanged', {filename, newContent});
+                res.parent.children[name] = new FakeFile(name, fullPath, newContent);
+                this.events.emit('fileChanged', {fullPath, newContent});
                 return Promise.resolve();
             } else {
                 // we get here if findNode couldn't resolve the parent and the node is not the root dir.
                 // this should not happen after running ensureDirectory()
-                return Promise.reject(new Error(`unexpected error: not a legal file name? '${filename}'`));
+                return Promise.reject(new Error(`unexpected error: not a legal file name? '${fullPath}'`));
             }
         } else {
-            return Promise.reject(new Error(`not a legal file name '${filename}'`));
+            return Promise.reject(new Error(`not a legal file name '${fullPath}'`));
         }
     }
 
-    deleteFile(filename:string):Promise<void> {
-        const res = this.findNode(filename);
+    deleteFile(fullPath:string):Promise<void> {
+        const res = this.findNode(fullPath);
         if (isFakeFile(res.node) && isFakeDir(res.parent)) {
             delete res.parent.children[res.node.name];
-            this.events.emit('fileDeleted', {filename});
+            this.events.emit('fileDeleted', {fullPath});
         }
         return Promise.resolve();
     }
