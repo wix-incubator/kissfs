@@ -1,7 +1,6 @@
 import * as Promise from 'bluebird';
 import {FileSystem, Directory, pathSeparator, FileSystemNode} from "./api";
-import {getPathNodes} from "./utils";
-import {EventEmitter} from 'eventemitter3';
+import {InternalEventsEmitter, getPathNodes, makeEventsEmitter} from "./utils";
 import {last, map} from 'lodash';
 
 type FakeNode = FakeDir|FakeFile;
@@ -31,7 +30,7 @@ function isFakeFile(node : FakeNode|null): node is FakeFile{
 const dummyDir = new FakeDir('', '', {});
 
 export class MemoryImpl implements FileSystem {
-    public readonly events:FileSystem.EventEmitter = (new EventEmitter()) as any as FileSystem.EventEmitter;
+    public readonly events: InternalEventsEmitter = makeEventsEmitter();
     private readonly root = new FakeDir('', '', {});
 
     constructor(public baseUrl = 'http://fake') {

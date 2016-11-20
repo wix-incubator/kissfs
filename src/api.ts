@@ -1,5 +1,4 @@
 import * as Promise from 'bluebird';
-import {EventEmitter as ExtEventEmitter} from 'eventemitter3';
 export const pathSeparator = '/';
 
 export interface FileSystemNode{
@@ -21,29 +20,24 @@ export interface File extends FileSystemNode{
     type:'file';
 }
 
-export const fileCreated = 'fileCreated';
 export interface FileCreatedEvent{
     fullPath:string,
     newContent: string
 }
 
-export const fileChanged = 'fileChanged';
 export interface FileChangedEvent{
     fullPath:string,
     newContent: string
 }
 
-export const fileDeleted = 'fileDeleted';
 export interface FileDeletedEvent{
     fullPath:string
 }
 
-export const directoryCreated = 'directoryCreated';
 export interface DirectoryCreatedEvent{
     fullPath:string,
 }
 
-export const directoryDeleted = 'directoryDeleted';
 export interface DirectoryDeletedEvent{
     filename:string
 }
@@ -59,10 +53,6 @@ export interface EventAspect<S,O>{
     removeListener(event: S, fn?: ListenerFn<O>, context?: any, once?: boolean): this;
     off(event: S, fn?: ListenerFn<O>, context?: any, once?: boolean): this;
     /** @internal */ emit(event: S, ...args: Array<any>): boolean;
-}
-
-export interface EventAgnostic{
-    eventNames(): Array<string | symbol>;
 }
 
 export module FileSystem {
