@@ -1,7 +1,7 @@
 import {pathSeparator, EventEmitter as FSEvents} from './api';
 import {EventEmitter} from 'eventemitter3';
 
-export function getPathNodes(path:string):string[]{
+export function getPathNodes(path:string):Array<string>{
     return path.split(pathSeparator).filter(n => n.length !== 0);
 }
 

@@ -86,6 +86,16 @@ ${JSON.stringify(events)}`));
                     ]}));
         });
 
+        it(`saving a file over a file in its path- fails`, function() {
+            return fs.saveFile('foo', 'foo')
+                .then(() => expectEvents({type: 'fileCreated', fullPath:'foo', newContent:'foo'}))
+                .then(() => expect(fs.saveFile('foo/bar.txt', 'bar')).to.be.rejectedWith(Error))
+                .then(() => expect(fs.loadDirectoryTree()).to.become({
+                    type:'dir', name:'', fullPath:'', children:[
+                        {type:'file', name:'foo', fullPath:'foo'}
+                    ]}));
+        });
+
         it(`saving a new file (and a new directory to hold it)`, function() {
             return fs.saveFile('foo/bar.txt', 'baz')
                 .then(() => expectEvents({type: 'directoryCreated', fullPath:'foo'}, {type: 'fileCreated', fullPath:'foo/bar.txt', newContent:'baz'}))

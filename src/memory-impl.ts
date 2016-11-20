@@ -5,12 +5,6 @@ import {last, map} from 'lodash';
 
 type FakeNode = FakeDir|FakeFile;
 
-type RootNode = {node:FakeDir, parent:null};
-type NodeAndParent = {node:FakeNode, parent:FakeDir};
-type NoNodeAndParent = {node:null, parent:FakeDir};
-type NoNode = {node: null, parent: null};
-type FindNodeResult = RootNode|NoNode|NodeAndParent|NoNodeAndParent;
-
 class FakeDir{
     readonly type = 'dir';
     constructor(public name: string, public fullPath: string, public children: {[name: string]: FakeNode }){}
@@ -50,62 +44,50 @@ export class MemoryImpl implements FileSystem {
         return current;
     }
 
-    // TODO make into findParent
-    private findNode(path: string) : FindNodeResult{
-        const pathArr = getPathNodes(path);
-        if (pathArr.length) {
-            const parent = this.getPathTarget(pathArr.slice(0, pathArr.length - 1));
-            if (parent) {
-                const parentChildren = parent.children;
-                const filename = last(pathArr);
-                return {node: parentChildren[filename], parent: parent};
-            }
-            return {node: null, parent: null};
-        } else {
-            return {node: this.root, parent: null};
-        }
-    }
-
     saveFile(fullPath:string, newContent:string):Promise<void> {
         const pathArr = getPathNodes(fullPath);
         const name = pathArr.pop();
         if (name) {
             const parentPath = pathArr.join(pathSeparator);
-            this.ensureDirectory(parentPath);
-            const res = this.findNode(fullPath);
-            if(res.parent){
-                let type;
-                const existingChild = res.parent.children[name];
-                if (isFakeDir(existingChild)){
-                    return Promise.reject(new Error(`file save error for path '${fullPath}'`));
-                } else if (isFakeFile(existingChild)){
-                    if (existingChild.content === newContent){
+            return this.ensureDirectory(parentPath)
+                .then(()=> {
+                    const parent = this.getPathTarget(pathArr);
+                    if(parent){
+                        let type;
+                        const existingChild = parent.children[name];
+                        if (isFakeDir(existingChild)){
+                            return Promise.reject(new Error(`file save error for path '${fullPath}'`));
+                        } else if (isFakeFile(existingChild)){
+                            if (existingChild.content === newContent){
+                                return Promise.resolve();
+                            }
+                            type = 'fileChanged';
+                        } else {
+                            type = 'fileCreated';
+                        }
+                        parent.children[name] = new FakeFile(name, fullPath, newContent);
+                        this.events.emit(type, {type, fullPath, newContent});
                         return Promise.resolve();
+                    } else {
+                        // we get here if findNode couldn't resolve the parent and the node is not the root dir.
+                        // this should not happen after running ensureDirectory()
+                        return Promise.reject(new Error(`unexpected error: not a legal file name? '${fullPath}'`));
                     }
-                    type = 'fileChanged';
-                } else {
-                    type = 'fileCreated';
-                }
-                res.parent.children[name] = new FakeFile(name, fullPath, newContent);
-                this.events.emit(type, {type, fullPath, newContent});
-                return Promise.resolve();
-            } else {
-                // we get here if findNode couldn't resolve the parent and the node is not the root dir.
-                // this should not happen after running ensureDirectory()
-                return Promise.reject(new Error(`unexpected error: not a legal file name? '${fullPath}'`));
-            }
+                });
         } else {
-            return Promise.reject(new Error(`not a legal file name '${fullPath}'`));
+            return Promise.reject(new Error(`root is not a legal file name`));
         }
     }
 
     deleteFile(fullPath:string):Promise<void> {
-        const res = this.findNode(fullPath);
-        if (isFakeDir(res.parent)) {
-            if (isFakeFile(res.node)) {
-                delete res.parent.children[res.node.name];
+        const pathArr = getPathNodes(fullPath);
+        const parent = (pathArr.length)? this.getPathTarget(pathArr.slice(0, pathArr.length - 1)) : null;
+        if (isFakeDir(parent)) {
+            const node = parent.children[pathArr[pathArr.length - 1]];
+            if (isFakeFile(node)) {
+                delete parent.children[node.name];
                 this.events.emit('fileDeleted', {type: 'fileDeleted', fullPath});
-            } else if (isFakeDir(res.node)){
+            } else if (isFakeDir(node)){
                 return Promise.reject(new Error(`Directory is not a file '${fullPath}'`));
             }
         }
@@ -113,55 +95,55 @@ export class MemoryImpl implements FileSystem {
     }
 
     deleteDirectory(fullPath: string, recursive?: boolean): Promise<void> {
-        const res = this.findNode(fullPath);
-        if (isFakeDir(res.node)){
-            if(recursive || !Object.keys(res.node.children).length){
-                if (res.node === this.root){
-                    return Promise.reject(new Error(`Can't delete root directory`));
-                } else if(res.parent){
-                    delete res.parent.children[res.node.name];
-                    this.events.emit('directoryDeleted', {type:'directoryDeleted', fullPath});
-                    return Promise.resolve();
-                } else {
-                    // node is a directory, but it's not the root and it doesn't have a parent directory
-                    return Promise.reject(new Error(`unexpected: unknown Directory '${fullPath}'`));
-                }
-            } else {
-                return Promise.reject(new Error(`Directory is not empty '${fullPath}'`));
-            }
-        } else if(isFakeFile(res.node)){
-            return Promise.reject(new Error(`File is not a directory '${fullPath}'`));
-        } else {
-            return Promise.resolve();
+        const pathArr = getPathNodes(fullPath);
+        if (pathArr.length === 0){
+            return Promise.reject(new Error(`Can't delete root directory`));
         }
-    }
-
-    ensureDirectory(fullPath:string):Promise<void> {
-        let current = this.root;
-        getPathNodes(fullPath).forEach(dirName => {
-            let next = current.children[dirName];
-            if (!next) {
-                next = new FakeDir(dirName, current.fullPath ? [current.fullPath, dirName].join(pathSeparator) : dirName, {});
-                current.children[dirName] = next;
-                this.events.emit('directoryCreated', {type:'directoryCreated', fullPath:next.fullPath});
+        const parent = this.getPathTarget(pathArr.slice(0, pathArr.length - 1));
+        if (isFakeDir(parent)) {
+            const node = parent.children[pathArr[pathArr.length - 1]];
+            if (isFakeFile(node)) {
+                return Promise.reject(new Error(`File is not a directory '${fullPath}'`));
+            } else if(node){
+                if (!recursive && Object.keys(node.children).length) {
+                    return Promise.reject(new Error(`Directory is not empty '${fullPath}'`));
+                } else {
+                    delete parent.children[node.name];
+                    this.events.emit('directoryDeleted', {type: 'directoryDeleted', fullPath});
+                }
             }
-            if (isFakeDir(next)) {
-                current = next;
-            } else {
-                throw new Error(next.fullPath + ' is a file');
-            }
-        });
-
+        }
         return Promise.resolve();
     }
 
-    loadTextFile(path):Promise<string>{
-        const res = this.findNode(path);
-        if(res && isFakeFile(res.node)) {
-            return Promise.resolve(res.node.content);
-        } else {
-            return Promise.reject(new Error(`Cannot find file ${path}`));
+    ensureDirectory(fullPath:string):Promise<void> {
+        return Promise.reduce(getPathNodes(fullPath), (current, dirName, _i, _l) => {
+            const next = current.children[dirName];
+            if (isFakeDir(next)) {
+                return next;
+            } else if (isFakeFile(next)) {
+                return Promise.reject(new Error(`File is not a directory ${next.fullPath}`));
+            } else {
+                const newDir = new FakeDir(dirName, current.fullPath ? [current.fullPath, dirName].join(pathSeparator) : dirName, {});
+                current.children[dirName] = newDir;
+                this.events.emit('directoryCreated', {type:'directoryCreated', fullPath:newDir.fullPath});
+                return newDir;
+            }
+        }, this.root).return();
+    }
+
+    loadTextFile(fullPath):Promise<string>{
+        const pathArr = getPathNodes(fullPath);
+        const parent = (pathArr.length) ? this.getPathTarget(pathArr.slice(0, pathArr.length - 1)) : null;
+        if (isFakeDir(parent)) {
+            const node = parent.children[pathArr[pathArr.length - 1]];
+            if (isFakeFile(node)) {
+                return Promise.resolve(node.content);
+            } else if (isFakeDir(node)) {
+                return Promise.reject(new Error(`File is a directory ${fullPath}`));
+            }
         }
+        return Promise.reject(new Error(`Cannot find file ${fullPath}`));
     }
 
     loadDirectoryTree (): Promise<Directory> {

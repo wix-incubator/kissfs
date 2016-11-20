@@ -69,12 +69,12 @@ export type EventEmitter =
 
 
 export interface FileSystem {
-    saveFile(filePath:string, newContent:string): Promise<void>;
-    deleteFile(filename:string):Promise<void>;
-    deleteDirectory(dirName:string, recursive?:boolean):Promise<void>;
-    loadTextFile(filePath:string): Promise<string>;
+    saveFile(fullPath:string, newContent:string): Promise<void>;
+    deleteFile(fullPath:string):Promise<void>;
+    deleteDirectory(fullPath:string, recursive?:boolean):Promise<void>;
+    loadTextFile(fullPath:string): Promise<string>;
     loadDirectoryTree(): Promise<Directory>;
-    ensureDirectory(path:string): Promise<void>;
+    ensureDirectory(fullPath:string): Promise<void>;
     readonly events:EventEmitter;
     readonly baseUrl: string;
 }
