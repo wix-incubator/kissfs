@@ -30,14 +30,17 @@ export function assertFileSystemContract(fsProvider: () => FileSystem) {
         });
 
         it(`ensuring existence of directory`, function() {
-            return fs.ensureDirectory('foo')
-                .then(() => expect(fs.loadDirectoryTree()).to.become({
-                    type:'dir', name:'', fullPath:'', children:[
-                        {type:'dir', name:'foo', fullPath:'foo', children:[]}
-                    ]}));
+            const expectedStructure = {
+                type:'dir', name:'', fullPath:'', children:[
+                    {type:'dir', name:'foo.bar', fullPath:'foo.bar', children:[]}
+                ]};
+            return fs.ensureDirectory('foo.bar')
+                .then(() => expect(fs.loadDirectoryTree()).to.become(expectedStructure))
+                .then(() => fs.ensureDirectory('foo.bar')) //2nd time does nothing
+                .then(() => expect(fs.loadDirectoryTree()).to.become(expectedStructure))
         });
 
-        it(`saving a file over a folder - fails`, function() {
+        it(`saving a file over a directory - fails`, function() {
             return fs.ensureDirectory('foo')
                 .then(() => expect(fs.saveFile('foo', 'bar')).to.be.rejectedWith(Error))
                 .then(() => expect(fs.loadDirectoryTree()).to.become({
@@ -46,7 +49,7 @@ export function assertFileSystemContract(fsProvider: () => FileSystem) {
                     ]}));
         });
 
-        it(`saving a new file (and a new folder to hold it)`, function() {
+        it(`saving a new file (and a new directory to hold it)`, function() {
             return fs.saveFile('foo/bar.txt', 'baz')
                 .then(() => expect(fs.loadDirectoryTree()).to.become({
                     type:'dir', name:'', fullPath:'', children:[
@@ -66,6 +69,26 @@ export function assertFileSystemContract(fsProvider: () => FileSystem) {
                 .then(() => expect(fs.loadTextFile('foo.txt')).to.become('bar'))
                 .then(() => fs.saveFile('foo.txt', 'bar'))
                 .then(() => expect(fs.loadTextFile('foo.txt')).to.become('bar'));
+        });
+
+        it(`deleting root directory - fails`, function() {
+            return expect(fs.deleteDirectory('')).to.be.rejectedWith(Error);
+        });
+
+
+        it(`deleting non existing directory succeeds`, function() {
+            return fs.deleteDirectory('foo/bar')
+                .then(() => expect(fs.loadDirectoryTree()).to.eventually.have.property('children').eql([]));
+        });
+
+        it(`deleting directory which is actually a file - fails`, function() {
+            return fs.saveFile('foo/bar/baz.txt', 'foo')
+                .then(() => expect(fs.deleteDirectory('foo/bar/baz.txt')).to.be.rejectedWith(Error));
+        });
+
+        it(`deleting non-empty directory without recursive flag - fails`, function() {
+            return fs.saveFile('foo/bar/baz.txt', 'foo')
+                .then(() => expect(fs.deleteDirectory('foo/bar')).to.be.rejectedWith(Error));
         });
 
         it(`deleting only one file`, function() {

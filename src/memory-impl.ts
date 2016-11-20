@@ -39,7 +39,6 @@ export class MemoryImpl implements FileSystem {
 
     private getPathTarget(pathArr: string[]): FakeDir | null {
         var current: FakeDir = this.root;
-
         while (pathArr.length ) {
             const key = pathArr.shift();
             if (key && current.children && current.children[key] && isFakeDir(current.children[key])) {
@@ -53,13 +52,17 @@ export class MemoryImpl implements FileSystem {
 
     private findNode(path: string) : FindNodeResult{
         const pathArr = getPathNodes(path);
-        const parent = this.getPathTarget(pathArr.slice(0, pathArr.length - 1));
-        if (parent) {
-            const parentChildren = parent.children;
-            const filename = last(pathArr);
-            return {node: parentChildren[filename], parent: parent};
+        if (pathArr.length) {
+            const parent = this.getPathTarget(pathArr.slice(0, pathArr.length - 1));
+            if (parent) {
+                const parentChildren = parent.children;
+                const filename = last(pathArr);
+                return {node: parentChildren[filename], parent: parent};
+            }
+            return {node: null, parent: null};
+        } else {
+            return {node: this.root, parent: null};
         }
-        return {node: null, parent: null};
     }
 
     saveFile(filename:string, newContent:string):Promise<void> {
@@ -98,8 +101,7 @@ export class MemoryImpl implements FileSystem {
         const res = this.findNode(dirName);
         if (isFakeDir(res.node)){
             if(recursive || !Object.keys(res.node.children).length){
-                if (res.parent === this.root){
-                    // TODO add test
+                if (res.node === this.root){
                     return Promise.reject(new Error(`Can't delete root directory`));
                 } else if(res.parent){
                     delete res.parent.children[res.node.name];
@@ -111,12 +113,12 @@ export class MemoryImpl implements FileSystem {
                     return Promise.reject(new Error(`unexpected: unknown Directory '${dirName}'`));
                 }
             } else {
-                // TODO add test
-                return Promise.reject(new Error(`Directory not empty '${dirName}'`));
+                return Promise.reject(new Error(`Directory is not empty '${dirName}'`));
             }
-        } else {
-            // TODO add test
+        } else if(isFakeFile(res.node)){
             return Promise.reject(new Error(`File is not a directory '${dirName}'`));
+        } else {
+            return Promise.resolve();
         }
     }
 
