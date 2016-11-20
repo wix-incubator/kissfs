@@ -13,8 +13,7 @@ export function assertFileSystemContract(fsProvider: () => FileSystem) {
 // TODO add events expectations
 
         it(`initially empty`, function() {
-            return fs.loadDirectoryTree()
-                .then(rootData => expect(rootData).to.eql({type:'dir', name:'', fullPath:'', children:[]}));
+            return expect(fs.loadDirectoryTree()).to.become({type:'dir', name:'', fullPath:'', children:[]});
         });
 
         it(`loading a non-existing file - fails`, function() {
@@ -32,8 +31,7 @@ export function assertFileSystemContract(fsProvider: () => FileSystem) {
 
         it(`ensuring existence of directory`, function() {
             return fs.ensureDirectory('foo')
-                .then(() => fs.loadDirectoryTree())
-                .then(rootData => expect(rootData).to.eql({
+                .then(() => expect(fs.loadDirectoryTree()).to.become({
                     type:'dir', name:'', fullPath:'', children:[
                         {type:'dir', name:'foo', fullPath:'foo', children:[]}
                     ]}));
@@ -42,8 +40,7 @@ export function assertFileSystemContract(fsProvider: () => FileSystem) {
         it(`saving a file over a folder - fails`, function() {
             return fs.ensureDirectory('foo')
                 .then(() => expect(fs.saveFile('foo', 'bar')).to.be.rejectedWith(Error))
-                .then(() => fs.loadDirectoryTree())
-                .then(rootData => expect(rootData).to.eql({
+                .then(() => expect(fs.loadDirectoryTree()).to.become({
                     type:'dir', name:'', fullPath:'', children:[
                         {type:'dir', name:'foo', fullPath:'foo', children:[]}
                     ]}));
@@ -51,8 +48,7 @@ export function assertFileSystemContract(fsProvider: () => FileSystem) {
 
         it(`saving a new file (and a new folder to hold it)`, function() {
             return fs.saveFile('foo/bar.txt', 'baz')
-                .then(() => fs.loadDirectoryTree())
-                .then(rootData => expect(rootData).to.eql({
+                .then(() => expect(fs.loadDirectoryTree()).to.become({
                     type:'dir', name:'', fullPath:'', children:[
                         {type:'dir', name:'foo', fullPath:'foo', children:[
                             {type:'file', name:'bar.txt', fullPath:'foo/bar.txt'}]}]}));
@@ -60,34 +56,28 @@ export function assertFileSystemContract(fsProvider: () => FileSystem) {
 
         it(`saving a file with different content`, function() {
             return fs.saveFile('foo.txt', 'bar')
-                .then(() => fs.loadTextFile('foo.txt'))
-                .then(content => expect(content).to.eql('bar'))
+                .then(() => expect(fs.loadTextFile('foo.txt')).to.become('bar'))
                 .then(() => fs.saveFile('foo.txt', 'baz'))
-                .then(() => fs.loadTextFile('foo.txt'))
-                .then(content => expect(content).to.eql('baz'));
+                .then(() => expect(fs.loadTextFile('foo.txt')).to.become('baz'));
         });
 
         it(`saving a file with same content`, function() {
             return fs.saveFile('foo.txt', 'bar')
-                .then(() => fs.loadTextFile('foo.txt'))
-                .then(content => expect(content).to.eql('bar'))
+                .then(() => expect(fs.loadTextFile('foo.txt')).to.become('bar'))
                 .then(() => fs.saveFile('foo.txt', 'bar'))
-                .then(() => fs.loadTextFile('foo.txt'))
-                .then(content => expect(content).to.eql('bar'));
+                .then(() => expect(fs.loadTextFile('foo.txt')).to.become('bar'));
         });
 
         it(`deleting only one file`, function() {
             return fs.saveFile('foo.txt', 'foo')
                 .then(() => fs.saveFile('bar.txt','bar'))
                 .then(() => fs.deleteFile('bar.txt'))
-                .then(() => fs.loadDirectoryTree())
-                .then(rootData => expect(rootData.children).to.eql([{fullPath:'foo.txt', name:'foo.txt', type:'file'}]));
+                .then(() => expect(fs.loadDirectoryTree()).to.eventually.have.property('children').eql([{fullPath:'foo.txt', name:'foo.txt', type:'file'}]));
         });
 
         it(`deleting non existing file succeeds`, function() {
             return fs.deleteFile('foo/bar.txt')
-                .then(() => fs.loadDirectoryTree())
-                .then(rootData => expect(rootData.children).to.eql([]));
+                .then(() => expect(fs.loadDirectoryTree()).to.eventually.have.property('children').eql([]));
         });
 
         it(`listens to file changes`, function() {
