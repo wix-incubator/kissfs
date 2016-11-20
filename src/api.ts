@@ -21,24 +21,29 @@ export interface File extends FileSystemNode{
 }
 
 export interface FileCreatedEvent{
+    type:'fileCreated',
     fullPath:string,
     newContent: string
 }
 
 export interface FileChangedEvent{
+    type:'fileChanged',
     fullPath:string,
     newContent: string
 }
 
 export interface FileDeletedEvent{
+    type:'fileDeleted',
     fullPath:string
 }
 
 export interface DirectoryCreatedEvent{
+    type:'directoryCreated',
     fullPath:string,
 }
 
 export interface DirectoryDeletedEvent{
+    type:'directoryDeleted',
     filename:string
 }
 
@@ -52,7 +57,6 @@ export interface EventAspect<S,O>{
     once(event: S, fn: ListenerFn<O>, context?: any): this;
     removeListener(event: S, fn?: ListenerFn<O>, context?: any, once?: boolean): this;
     off(event: S, fn?: ListenerFn<O>, context?: any, once?: boolean): this;
-    /** @internal */ emit(event: S, ...args: Array<any>): boolean;
 }
 
 export type EventEmitter =

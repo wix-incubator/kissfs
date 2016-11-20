@@ -1,18 +1,47 @@
 import {expect} from "chai";
-import {FileSystem, FileSystemNode, FileCreatedEvent, FileDeletedEvent, Directory} from '../src/api';
+import {FileSystem} from '../src/api';
 import * as Promise from 'bluebird';
 
-export function assertFileSystemContract(fsProvider: () => FileSystem) {
+export type Options = {
+    eventChangesPollingInterval:number;
+    noExtraEventsGrace:number;
+    timeout:number;
+};
+export function assertFileSystemContract(fsProvider: () => FileSystem, options:Options) {
     describe('filesystem contract', () => {
         let fs: FileSystem;
         let events: Array<any>;
         beforeEach(() => {
             fs = fsProvider();
             events = [];
-           // fs.events.addListener()
+            fs.events.addListener('fileCreated', handleEvent('fileCreated'));
+            fs.events.addListener('fileChanged', handleEvent('fileChanged'));
+            fs.events.addListener('fileDeleted', handleEvent('fileDeleted'));
+            fs.events.addListener('directoryCreated', handleEvent('directoryCreated'));
+            fs.events.addListener('directoryDeleted', handleEvent('directoryDeleted'));
         });
 
-// TODO add events expectations
+        afterEach(() => {
+            expect(events, 'unmatched events after test case').to.eql([]);
+        });
+
+        function handleEvent(eventName:string){
+            return event => {
+                expect(event.type, `type of event dispatched as ${eventName}`).to.eql(eventName);
+                events.push(event);
+            }
+        }
+
+        function expectEvents(...expectedEvents){
+            return Promise.resolve()
+                .then(() => {
+                    expect(events).to.eql(expectedEvents);
+                    events = [];
+                })
+                .then(()=> Promise.delay(options.noExtraEventsGrace).then(() => expect(events).to.eql([])),
+                    () => Promise.delay(options.eventChangesPollingInterval).then(() => expectEvents(...expectedEvents)))
+                .timeout(options.timeout, new Error('timed out waiting for events'));
+        }
 
         it(`initially empty`, function() {
             return expect(fs.loadDirectoryTree()).to.become({type:'dir', name:'', fullPath:'', children:[]});
@@ -24,6 +53,7 @@ export function assertFileSystemContract(fsProvider: () => FileSystem) {
 
         it(`loading a non-existing file - fails`, function() {
             return fs.ensureDirectory('foo')
+                .then(() => expectEvents({type: 'directoryCreated', fullPath:'foo'}))
                 .then(() => expect(fs.loadTextFile('foo')).to.be.rejectedWith(Error));
         });
 
@@ -37,6 +67,7 @@ export function assertFileSystemContract(fsProvider: () => FileSystem) {
                     {type:'dir', name:'foo.bar', fullPath:'foo.bar', children:[]}
                 ]};
             return fs.ensureDirectory('foo.bar')
+                .then(() => expectEvents({type: 'directoryCreated', fullPath:'foo.bar'}))
                 .then(() => expect(fs.loadDirectoryTree()).to.become(expectedStructure))
                 .then(() => fs.ensureDirectory('foo.bar')) //2nd time does nothing
                 .then(() => expect(fs.loadDirectoryTree()).to.become(expectedStructure))
@@ -44,6 +75,7 @@ export function assertFileSystemContract(fsProvider: () => FileSystem) {
 
         it(`saving a file over a directory - fails`, function() {
             return fs.ensureDirectory('foo')
+                .then(() => expectEvents({type: 'directoryCreated', fullPath:'foo'}))
                 .then(() => expect(fs.saveFile('foo', 'bar')).to.be.rejectedWith(Error))
                 .then(() => expect(fs.loadDirectoryTree()).to.become({
                     type:'dir', name:'', fullPath:'', children:[
@@ -53,6 +85,7 @@ export function assertFileSystemContract(fsProvider: () => FileSystem) {
 
         it(`saving a new file (and a new directory to hold it)`, function() {
             return fs.saveFile('foo/bar.txt', 'baz')
+                .then(() => expectEvents({type: 'directoryCreated', fullPath:'foo'}, {type: 'fileCreated', fullPath:'foo/bar.txt', newContent:'baz'}))
                 .then(() => expect(fs.loadDirectoryTree()).to.become({
                     type:'dir', name:'', fullPath:'', children:[
                         {type:'dir', name:'foo', fullPath:'foo', children:[
@@ -61,13 +94,16 @@ export function assertFileSystemContract(fsProvider: () => FileSystem) {
 
         it(`saving a file with different content`, function() {
             return fs.saveFile('foo.txt', 'bar')
+                .then(() => expectEvents({type: 'fileCreated', fullPath:'foo.txt', newContent:'bar'}))
                 .then(() => expect(fs.loadTextFile('foo.txt')).to.become('bar'))
                 .then(() => fs.saveFile('foo.txt', 'baz'))
+                .then(() => expectEvents({type: 'fileChanged', fullPath:'foo.txt', newContent:'baz'}))
                 .then(() => expect(fs.loadTextFile('foo.txt')).to.become('baz'));
         });
 
         it(`saving a file with same content`, function() {
             return fs.saveFile('foo.txt', 'bar')
+                .then(() => expectEvents({type: 'fileCreated', fullPath:'foo.txt', newContent:'bar'}))
                 .then(() => expect(fs.loadTextFile('foo.txt')).to.become('bar'))
                 .then(() => fs.saveFile('foo.txt', 'bar'))
                 .then(() => expect(fs.loadTextFile('foo.txt')).to.become('bar'));
@@ -77,69 +113,39 @@ export function assertFileSystemContract(fsProvider: () => FileSystem) {
             return expect(fs.deleteDirectory('')).to.be.rejectedWith(Error);
         });
 
-
         it(`deleting non existing directory succeeds`, function() {
             return fs.deleteDirectory('foo/bar')
                 .then(() => expect(fs.loadDirectoryTree()).to.eventually.have.property('children').eql([]));
         });
 
         it(`deleting directory which is actually a file - fails`, function() {
-            return fs.saveFile('foo/bar/baz.txt', 'foo')
-                .then(() => expect(fs.deleteDirectory('foo/bar/baz.txt')).to.be.rejectedWith(Error));
+            return fs.saveFile('foo.txt', 'foo')
+                .then(() => expectEvents({type: 'fileCreated', fullPath:'foo.txt', newContent:'foo'}))
+                .then(() => expect(fs.deleteDirectory('foo.txt')).to.be.rejectedWith(Error));
         });
 
         it(`deleting non-empty directory without recursive flag - fails`, function() {
             return fs.saveFile('foo/bar/baz.txt', 'foo')
+                .then(() => expectEvents(
+                    {type: 'directoryCreated', fullPath:'foo'},
+                    {type: 'directoryCreated', fullPath:'foo/bar'},
+                    {type: 'fileCreated', fullPath:'foo/bar/baz.txt', newContent:'foo'}))
                 .then(() => expect(fs.deleteDirectory('foo/bar')).to.be.rejectedWith(Error));
         });
 
         it(`deleting only one file`, function() {
             return fs.saveFile('foo.txt', 'foo')
+                .then(() => expectEvents({type: 'fileCreated', fullPath:'foo.txt', newContent:'foo'}))
                 .then(() => fs.saveFile('bar.txt','bar'))
+                .then(() => expectEvents({type: 'fileCreated', fullPath:'bar.txt', newContent:'bar'}))
                 .then(() => fs.deleteFile('bar.txt'))
+                .then(() => expectEvents({type: 'fileDeleted', fullPath:'bar.txt'}))
                 .then(() => expect(fs.loadDirectoryTree()).to.eventually.have.property('children').eql([{fullPath:'foo.txt', name:'foo.txt', type:'file'}]));
         });
 
         it(`deleting non existing file succeeds`, function() {
             return fs.deleteFile('foo/bar.txt')
                 .then(() => expect(fs.loadDirectoryTree()).to.eventually.have.property('children').eql([]));
-        });
-
-        it(`listens to file changes`, function() {
-            const newValue = 'newValue';
-            const fileName = 'index.html';
-
-            const gotEvent =  new Promise((resolve, reject) => {
-                fs.events.on('fileChanged', function(event:FileCreatedEvent) {
-                    try{
-                        expect(event.newContent).to.equal(newValue);
-                        expect(event.fullPath).to.equal(fileName);
-                        resolve();
-                    } catch(error){
-                        reject(error);
-                    }
-                });
-            });
-            return Promise.all([fs.saveFile(fileName, newValue), gotEvent]);
-
-        });
-
-        it(`listen to file delete`, function(){
-            const expectedFileName = 'src/file.txt';
-            return fs.saveFile(expectedFileName,'content')
-                .then(() => {
-                    const gotEvent =  new Promise((resolve, reject) => {
-                        fs.events.on('fileDeleted', function(event) {
-                            try{
-                                expect(event.fullPath).to.equal(expectedFileName);
-                                resolve();
-                            } catch(error){
-                                reject(error);
-                            }
-                        });
-                    });
-                    return Promise.all([fs.deleteFile(expectedFileName), gotEvent]);
-                });
         });
     });
 }

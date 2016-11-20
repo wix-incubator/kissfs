@@ -50,6 +50,7 @@ export class MemoryImpl implements FileSystem {
         return current;
     }
 
+    // TODO make into findParent
     private findNode(path: string) : FindNodeResult{
         const pathArr = getPathNodes(path);
         if (pathArr.length) {
@@ -72,11 +73,21 @@ export class MemoryImpl implements FileSystem {
             const parentPath = pathArr.join(pathSeparator);
             this.ensureDirectory(parentPath);
             const res = this.findNode(fullPath);
-            if (isFakeDir(res.node)) {
-                return Promise.reject(new Error(`file save error for path '${fullPath}'`));
-            } else if(res.parent){
+            if(res.parent){
+                let type;
+                const existingChild = res.parent.children[name];
+                if (isFakeDir(existingChild)){
+                    return Promise.reject(new Error(`file save error for path '${fullPath}'`));
+                } else if (isFakeFile(existingChild)){
+                    if (existingChild.content === newContent){
+                        return Promise.resolve();
+                    }
+                    type = 'fileChanged';
+                } else {
+                    type = 'fileCreated';
+                }
                 res.parent.children[name] = new FakeFile(name, fullPath, newContent);
-                this.events.emit('fileChanged', {fullPath, newContent});
+                this.events.emit(type, {type, fullPath, newContent});
                 return Promise.resolve();
             } else {
                 // we get here if findNode couldn't resolve the parent and the node is not the root dir.
@@ -92,7 +103,7 @@ export class MemoryImpl implements FileSystem {
         const res = this.findNode(fullPath);
         if (isFakeFile(res.node) && isFakeDir(res.parent)) {
             delete res.parent.children[res.node.name];
-            this.events.emit('fileDeleted', {fullPath});
+            this.events.emit('fileDeleted', {type:'fileDeleted', fullPath});
         }
         return Promise.resolve();
     }
@@ -105,7 +116,6 @@ export class MemoryImpl implements FileSystem {
                     return Promise.reject(new Error(`Can't delete root directory`));
                 } else if(res.parent){
                     delete res.parent.children[res.node.name];
-                    // TODO what events do we expect?
                     // this.events.emit('fileDeleted', {filename});
                     return Promise.resolve();
                 } else {
@@ -129,6 +139,7 @@ export class MemoryImpl implements FileSystem {
             if (!next) {
                 next = new FakeDir(dirName, current.fullPath ? [current.fullPath, dirName].join(pathSeparator) : dirName, {});
                 current.children[dirName] = next;
+                this.events.emit('directoryCreated', {type:'directoryCreated', fullPath:next.fullPath});
             }
             if (isFakeDir(next)) {
                 current = next;
