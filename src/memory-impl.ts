@@ -101,40 +101,44 @@ export class MemoryImpl implements FileSystem {
 
     deleteFile(fullPath:string):Promise<void> {
         const res = this.findNode(fullPath);
-        if (isFakeFile(res.node) && isFakeDir(res.parent)) {
-            delete res.parent.children[res.node.name];
-            this.events.emit('fileDeleted', {type:'fileDeleted', fullPath});
+        if (isFakeDir(res.parent)) {
+            if (isFakeFile(res.node)) {
+                delete res.parent.children[res.node.name];
+                this.events.emit('fileDeleted', {type: 'fileDeleted', fullPath});
+            } else if (isFakeDir(res.node)){
+                return Promise.reject(new Error(`Directory is not a file '${fullPath}'`));
+            }
         }
         return Promise.resolve();
     }
 
-    deleteDirectory(dirName: string, recursive?: boolean): Promise<void> {
-        const res = this.findNode(dirName);
+    deleteDirectory(fullPath: string, recursive?: boolean): Promise<void> {
+        const res = this.findNode(fullPath);
         if (isFakeDir(res.node)){
             if(recursive || !Object.keys(res.node.children).length){
                 if (res.node === this.root){
                     return Promise.reject(new Error(`Can't delete root directory`));
                 } else if(res.parent){
                     delete res.parent.children[res.node.name];
-                    // this.events.emit('fileDeleted', {filename});
+                    this.events.emit('directoryDeleted', {type:'directoryDeleted', fullPath});
                     return Promise.resolve();
                 } else {
                     // node is a directory, but it's not the root and it doesn't have a parent directory
-                    return Promise.reject(new Error(`unexpected: unknown Directory '${dirName}'`));
+                    return Promise.reject(new Error(`unexpected: unknown Directory '${fullPath}'`));
                 }
             } else {
-                return Promise.reject(new Error(`Directory is not empty '${dirName}'`));
+                return Promise.reject(new Error(`Directory is not empty '${fullPath}'`));
             }
         } else if(isFakeFile(res.node)){
-            return Promise.reject(new Error(`File is not a directory '${dirName}'`));
+            return Promise.reject(new Error(`File is not a directory '${fullPath}'`));
         } else {
             return Promise.resolve();
         }
     }
 
-    ensureDirectory(dirPath:string):Promise<void> {
+    ensureDirectory(fullPath:string):Promise<void> {
         let current = this.root;
-        getPathNodes(dirPath).forEach(dirName => {
+        getPathNodes(fullPath).forEach(dirName => {
             let next = current.children[dirName];
             if (!next) {
                 next = new FakeDir(dirName, current.fullPath ? [current.fullPath, dirName].join(pathSeparator) : dirName, {});

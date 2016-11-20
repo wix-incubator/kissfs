@@ -40,7 +40,10 @@ export function assertFileSystemContract(fsProvider: () => FileSystem, options:O
                 })
                 .then(()=> Promise.delay(options.noExtraEventsGrace).then(() => expect(events).to.eql([])),
                     () => Promise.delay(options.eventChangesPollingInterval).then(() => expectEvents(...expectedEvents)))
-                .timeout(options.timeout, new Error('timed out waiting for events'));
+                .timeout(options.timeout, new Error(`timed out waiting for events
+${JSON.stringify(expectedEvents)}
+while fould events
+${JSON.stringify(events)}`));
         }
 
         it(`initially empty`, function() {
@@ -113,6 +116,17 @@ export function assertFileSystemContract(fsProvider: () => FileSystem, options:O
             return expect(fs.deleteDirectory('')).to.be.rejectedWith(Error);
         });
 
+        it(`deleting a directory`, function() {
+            return fs.ensureDirectory('foo/bar')
+                .then(() => expectEvents(
+                    {type: 'directoryCreated', fullPath:'foo'},
+                    {type: 'directoryCreated', fullPath:'foo/bar'}))
+                .then(() => fs.deleteDirectory('foo/bar'))
+                .then(() => expectEvents({type: 'directoryDeleted', fullPath:'foo/bar'}))
+                .then(() => expect(fs.loadDirectoryTree()).to.eventually.have.property('children').eql([
+                    {children:[], fullPath:'foo', name:'foo', type:'dir'}]));
+        });
+
         it(`deleting non existing directory succeeds`, function() {
             return fs.deleteDirectory('foo/bar')
                 .then(() => expect(fs.loadDirectoryTree()).to.eventually.have.property('children').eql([]));
@@ -133,6 +147,23 @@ export function assertFileSystemContract(fsProvider: () => FileSystem, options:O
                 .then(() => expect(fs.deleteDirectory('foo/bar')).to.be.rejectedWith(Error));
         });
 
+        it(`deleting non-empty directory with recursive flag`, function() {
+            return fs.saveFile('foo/bar/baz.txt', 'foo')
+                .then(() => expectEvents(
+                    {type: 'directoryCreated', fullPath:'foo'},
+                    {type: 'directoryCreated', fullPath:'foo/bar'},
+                    {type: 'fileCreated', fullPath:'foo/bar/baz.txt', newContent:'foo'}))
+                .then(() => fs.deleteDirectory('foo', true))
+                .then(() => expectEvents({type: 'directoryDeleted', fullPath:'foo'})) // only report the detached node, not an event per nested node
+                .then(() => expect(fs.loadDirectoryTree()).to.eventually.have.property('children').eql([]));
+        });
+
+        it(`deleting file which is actually a directory - fails`, function() {
+            return fs.ensureDirectory('foo.bar')
+                .then(() => expectEvents({type: 'directoryCreated', fullPath:'foo.bar'}))
+                .then(() => expect(fs.deleteFile('foo.bar')).to.be.rejectedWith(Error));
+        });
+
         it(`deleting only one file`, function() {
             return fs.saveFile('foo.txt', 'foo')
                 .then(() => expectEvents({type: 'fileCreated', fullPath:'foo.txt', newContent:'foo'}))
@@ -144,6 +175,11 @@ export function assertFileSystemContract(fsProvider: () => FileSystem, options:O
         });
 
         it(`deleting non existing file succeeds`, function() {
+            return fs.deleteFile('bar.txt')
+                .then(() => expect(fs.loadDirectoryTree()).to.eventually.have.property('children').eql([]));
+        });
+
+        it(`deleting non existing file (deep path) succeeds`, function() {
             return fs.deleteFile('foo/bar.txt')
                 .then(() => expect(fs.loadDirectoryTree()).to.eventually.have.property('children').eql([]));
         });
