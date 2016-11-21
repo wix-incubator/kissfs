@@ -1,7 +1,12 @@
+var path = require('path');
+
+var NODE_MODULES_PATH = path.resolve(__dirname, 'node_modules');
+
 var loaders = {
     loaders: [
         {
             test: /\.ts[x]?$/,
+            exclude : NODE_MODULES_PATH,
             loader: 'ts-loader?logLevel=warn' // &transpileOnly=true
         }
     ],
@@ -26,7 +31,7 @@ module.exports = {
         test: ['./test'],
         webtest: ['mocha!./test']
     },
-    devtool: 'inline-source-map',
+    devtool: 'eval',
     output: output,
     resolve: resolve,
     module: loaders
