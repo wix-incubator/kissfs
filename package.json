@@ -1,7 +1,7 @@
 {
-  "name": "reactive-fs",
+  "name": "kissfs",
   "version": "0.0.1",
-  "description": "javascript file-system read/write/watch API and basic implementations",
+  "description": "Extendable and reactive file-system library that keeps it simple",
   "main": "dist/src/index.js",
   "scripts": {
     "clean": "rimraf ./dist",
@@ -9,14 +9,14 @@
     "build:watch": "tsc -d -w",
     "bundle": "webpack --progress",
     "pretest": "npm run clean && npm run build && npm run bundle",
-    "test": "npm run test:server && npm run test:browser",
-    "test:server": "mocha --reporter mocha-env-reporter dist/test/index --recursive",
+    "test": "npm run test:node && npm run test:browser",
+    "test:node": "mocha --reporter mocha-env-reporter dist/test/index --recursive",
     "test:browser": "karma start --single-run",
     "start": "webpack-dev-server --progress"
   },
   "repository": {
     "type": "git",
-    "url": "git@github.com:wix/reactive-fs.git"
+    "url": "git@github.com:wix/kissfs.git"
   },
   "keywords": [
     "file",
@@ -27,9 +27,9 @@
   "author": "Amir Arad (amira@wix.com)",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/wix/reactive-fs/issues"
+    "url": "https://github.com/wix/kissfs/issues"
   },
-  "homepage": "https://github.com/wix/reactive-fs#readme",
+  "homepage": "https://github.com/wix/kissfs#readme",
   "devDependencies": {
     "@types/bluebird": "3.0.35",
     "@types/chai": "3.4.34",

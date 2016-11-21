@@ -1,5 +1,4 @@
-# reactive-fs
-[![Build Status](https://travis-ci.org/wix/reactive-fs.svg?branch=master)](https://travis-ci.org/wix/reactive-fs)
+# kissfs
+[![Build Status](https://travis-ci.org/wix/kissfs.svg?branch=master)](https://travis-ci.org/wix/kissfs)
 
-file-system read/write/watch API and basic implementations
-
+Extendable and reactive filesystem library that keeps it simple
