@@ -1,5 +1,5 @@
 import {expect} from "chai";
-import {FileSystem} from '../src/api';
+import {FileSystem} from '../src';
 import * as Promise from 'bluebird';
 
 export type Options = {

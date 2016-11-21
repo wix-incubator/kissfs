@@ -21,9 +21,11 @@ function isFakeDir(node : FakeNode|null): node is FakeDir{
 function isFakeFile(node : FakeNode|null): node is FakeFile{
     return node != null && node.type === 'file';
 }
-const dummyDir = new FakeDir('', '', {});
 
-export class MemoryImpl implements FileSystem {
+/**
+ * naive in-memory implementation of the FileSystem interface
+ */
+export class MemoryFileSystem implements FileSystem {
     public readonly events: InternalEventsEmitter = makeEventsEmitter();
     private readonly root = new FakeDir('', '', {});
 

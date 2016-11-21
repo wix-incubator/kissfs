@@ -5,4 +5,4 @@ import * as chai from 'chai';
 chai.use(cap);
 
 
-import './memory-impl.spec';
+import './memory-fs.spec';
