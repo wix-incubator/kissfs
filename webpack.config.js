@@ -28,8 +28,8 @@ var output = {
 module.exports = {
     context: __dirname,
     entry: {
-        test: ['./test'],
-        webtest: ['mocha!./test']
+        test: ['./test/browser'],
+        webtest: ['mocha!./test/browser']
     },
     devtool: 'eval',
     output: output,

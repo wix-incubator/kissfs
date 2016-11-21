@@ -42,7 +42,7 @@ export function assertFileSystemContract(fsProvider: () => FileSystem, options:O
                     () => Promise.delay(options.eventChangesPollingInterval).then(() => expectEvents(...expectedEvents)))
                 .timeout(options.timeout, new Error(`timed out waiting for events
 ${JSON.stringify(expectedEvents)}
-while fould events
+while found events
 ${JSON.stringify(events)}`));
         }
 
@@ -54,7 +54,7 @@ ${JSON.stringify(events)}`));
             return expect(fs.loadTextFile('foo.txt')).to.be.rejectedWith(Error);
         });
 
-        it(`loading a non-existing file - fails`, function() {
+        it(`loading a directory as a file - fails`, function() {
             return fs.ensureDirectory('foo')
                 .then(() => expectEvents({type: 'directoryCreated', fullPath:'foo'}))
                 .then(() => expect(fs.loadTextFile('foo')).to.be.rejectedWith(Error));
