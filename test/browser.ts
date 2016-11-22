@@ -1,2 +1,1 @@
-import '../test-kit';
-import './memory-fs.spec';
+import './universal';
