@@ -6,6 +6,8 @@ node_js:
 os:
   - linux
   - osx
+addons:
+  firefox: "latest"
 
 before_script:
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then export CHROME_BIN=chromium-browser ; fi 
