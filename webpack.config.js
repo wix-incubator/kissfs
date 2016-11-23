@@ -14,7 +14,10 @@ var loaders = {
 };
 
 var resolve = {
-    extensions: [".webpack.js", ".web.js", ".js", ".ts", ".tsx"]
+    extensions: [".webpack.js", ".web.js", ".js", ".ts", ".tsx"],
+    alias: {
+        'bluebird-retry': 'bluebird-retry/lib/bluebird-retry'
+    }
 };
 
 var output = {
@@ -28,8 +31,8 @@ var output = {
 module.exports = {
     context: __dirname,
     entry: {
-        test: ['./test'],
-        webtest: ['mocha!./test']
+        test: ['./test/browser'],
+        webtest: ['mocha!./test/browser']
     },
     devtool: 'eval',
     output: output,

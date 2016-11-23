@@ -44,7 +44,7 @@ export interface DirectoryCreatedEvent{
 
 export interface DirectoryDeletedEvent{
     type:'directoryDeleted',
-    filename:string
+    fullPath:string
 }
 
 export type ListenerFn<T> = (event: T) => void;
