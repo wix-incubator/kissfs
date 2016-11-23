@@ -54,13 +54,4 @@ describe('events test driver', ()=>{
         setTimeout(() => emitter.emit('event', {type:'event', foo:'bar'}), 25);
         return result;
     });
-
-    it('failure when matching delayed events', () => {
-        matcher.track(emitter, 'event');
-        const result = expect(matcher.expect([{type:'event', foo:'bar'}])).to.be.rejectedWith(/unexpected event/);
-        setTimeout(() => emitter.emit('event', {type:'event', foo:'bar'}), 15);
-        setTimeout(() => emitter.emit('event', {type:'event', foo:'bar'}), 25);
-        return result;
-    });
-
 });

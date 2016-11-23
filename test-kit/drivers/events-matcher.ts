@@ -28,8 +28,6 @@ export class EventsMatcher{
     expect(events: Array<EventObj>) {
         return retry(this.checkEvents.bind(this, events), this.options)
             .catch(e => {throw e.failure;}) // restore original error from bluebird-retry
-            .delay(this.options.noExtraEventsGrace)
-            .then(()=> expect(this.events, 'unexpected event after successful matching').to.be.empty);
     }
 
     private checkEvents(events: Array<EventObj>){
