@@ -10,7 +10,7 @@
     "bundle": "webpack --progress",
     "pretest": "npm run clean && npm run build && npm run bundle",
     "test": "npm run test:node && npm run test:browser",
-    "test:node": "mocha --require ./test-kit/local-test-load --reporter mocha-env-reporter dist/test/nodejs",
+    "test:node": "mocha --reporter mocha-env-reporter dist/test/nodejs",
     "test:browser": "karma start --single-run",
     "start": "webpack-dev-server --progress"
   },
@@ -70,7 +70,6 @@
   "dependencies": {
     "bluebird": "3.4.6",
     "chokidar": "1.6.1",
-    "node-watch": "0.4.1",
     "eventemitter3": "2.0.2",
     "fs-extra": "1.0.0",
     "lodash": "4.17.2"
