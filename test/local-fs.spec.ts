@@ -11,7 +11,6 @@ describe('the local filesystem implementation', function () {
         dir({unsafeCleanup:true},(err, path, cleanupCallback)=>{
             dirCleanup = cleanupCallback;
             rootPath = path;
-            console.log(rootPath);
             done();
         })
     });

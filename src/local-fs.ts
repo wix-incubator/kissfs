@@ -7,6 +7,7 @@ import {walk, WalkEventFile,
     writeFile as writeFile_,
     remove as remove_,
     rmdir as rmdir_,
+    access as access_,
     stat as stat_} from 'fs-extra';
 import * as Promise from 'bluebird';
 import { watch } from 'chokidar';
@@ -19,6 +20,7 @@ const writeFile = Promise.promisify<void, string, any>(writeFile_);
 const remove = Promise.promisify<void, string>(remove_ as (dir: string, callback: (err: any, _: void) => void) => void);
 const rmdir = Promise.promisify<void, string>(rmdir_ as (dir: string, callback: (err: any, _: void) => void) => void);
 const stat = Promise.promisify<Stats, string>(stat_);
+const access = Promise.promisify<void, string>(access_);
 
 // TODO test, move to constructor argument and use in all methods
 const blacklist = ['node_modules', '.git', '.idea', 'dist'];
@@ -36,8 +38,8 @@ export class LocalFileSystem implements FileSystem{
     }
     init(): Promise<LocalFileSystem>{
         this.watcher = watch([this.baseUrl], {
-          //  usePolling:true,
-          //  interval:100,
+            //  usePolling:true,
+            //  interval:100,
             ignored: isBlackListed,
             //    atomic: false, //todo 50?
             cwd: this.baseUrl
@@ -49,11 +51,7 @@ export class LocalFileSystem implements FileSystem{
 
         return new Promise<LocalFileSystem>(resolve=>{
             this.watcher.once('ready', () => {
-                this.watcher.on('all', (name, path) => {
-                    console.log('track:', name, path);
-                });
-
-                this.watcher.on('addDir', (relPath:string, stats:Stats)=> {
+               this.watcher.on('addDir', (relPath:string, stats:Stats)=> {
 
                     if (relPath) { // ignore event of root folder creation
                         this.events.emit('directoryCreated', {
@@ -83,12 +81,11 @@ export class LocalFileSystem implements FileSystem{
                         type: 'directoryDeleted',
                         fullPath: relPath.split(path.sep).join(pathSeparator)
                     }));
-                // this.watcher.on('unlink', (filename) => {
-                //     var event = {
-                //         filename: normalizePath(filename)
-                //     };
-                //     io.emit('file-delete', event);
-                // });
+                this.watcher.on('unlink', (relPath:string)=>
+                    this.events.emit('fileDeleted', {
+                        type: 'fileDeleted',
+                        fullPath: relPath.split(path.sep).join(pathSeparator)
+                    }));
                 resolve(this);
             });
         });
@@ -107,13 +104,17 @@ export class LocalFileSystem implements FileSystem{
             return Promise.reject(new Error(`Can't delete root directory`));
         }
         const fullPath = path.join(this.baseUrl, ...getPathNodes(relPath));
-        return stat(fullPath).then(stats => {
-            if(stats.isFile()){
-                return remove(fullPath);
-            } else {
-                throw new Error(`not a file: ${relPath}`);
-            }
-        });
+        return access(fullPath)
+            .then(() => stat(fullPath), err => null)
+            .then(stats => {
+                if (stats) {
+                    if (stats.isFile()) {
+                        return remove(fullPath);
+                    } else {
+                        throw new Error(`not a file: ${relPath}`);
+                    }
+                }
+            });
     }
 
     deleteDirectory(relPath: string, recursive?: boolean): Promise<void> {
@@ -122,13 +123,17 @@ export class LocalFileSystem implements FileSystem{
             return Promise.reject(new Error(`Can't delete root directory`));
         }
         const fullPath = path.join(this.baseUrl, ...pathArr);
-        return stat(fullPath).then(stats => {
-            if(stats.isDirectory()){
-                return recursive ? rmdir(fullPath) : remove(fullPath);
-            } else {
-                throw new Error(`not a directory: ${relPath}`);
-            }
-        });
+        return access(fullPath)
+            .then(() => stat(fullPath), err => null)
+            .then(stats => {
+                if (stats) {
+                    if (stats.isDirectory()) {
+                        return recursive ? remove(fullPath): rmdir(fullPath);
+                    } else {
+                        throw new Error(`not a directory: ${relPath}`);
+                    }
+                }
+            });
     }
 
     loadTextFile(relPath: string): Promise<string> {
