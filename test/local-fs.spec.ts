@@ -1,5 +1,5 @@
 import {assertFileSystemContract} from './implementation-suite'
-import {LocalFileSystem} from "../src/local-fs";
+import {LocalFileSystem} from "../src/nodejs";
 import {dir} from 'tmp';
 import {mkdirSync} from 'fs';
 import {join} from 'path';

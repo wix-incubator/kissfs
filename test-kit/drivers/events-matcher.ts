@@ -27,7 +27,7 @@ export class EventsMatcher{
 
     expect(events: Array<EventObj>) {
         return retry(this.checkEvents.bind(this, events), this.options)
-            .catch(e => {throw e.failure;}) // restore original error from bluebird-retry
+            .catch(e => {throw e.failure;}); // restore original error from bluebird-retry
     }
 
     private checkEvents(events: Array<EventObj>){

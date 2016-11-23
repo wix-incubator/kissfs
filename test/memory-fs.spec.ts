@@ -1,5 +1,5 @@
 import {assertFileSystemContract} from './implementation-suite'
-import {MemoryFileSystem} from "../src";
+import {MemoryFileSystem} from "../src/browser";
 import * as Promise from 'bluebird';
 
 describe('the in memory implementation', function() {

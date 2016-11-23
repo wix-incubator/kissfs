@@ -2,7 +2,8 @@
   "name": "kissfs",
   "version": "0.0.2",
   "description": "Extensible and reactive file-system library that keeps it simple",
-  "main": "dist/src/index.js",
+  "main": "dist/src/nodejs.js",
+  "browser": "dist/src/browser.js",
   "scripts": {
     "clean": "rimraf ./dist",
     "build": "tsc -d",
