@@ -36,8 +36,8 @@ export class LocalFileSystem implements FileSystem{
     }
     init(): Promise<LocalFileSystem>{
         this.watcher = watch([this.baseUrl], {
-            usePolling:true,
-            interval:100,
+          //  usePolling:true,
+          //  interval:100,
             ignored: isBlackListed,
             //    atomic: false, //todo 50?
             cwd: this.baseUrl
@@ -78,6 +78,11 @@ export class LocalFileSystem implements FileSystem{
                             fullPath: relPath.split(path.sep).join(pathSeparator),
                             newContent: content
                         })));
+                this.watcher.on('unlinkDir', (relPath:string)=>
+                    this.events.emit('directoryDeleted', {
+                        type: 'directoryDeleted',
+                        fullPath: relPath.split(path.sep).join(pathSeparator)
+                    }));
                 // this.watcher.on('unlink', (filename) => {
                 //     var event = {
                 //         filename: normalizePath(filename)

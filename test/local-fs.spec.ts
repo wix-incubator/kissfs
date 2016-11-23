@@ -26,6 +26,6 @@ describe('the local filesystem implementation', function () {
         }, {
             interval: 50,
             noExtraEventsGrace: 150,
-            timeout: 250
+            timeout: 1500
         });
 });
