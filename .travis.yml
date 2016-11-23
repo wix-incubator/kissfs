@@ -5,7 +5,7 @@ node_js:
   - "4"
 os:
   - linux
-  - osx
+  - osx 
 addons:
   firefox: "latest"
 
