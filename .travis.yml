@@ -8,6 +8,6 @@ os:
   - osx
 
 before_script:
-  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; export CHROME_BIN=chromium-browser ; fi 
-  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; export DISPLAY=:99.0; fi
-  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; sh -e /etc/init.d/xvfb start; fi 
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then export CHROME_BIN=chromium-browser ; fi 
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then export DISPLAY=:99.0; fi
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sh -e /etc/init.d/xvfb start; fi 
