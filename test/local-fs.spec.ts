@@ -59,7 +59,8 @@ describe(`the local filesystem implementation`, function () {
         });
 
         it(`handle dir creation and deletion`, () => {
-            return mkdirAsync(`${testPath}/${dirName}`)
+            const path = join(testPath, dirName)
+            return mkdirAsync(path)
                 .then(() => waitFor(
                     () => expect(fs.loadDirectoryTree())
                         .to.eventually.have.property('children').eql([
@@ -67,7 +68,7 @@ describe(`the local filesystem implementation`, function () {
                         ])
                 ))
                 .then(() => matcher.expect([{type: 'directoryCreated', fullPath: dirName}]))
-                .then(() => rmdirAsync(`${testPath}/${dirName}`))
+                .then(() => rmdirAsync(path))
                 .then(() => matcher.expect([{type: 'directoryDeleted', fullPath: dirName}]))
                 .then(() => waitFor(
                     () => expect(fs.loadDirectoryTree()).to.eventually.have.property('children').eql([])
@@ -75,10 +76,11 @@ describe(`the local filesystem implementation`, function () {
         });
 
         it(`handle file creation and deletion`, () => {
-            return writeFileAsync(`${testPath}/${fileName}`, content)
+            const path = join(testPath, fileName)
+            return writeFileAsync(path, content)
                 .then(() => matcher.expect([{type: 'fileCreated', fullPath: fileName, newContent: content}]))
                 .then(() => waitFor(() => expect(fs.loadTextFile(fileName)).to.eventually.equals(content)))
-                .then(() => unlinkAsync(`${testPath}/${fileName}`))
+                .then(() => unlinkAsync(path))
                 .then(() => matcher.expect([{type: 'fileDeleted', fullPath: fileName}]))
                 .then(() => waitFor(() => expect(fs.loadTextFile(fileName)).to.eventually.be.rejected))
                 .then(() => matcher.expect([]))
