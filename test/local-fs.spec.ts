@@ -76,13 +76,23 @@ describe(`the local filesystem implementation`, function () {
         });
 
         it(`handle file creation and deletion`, () => {
-            const path = join(testPath, fileName)
+            const path = join(testPath, fileName);
             return writeFileAsync(path, content)
                 .then(() => matcher.expect([{type: 'fileCreated', fullPath: fileName, newContent: content}]))
                 .then(() => waitFor(() => expect(fs.loadTextFile(fileName)).to.eventually.equals(content)))
                 .then(() => unlinkAsync(path))
                 .then(() => matcher.expect([{type: 'fileDeleted', fullPath: fileName}]))
                 .then(() => waitFor(() => expect(fs.loadTextFile(fileName)).to.eventually.be.rejected))
+                .then(() => matcher.expect([]))
+        });
+
+        it(`handle file change`, () => {
+            const path = join(testPath, fileName);
+            const newContent = `_${content}`;
+            return writeFileAsync(path, content)
+                .then(() => matcher.expect([{type: 'fileCreated', fullPath: fileName, newContent: content}]))
+                .then(() => writeFileAsync(path, newContent))
+                .then(() => matcher.expect([{type: 'fileChanged', fullPath: fileName, newContent}]))
                 .then(() => matcher.expect([]))
         });
 
