@@ -15,23 +15,25 @@ import {expect} from 'chai';
 import * as Promise from 'bluebird';
 import {EventEmitter} from 'eventemitter3';
 
-describe(`the local filesystem implementation`, function () {
+describe(`the local filesystem implementation`, () => {
     let dirCleanup, rootPath, testPath;
     let counter = 0;
-    before((done)=>{
-        dir({unsafeCleanup:true},(err, path, cleanupCallback)=>{
+
+    before(done => {
+        dir({unsafeCleanup:true}, (err, path, cleanupCallback) => {
             dirCleanup = cleanupCallback;
             rootPath = path;
             done();
         })
     });
-    after(()=>{
+
+    after(() => {
         dirCleanup();
     });
 
     function getFS() {
         testPath = join(rootPath, 'fs_'+(counter++));
-        mkdirSync(testPath)
+        mkdirSync(testPath);
         return new LocalFileSystem(testPath).init();
     }
 
@@ -52,7 +54,7 @@ describe(`the local filesystem implementation`, function () {
         const content = 'content';
 
         beforeEach(() => {
-            matcher = new EventsMatcher(eventMatcherOptions)
+            matcher = new EventsMatcher(eventMatcherOptions);
             return getFS().then(newFs => {
                 fs = newFs
                 matcher.track(fs.events as any as EventEmitter,
@@ -101,5 +103,5 @@ describe(`the local filesystem implementation`, function () {
                 })
                 .then(() => expect(fs.loadTextFile(fileName)).to.eventually.equals(newContent));
         });
-    })
+    });
 });
