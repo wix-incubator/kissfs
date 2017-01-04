@@ -13,7 +13,8 @@
     "test": "npm run test:node && npm run test:browser",
     "test:node": "mocha --reporter mocha-env-reporter dist/test/nodejs",
     "test:browser": "karma start --single-run",
-    "start": "webpack-dev-server --progress"
+    "start": "webpack-dev-server --progress",
+    "server": "npm run build && node dist/src/ws-server & npm start"
   },
   "repository": {
     "type": "git",
@@ -43,6 +44,7 @@
     "@types/node": "6.0.48",
     "@types/sinon": "1.16.32",
     "@types/tmp": "0.0.31",
+    "@types/ws": "^0.0.37",
     "bluebird-retry": "^0.8.0",
     "chai": "3.5.0",
     "chai-as-promised": "6.0.0",
@@ -66,7 +68,8 @@
     "ts-loader": "1.2.1",
     "typescript": "2.0.9",
     "webpack": "2.1.0-beta.25",
-    "webpack-dev-server": "2.1.0-beta.10"
+    "webpack-dev-server": "2.1.0-beta.10",
+    "ws": "^1.1.1"
   },
   "dependencies": {
     "bluebird": "3.4.6",
