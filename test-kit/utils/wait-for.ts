@@ -1,10 +1,15 @@
 import * as Promise from 'bluebird';
+import isPromise from './is-promise'
 
 export function waitFor(assertion, timeout = 500, pollingInterval = 10) {
     return new Promise(function (resolve, reject) {
+        let promisedAssertion: PromiseLike<any> | null = null;
         function tryAssertion() {
             try {
-                assertion();
+                const returned = assertion();
+                if (isPromise(returned)) {
+                    promisedAssertion = returned;
+                }
             } catch(err) {
                 return err;
             }
@@ -24,7 +29,7 @@ export function waitFor(assertion, timeout = 500, pollingInterval = 10) {
                     setTimeout(nextAttempt, pollingInterval);
                 }
             } else {
-                resolve();
+                promisedAssertion ? promisedAssertion.then(() => resolve(), reason => reject(reason)) : resolve();
             }
         }
 
