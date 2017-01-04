@@ -1,6 +1,6 @@
-import {EventsMatcher} from '../utils/events-matcher';
+import {EventsMatcher} from '../drivers/events-matcher';
 import {EventEmitter} from 'eventemitter3';
-import {expect} from "chai";
+import {expect} from 'chai';
 
 describe('events test driver', ()=>{
 

@@ -1,6 +1,6 @@
 import {expect} from "chai";
 import {FileSystem} from '../src/api';
-import {EventsMatcher} from '../test-kit/utils/events-matcher';
+import {EventsMatcher} from '../test-kit/drivers/events-matcher';
 import * as Promise from 'bluebird';
 import {EventEmitter} from 'eventemitter3';
 

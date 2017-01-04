@@ -1,15 +1,15 @@
 import {assertFileSystemContract} from './implementation-suite'
-import {waitFor} from '../test-kit/utils/wait-for'
-import {EventsMatcher} from '../test-kit/utils/events-matcher';
+import {EventsMatcher} from '../test-kit/drivers/events-matcher';
 import {FileSystem} from '../src/api';
 import {LocalFileSystem} from '../src/nodejs';
 import {dir} from 'tmp';
 import {
-    mkdirAsync,
-    writeFileAsync,
-    unlinkAsync,
-    rmdirAsync
-} from 'fs-extra-promise';
+    mkdirSync,
+    rmdirSync,
+    writeFileSync,
+    unlinkSync
+} from 'fs';
+
 import {join} from 'path';
 import {expect} from 'chai';
 import * as Promise from 'bluebird';
@@ -31,7 +31,8 @@ describe(`the local filesystem implementation`, function () {
 
     function getFS() {
         testPath = join(rootPath, 'fs_'+(counter++));
-        return mkdirAsync(testPath).then(() => new LocalFileSystem(testPath).init());
+        mkdirSync(testPath)
+        return new LocalFileSystem(testPath).init();
     }
 
     const eventMatcherOptions: EventsMatcher.Options = {
@@ -43,58 +44,62 @@ describe(`the local filesystem implementation`, function () {
     assertFileSystemContract(getFS, eventMatcherOptions);
 
     describe(`external changes`, () => {
-        const fileName = 'foo.txt';
-        const dirName = 'dir';
-        const content = 'content';
-
         let fs: FileSystem;
         let matcher: EventsMatcher;
+
+        const dirName = 'dir';
+        const fileName = 'foo.txt';
+        const content = 'content';
+
         beforeEach(() => {
             matcher = new EventsMatcher(eventMatcherOptions)
             return getFS().then(newFs => {
                 fs = newFs
                 matcher.track(fs.events as any as EventEmitter,
                     'fileCreated', 'fileChanged', 'fileDeleted', 'directoryCreated', 'directoryDeleted');
-            })
+            });
         });
 
-        it(`handle dir creation and deletion`, () => {
-            const path = join(testPath, dirName)
-            return mkdirAsync(path)
-                .then(() => waitFor(
-                    () => expect(fs.loadDirectoryTree())
-                        .to.eventually.have.property('children').eql([
-                            {children: [], fullPath: dirName, name: dirName, type:'dir'}
-                        ])
-                ))
-                .then(() => matcher.expect([{type: 'directoryCreated', fullPath: dirName}]))
-                .then(() => rmdirAsync(path))
-                .then(() => matcher.expect([{type: 'directoryDeleted', fullPath: dirName}]))
-                .then(() => waitFor(
-                    () => expect(fs.loadDirectoryTree()).to.eventually.have.property('children').eql([])
-                ));
+        it(`handles dir creation`, () => {
+            const path = join(testPath, dirName);
+            mkdirSync(path);
+            return expect(fs.loadDirectoryTree())
+                .to.eventually.have.property('children').eql([
+                    {children: [], fullPath: dirName, name: dirName, type:'dir'}
+                ]);
         });
 
-        it(`handle file creation and deletion`, () => {
+        it(`handles dir deletion`, () => {
+            const path = join(testPath, dirName);
+            mkdirSync(path);
+            rmdirSync(path);
+            return expect(fs.loadDirectoryTree()).to.eventually.have.property('children').eql([]);
+        });
+
+        it(`handles file creation`, () => {
             const path = join(testPath, fileName);
-            return writeFileAsync(path, content)
-                .then(() => matcher.expect([{type: 'fileCreated', fullPath: fileName, newContent: content}]))
-                .then(() => waitFor(() => expect(fs.loadTextFile(fileName)).to.eventually.equals(content)))
-                .then(() => unlinkAsync(path))
-                .then(() => matcher.expect([{type: 'fileDeleted', fullPath: fileName}]))
-                .then(() => waitFor(() => expect(fs.loadTextFile(fileName)).to.eventually.be.rejected))
-                .then(() => matcher.expect([]))
+            writeFileSync(path, content);
+            return expect(fs.loadTextFile(fileName)).to.eventually.equals(content);
         });
 
-        it(`handle file change`, () => {
+        it(`handles file deletion`, () => {
+            const path = join(testPath, fileName);
+            writeFileSync(path, content);
+            unlinkSync(path);
+            return expect(fs.loadTextFile(fileName)).to.eventually.be.rejected;
+        });
+
+        it(`handles file change`, () => {
             const path = join(testPath, fileName);
             const newContent = `_${content}`;
-            return writeFileAsync(path, content)
-                .then(() => matcher.expect([{type: 'fileCreated', fullPath: fileName, newContent: content}]))
-                .then(() => writeFileAsync(path, newContent))
-                .then(() => matcher.expect([{type: 'fileChanged', fullPath: fileName, newContent}]))
-                .then(() => matcher.expect([]))
-        });
 
+            writeFileSync(path, content);
+            return matcher.expect([{type: 'fileCreated', fullPath: fileName, newContent: content}])
+                .then(() => {
+                    writeFileSync(path, newContent);
+                    return Promise.resolve();
+                })
+                .then(() => expect(fs.loadTextFile(fileName)).to.eventually.equals(newContent));
+        });
     })
 });
