@@ -30,7 +30,7 @@ function isBlackListed(file: string) {
 }
 
 // TODO extract chokidar watch mechanism to configuration
-export class LocalFileSystem implements FileSystem{
+export class LocalFileSystem implements FileSystem {
     public readonly events: InternalEventsEmitter = makeEventsEmitter();
     private watcher: FSWatcher;
     constructor(public baseUrl) {
