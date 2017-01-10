@@ -15,7 +15,11 @@ describe('the local filesystem implementation', function () {
         })
     });
     after(()=>{
-        dirCleanup();
+        try {
+            dirCleanup();
+        } catch(e){
+            console.log('cleanup error', e);
+        }
     });
     assertFileSystemContract(
         () => {
