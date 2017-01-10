@@ -5,7 +5,7 @@ import * as Promise from 'bluebird';
 import {EventEmitter} from 'eventemitter3';
 
 export function assertFileSystemContract(fsProvider: () => Promise<FileSystem>, options:EventsMatcher.Options) {
-    describe('filesystem contract', () => {
+    describe(`filesystem contract`, () => {
         let fs: FileSystem;
         let matcher: EventsMatcher;
         beforeEach(() => {

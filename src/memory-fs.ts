@@ -5,7 +5,7 @@ import {last, map} from 'lodash';
 
 type FakeNode = FakeDir|FakeFile;
 
-class FakeDir{
+class FakeDir {
     readonly type = 'dir';
     constructor(public name: string, public fullPath: string, public children: {[name: string]: FakeNode }){}
 }
