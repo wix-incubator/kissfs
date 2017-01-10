@@ -148,9 +148,9 @@ export class LocalFileSystem implements FileSystem{
             const baseUrl = this.baseUrl;
             walk(baseUrl)
                 .on('readable', function () {
-                    var item:WalkEventFile;
+                    let item:WalkEventFile;
                     while ((item = this.read())) {
-                        const itemPath = path.relative(baseUrl, item.path);
+                        const itemPath = path.relative(baseUrl, item.path).split(path.sep).join(pathSeparator);
                         if (item.stats.isDirectory()){
                             promises.push(memFs.ensureDirectory(itemPath));
                         } else if (item.stats.isFile()){
