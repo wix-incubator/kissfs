@@ -26,9 +26,12 @@ describe(`the local filesystem implementation`, () => {
             done();
         })
     });
-
     after(() => {
-        dirCleanup();
+        try {
+            dirCleanup();
+        } catch(e) {
+            console.log('cleanup error', e);
+        }
     });
 
     function getFS() {
