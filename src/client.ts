@@ -1,11 +1,15 @@
-const ws = new WebSocket('ws://localhost:3000')
+import ClientFileSystem from './client-fs'
 
-// ws.onmessage = message => console.log(JSON.stringify(message.data))
-ws.onmessage = message => console.log(JSON.stringify(message.data))
+const ws = new WebSocket('ws://localhost:3000');
+
 ws.onopen = () => {
-    ws.send(JSON.stringify({
-        type: 'FsEvent',
-        name: 'saveFile',
-        args: ['a.txt', 'content']
-    }))
+    const fs = new ClientFileSystem(ws)
+    fs
+        .saveFile('a.txt', 'my content')
+        .then(
+            res => console.log('res: ', res),
+            err => console.log('err: ', err)
+        )
 }
+
+
