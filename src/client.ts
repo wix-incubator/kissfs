@@ -1,15 +1,10 @@
-import ClientFileSystem from './client-fs'
+import {Connection, Session} from 'autobahn';
 
-const ws = new WebSocket('ws://localhost:3000');
-
-ws.onopen = () => {
-    const fs = new ClientFileSystem(ws)
-    fs
-        .saveFile('a.txt', 'my content')
-        .then(
-            res => console.log('res: ', res),
-            err => console.log('err: ', err)
-        )
-}
-
-
+const connection = new Connection({
+    realm: 'com.kissfs.driver',
+    url: 'ws://127.0.0.1:3000/',
+});
+connection.onopen = (session: Session) => {
+    session.call('com.kissfs.test', ['asd']).then(resp => console.log(resp) )
+};
+connection.open()
