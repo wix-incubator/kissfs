@@ -1,6 +1,6 @@
 import * as Promise from 'bluebird';
 import {Connection, Session} from 'autobahn';
-import {FileSystem} from './api';
+import {FileSystem, fileSystemEventNames, fsMethods} from './api';
 import {MemoryFileSystem} from './memory-fs';
 
 const Server = require('wamp-server');
@@ -17,39 +17,16 @@ function wsOverFs(fs: FileSystem, port = 3000) {
     });
 
     connection.onopen = (session: Session) => {
-
-        // console.log(session)
-        session.register('com.kissfs.test', data => {
-            console.log('com.kissfs.test', data);
-            return {test: data}
+        fileSystemEventNames.forEach(fsEvent => {
+            fs.events.on(fsEvent, data => session.publish(`com.kissfs.${fsEvent}`, [data]))
         })
-        // session.subscribe('com.kissfs.test', )
+
+        fsMethods.forEach(ev => {
+            session.register(`com.kissfs.${ev}`, (data: string[]) => fs[ev](...data).then(res => res));
+        })
     };
 
     connection.open();
-
-
-
-
-
-    // ['fileCreated', 'fileChanged', 'fileDeleted', 'directoryCreated', 'directoryDeleted']
-    //     .forEach(ev => fs.events.on(ev as any, data => server.publish(data))
-
-    // wss.on('connection', ws => {
-    //     ws.on('message', message => {
-    //         const {type, id, name, args} = JSON.parse(message);
-    //         if (type !== 'FsEvent') return;
-    //         fs[name](...args)
-    //             .then(fsResponse => {
-    //                 ws.send(JSON.stringify({
-    //                     id,
-    //                     type: 'FsEvent',
-    //                     data: fsResponse
-    //                 }))
-    //             })
-    //             .catch(error => ws.send(JSON.stringify({type: 'error', error})));
-    //     })
-    // })
 }
 
 wsOverFs(new MemoryFileSystem());

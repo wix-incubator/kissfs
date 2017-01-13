@@ -1,10 +1,14 @@
-import {Connection, Session} from 'autobahn';
+import WAMPClientFileSystem from './wamp-client-fs';
 
-const connection = new Connection({
-    realm: 'com.kissfs.driver',
-    url: 'ws://127.0.0.1:3000/',
-});
-connection.onopen = (session: Session) => {
-    session.call('com.kissfs.test', ['asd']).then(resp => console.log(resp) )
-};
-connection.open()
+let fs
+new WAMPClientFileSystem('ws://127.0.0.1:3000/', 'com.kissfs.driver').init()
+    .then(fsR => fs = fsR)
+    .then(() => fs.saveFile('a.txt', 'aaa'))
+    .then(() => fs.saveFile('b.txt', 'bbb'))
+    .then(() => fs.loadTextFile('b.txt'))
+    .then(data => console.log('b.txt: ', data))
+    .then(() => fs.deleteFile('b.txt'))
+    .then(() => fs.loadDirectoryTree())
+    .then(data => console.log('tree: ', data))
+
+
