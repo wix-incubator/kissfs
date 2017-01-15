@@ -1,7 +1,8 @@
-import WAMPClientFileSystem from './wamp-client-fs';
+import WampClientFileSystem from './wamp-client-fs';
+import {wampRealm} from './utils';
 
 let fs
-new WAMPClientFileSystem('ws://127.0.0.1:3000/', 'com.kissfs.driver').init()
+new WampClientFileSystem('ws://127.0.0.1:3000/', wampRealm).init()
     .then(fsR => fs = fsR)
     .then(() => fs.saveFile('a.txt', 'aaa'))
     .then(() => fs.saveFile('b.txt', 'bbb'))

@@ -1,20 +1,54 @@
-import {expect} from "chai";
-import {FileSystem, fileSystemEventNames} from '../src/api';
-import {EventsMatcher} from '../test-kit/drivers/events-matcher';
-import * as Promise from 'bluebird';
 import {EventEmitter} from 'eventemitter3';
+import * as Promise from 'bluebird';
+import {expect} from 'chai';
+import {assertFileSystemContract} from './implementation-suite'
+import {EventsMatcher} from '../test-kit/drivers/events-matcher';
+import {FileSystem, fileSystemEventNames} from '../src/api';
+import {MemoryFileSystem} from '../src/memory-fs';
+import wampServerOverFs from '../src/wamp-server-over-fs';
+import {WampServerAndClient, WampServer} from '../src/wamp-server-over-fs';
+import WampClientFileSystem from '../src/wamp-client-fs';
+import {wampRealm} from '../src/utils';
+import {Connection} from 'autobahn';
 
-export function assertFileSystemContract(fsProvider: () => Promise<FileSystem>, options:EventsMatcher.Options) {
+
+describe(`the wamp client filesystem implementation`, () => {
+
+    let wampServer: WampServer;
+
+    function server(): Promise<WampServerAndClient> {
+        return wampServerOverFs(new MemoryFileSystem());
+    }
+
+    function getFS(): Promise<FileSystem> {
+        return new WampClientFileSystem(`ws://127.0.0.1:3000/`, wampRealm).init();
+    }
+
+    const eventMatcherOptions: EventsMatcher.Options = {
+        interval: 50,
+        noExtraEventsGrace: 150,
+        timeout: 1500
+    };
+
     describe(`filesystem contract`, () => {
         let fs: FileSystem;
         let matcher: EventsMatcher;
         beforeEach(() => {
-            matcher = new EventsMatcher(options);
-            return fsProvider()
+            matcher = new EventsMatcher(eventMatcherOptions);
+            return server().then(serverAndClient => wampServer = serverAndClient.server)
+                .then(() => getFS())
                 .then(newFs => {
                     fs = newFs;
                     matcher.track(fs.events as any as EventEmitter, ...fileSystemEventNames);
-                });
+                })
+                .catch(err => console.log('err:', err));
+        });
+
+        afterEach(() => {
+            return new Promise(resolve => {
+                wampServer.close()
+                resolve()
+            })
         });
 
         it(`initially empty`, function() {
@@ -184,5 +218,5 @@ export function assertFileSystemContract(fsProvider: () => Promise<FileSystem>, 
                 .then(() => matcher.expect([]));
         });
     });
-}
 
+});

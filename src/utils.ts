@@ -11,3 +11,5 @@ export type InternalEventsEmitter = EventEmitter & FSEvents;
 export function makeEventsEmitter(): InternalEventsEmitter{
     return (new EventEmitter()) as any as InternalEventsEmitter;
 }
+
+export const wampRealm = 'com.kissfs.driver';

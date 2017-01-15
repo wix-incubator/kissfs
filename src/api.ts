@@ -56,6 +56,7 @@ export interface EventAspect<S,O>{
     addListener(event: S, fn: ListenerFn<O>, context?: any): this;
     once(event: S, fn: ListenerFn<O>, context?: any): this;
     removeListener(event: S, fn?: ListenerFn<O>, context?: any, once?: boolean): this;
+    removeAllListeners(event: S): this;
     off(event: S, fn?: ListenerFn<O>, context?: any, once?: boolean): this;
 }
 
