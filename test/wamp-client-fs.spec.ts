@@ -22,9 +22,9 @@ describe(`the wamp client filesystem implementation`, () => {
     }
 
     const eventMatcherOptions: EventsMatcher.Options = {
-        interval: 50,
-        noExtraEventsGrace: 150,
-        timeout: 1500
+        interval: 1,
+        noExtraEventsGrace: 10,
+        timeout: 30
     };
 
     beforeEach(() => server().then(serverAndClient => wampRouter = serverAndClient.router));

@@ -18,14 +18,14 @@ export default class WampClientFileSystem implements FileSystem {
 
     init(): Promise<WampClientFileSystem> {
         const {baseUrl, initTimeout, connection} = this
-        return new Promise<WampClientFileSystem>((resolve, reject) => {
+        return new Promise<WampClientFileSystem>(resolve => {
             connection.open();
             connection.onopen = (session: Session) => {
                 this.session = session;
                 this.realmPrefix = this.realm.replace(/(.*\..*)(\..*)$/, '$1.'); // 'xxx.yyy.zzz' => 'xxx.yyy.'
                 fileSystemEventNames.forEach(fsEvent => {
                     this.session.subscribe(
-                        `${this.realmPrefix}${fsEvent}`,
+                        this.realmPrefix + fsEvent,
                         res => this.events.emit(fsEvent, res && res[0])
                     )
                 });
