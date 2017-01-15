@@ -1,5 +1,5 @@
 import {expect} from "chai";
-import {FileSystem} from '../src/api';
+import {FileSystem, fileSystemEventNames} from '../src/api';
 import {EventsMatcher} from '../test-kit/drivers/events-matcher';
 import * as Promise from 'bluebird';
 import {EventEmitter} from 'eventemitter3';
@@ -13,8 +13,7 @@ export function assertFileSystemContract(fsProvider: () => Promise<FileSystem>, 
             return fsProvider()
                 .then(newFs => {
                     fs = newFs;
-                    matcher.track(fs.events as any as EventEmitter,
-                        'fileCreated', 'fileChanged', 'fileDeleted', 'directoryCreated', 'directoryDeleted');
+                    matcher.track(fs.events as any as EventEmitter, ...fileSystemEventNames);
                 });
         });
 

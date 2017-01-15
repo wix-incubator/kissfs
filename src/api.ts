@@ -56,8 +56,13 @@ export interface EventAspect<S,O>{
     addListener(event: S, fn: ListenerFn<O>, context?: any): this;
     once(event: S, fn: ListenerFn<O>, context?: any): this;
     removeListener(event: S, fn?: ListenerFn<O>, context?: any, once?: boolean): this;
+    removeAllListeners(event: S): this;
     off(event: S, fn?: ListenerFn<O>, context?: any, once?: boolean): this;
 }
+
+export type FileSystemEventName = 'fileCreated' | 'fileChanged' | 'fileDeleted' | 'directoryCreated' | 'directoryDeleted';
+export type FileSystemEventHandler = FileCreatedEvent | FileChangedEvent | FileDeletedEvent | DirectoryCreatedEvent | DirectoryDeletedEvent;
+export const fileSystemEventNames: FileSystemEventName[] = ['fileCreated', 'fileChanged', 'fileDeleted', 'directoryCreated', 'directoryDeleted'];
 
 export type EventEmitter =
     EventAspect<'fileCreated', FileCreatedEvent> &
@@ -65,9 +70,10 @@ export type EventEmitter =
         EventAspect<'fileDeleted', FileDeletedEvent> &
         EventAspect<'directoryCreated', DirectoryCreatedEvent> &
         EventAspect<'directoryDeleted', DirectoryDeletedEvent> &
-        {eventNames(): Array<'fileCreated'|'fileChanged'|'fileDeleted'|'directoryCreated'|'directoryDeleted'>};
+        EventAspect<FileSystemEventName, FileSystemEventHandler> &
+        {eventNames(): Array<FileSystemEventName>};
 
-
+export const fsMethods = ['saveFile', 'deleteFile', 'deleteDirectory', 'loadTextFile', 'loadDirectoryTree', 'ensureDirectory'];
 export interface FileSystem {
     saveFile(fullPath:string, newContent:string): Promise<void>;
     deleteFile(fullPath:string):Promise<void>;

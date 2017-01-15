@@ -1,14 +1,16 @@
 import {FileSystem, Directory, pathSeparator, FileSystemNode} from "./api";
 import {InternalEventsEmitter, getPathNodes, makeEventsEmitter} from "./utils";
 import {MemoryFileSystem} from './memory-fs';
-import {walk, WalkEventFile,
+import {
+    walk, WalkEventFile,
     ensureDir as ensureDir_,
     readFile as readFile_,
     writeFile as writeFile_,
     remove as remove_,
     rmdir as rmdir_,
     access as access_,
-    stat as stat_} from 'fs-extra';
+    stat as stat_
+} from 'fs-extra';
 import * as Promise from 'bluebird';
 import { watch } from 'chokidar';
 import * as path from 'path';
@@ -30,7 +32,7 @@ function isBlackListed(file: string) {
 }
 
 // TODO extract chokidar watch mechanism to configuration
-export class LocalFileSystem implements FileSystem{
+export class LocalFileSystem implements FileSystem {
     public readonly events: InternalEventsEmitter = makeEventsEmitter();
     private watcher: FSWatcher;
     constructor(public baseUrl) {
