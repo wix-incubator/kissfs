@@ -1,21 +1,24 @@
 import * as Promise from 'bluebird';
 import {Connection, Session} from 'autobahn';
 import {FileSystem, fileSystemEventNames, fsMethods} from './api';
-import {wampRealm} from './utils';
 
-const Server = require('wamp-server');
-export type WampServerAndClient = {
-    server: WampServer,
-    client: Connection
-}
+const Router = require('wamp-server');
 
 export type WampServer = {
-    close: void
-}
+    router: WampRouter,
+    connection: Connection
+};
 
-export default function wampServerOverFs(fs: FileSystem, port = 3000): Promise<WampServerAndClient> {
-    return new Promise<WampServerAndClient>(resolve => {
-        const server: WampServer = new Server({
+export type WampRouter = {
+    close: void
+};
+
+export const wampRealmPrefix = 'com.kissfs.';
+export const wampRealm = `${wampRealmPrefix}driver`;
+
+export default function wampServerOverFs(fs: FileSystem, port = 3000): Promise<WampServer> {
+    return new Promise<WampServer>(resolve => {
+        const router: WampRouter = new Router({
             port,
             realms: [wampRealm]
         });
@@ -27,19 +30,16 @@ export default function wampServerOverFs(fs: FileSystem, port = 3000): Promise<W
 
         connection.onopen = (session: Session) => {
             fileSystemEventNames.forEach(fsEvent => {
-                fs.events.on(fsEvent, data => session.publish(`com.kissfs.${fsEvent}`, [data]))
-            })
-
-            fsMethods.forEach(ev => {
-                session.register(`com.kissfs.${ev}`, (data: string[]) => fs[ev](...data).then(res => res));
+                fs.events.on(fsEvent, data => session.publish(`${wampRealmPrefix}${fsEvent}`, [data]));
             });
 
-            resolve({
-                server: server,
-                client: connection
-            })
+            fsMethods.forEach(ev => {
+                session.register(`${wampRealmPrefix}${ev}`, (data: string[]) => fs[ev](...data).then(res => res));
+            });
+
+            resolve({router, connection});
         };
 
         connection.open();
-    })
+    });
 }

@@ -22,10 +22,10 @@ export default class WampClientFileSystem implements FileSystem {
             connection.open();
             connection.onopen = (session: Session) => {
                 this.session = session;
-                this.realmPrefix = this.getRealmPrefix();
+                this.realmPrefix = this.realm.replace(/(.*\..*)(\..*)$/, '$1.'); // 'xxx.yyy.zzz' => 'xxx.yyy.'
                 fileSystemEventNames.forEach(fsEvent => {
                     this.session.subscribe(
-                        `${this.realmPrefix}.${fsEvent}`,
+                        `${this.realmPrefix}${fsEvent}`,
                         res => this.events.emit(fsEvent, res && res[0])
                     )
                 });
@@ -37,15 +37,9 @@ export default class WampClientFileSystem implements FileSystem {
         );
     }
 
-    private getRealmPrefix() { // TODO: refactor this to simple regexp
-        let realmPrefix = this.realm.split('.');
-        realmPrefix.pop();
-        return realmPrefix.join('.');
-    }
-
     saveFile(fullPath:string, newContent:string): Promise<void> {
         return new Promise<void>((resolve, reject) => {
-            this.session.call(`${this.realmPrefix}.saveFile`, [fullPath, newContent])
+            this.session.call(`${this.realmPrefix}saveFile`, [fullPath, newContent])
                 .then(() => resolve())
                 .catch(error => reject(new Error(error)))
         });
@@ -53,7 +47,7 @@ export default class WampClientFileSystem implements FileSystem {
 
     deleteFile(fullPath:string): Promise<void> {
         return new Promise<void>((resolve, reject) => {
-            this.session.call(`${this.realmPrefix}.deleteFile`, [fullPath])
+            this.session.call(`${this.realmPrefix}deleteFile`, [fullPath])
                 .then(() => resolve())
                 .catch(error => reject(new Error(error)))
         });
@@ -61,7 +55,7 @@ export default class WampClientFileSystem implements FileSystem {
 
     deleteDirectory(fullPath: string, recursive?: boolean): Promise<void> {
         return new Promise<void>((resolve, reject) => {
-            this.session.call(`${this.realmPrefix}.deleteDirectory`, [fullPath, recursive])
+            this.session.call(`${this.realmPrefix}deleteDirectory`, [fullPath, recursive])
                 .then(() => resolve())
                 .catch(error => reject(new Error(error)))
         });
@@ -69,7 +63,7 @@ export default class WampClientFileSystem implements FileSystem {
 
     ensureDirectory(fullPath:string): Promise<void> {
         return new Promise<void>((resolve, reject) => {
-            this.session.call(`${this.realmPrefix}.ensureDirectory`, [fullPath])
+            this.session.call(`${this.realmPrefix}ensureDirectory`, [fullPath])
                 .then(() => resolve())
                 .catch(error => reject(new Error(error)))
         });
@@ -77,7 +71,7 @@ export default class WampClientFileSystem implements FileSystem {
 
     loadTextFile(fullPath): Promise<string> {
         return new Promise<string>((resolve, reject) => {
-            return this.session.call(`${this.realmPrefix}.loadTextFile`, [fullPath])
+            return this.session.call(`${this.realmPrefix}loadTextFile`, [fullPath])
                 .then((content: string) => resolve(content))
                 .catch(error => reject(new Error(error)))
         });
@@ -85,7 +79,7 @@ export default class WampClientFileSystem implements FileSystem {
 
     loadDirectoryTree(): Promise<Directory> {
         return new Promise<Directory>((resolve, reject) => {
-            return this.session.call(`${this.realmPrefix}.loadDirectoryTree`)
+            return this.session.call(`${this.realmPrefix}loadDirectoryTree`)
                 .then((tree: Directory) => resolve(tree))
                 .catch(error => reject(new Error(error)))
         });
