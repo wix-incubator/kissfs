@@ -13,8 +13,7 @@
     "test": "npm run test:node && npm run test:browser",
     "test:node": "mocha --reporter mocha-env-reporter dist/test/nodejs",
     "test:browser": "karma start --single-run",
-    "start": "webpack-dev-server --progress",
-    "server": "npm run build && node dist/src/server & npm start"
+    "start": "webpack-dev-server --progress"
   },
   "repository": {
     "type": "git",
