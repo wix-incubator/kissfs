@@ -1,6 +1,6 @@
 import * as Promise from 'bluebird';
 import {Connection, Session} from 'autobahn';
-import {FileSystem, fileSystemEventNames, fsMethods} from './api';
+import {FileSystem, fileSystemEventNames, fileSystemMethods} from './api';
 
 const Router = require('wamp-server');
 
@@ -33,7 +33,7 @@ export default function wampServerOverFs(fs: FileSystem, port = 3000): Promise<W
                 fs.events.on(fsEvent, data => session.publish(`${wampRealmPrefix}${fsEvent}`, [data]));
             });
 
-            fsMethods.forEach(ev => {
+            fileSystemMethods.forEach(ev => {
                 session.register(`${wampRealmPrefix}${ev}`, (data: string[]) => fs[ev](...data).then(res => res));
             });
 
