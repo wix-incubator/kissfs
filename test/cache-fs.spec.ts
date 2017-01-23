@@ -3,14 +3,14 @@ import * as Promise from 'bluebird';
 import {expect} from 'chai';
 import {EventsMatcher} from '../test-kit/drivers/events-matcher';
 import {FileSystem} from '../src/api';
-import {CacheOverFs} from '../src/cache-over-fs';
+import {CacheFs} from '../src/cache-fs';
 import {MemoryFileSystem} from '../src/memory-fs';
 import {assertFileSystemContract} from './implementation-suite'
 
 describe(`the cache over MemoryFileSystem`, () => {
 
     function getFS(): Promise<FileSystem> {
-        return Promise.resolve(new CacheOverFs(new MemoryFileSystem()));
+        return Promise.resolve(new CacheFs(new MemoryFileSystem()));
     }
 
     const eventMatcherOptions: EventsMatcher.Options = {
