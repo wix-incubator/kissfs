@@ -17,7 +17,8 @@ type PathInCache = {
 type Node = Directory | File;
 
 export class CacheFs implements FileSystem {
-    public readonly events: InternalEventsEmitter;
+    public readonly events: InternalEventsEmitter = makeEventsEmitter();
+
     public baseUrl: string;
     private cache: FileSystem;
     private isTreeCached: boolean = false;
@@ -26,25 +27,36 @@ export class CacheFs implements FileSystem {
     constructor(public readonly fs: FileSystem) {
         this.baseUrl = fs.baseUrl;
         this.cache = new MemoryFileSystem();
-        this.events = this.fs.events as InternalEventsEmitter;
 
-        this.events.on('fileCreated', ({fullPath, newContent}) => {
+        this.fs.events.on('fileCreated', event => {
+            const {fullPath, newContent} = event;
             this.cache.saveFile(fullPath, newContent)
-                .then(() => this.pathsInCache[fullPath] = true);
+                .then(() => this.pathsInCache[fullPath] = true)
+                .then(() => this.events.emit('fileCreated', event));
         });
 
-        this.events.on('fileChanged', ({fullPath, newContent}) => {
+        this.fs.events.on('fileChanged', event => {
+            const {fullPath, newContent} = event;
             this.cache.saveFile(fullPath, newContent)
-                .then(() => this.pathsInCache[fullPath] = true);
+                .then(() => this.pathsInCache[fullPath] = true)
+                .then(() => this.events.emit('fileChanged', event));
         });
 
-        this.events.on('fileDeleted', ({fullPath}) => {
-            this.cache.deleteFile(fullPath)
-                .then(() => this.pathsInCache[fullPath] = true);
+        this.fs.events.on('fileDeleted', event => {
+            this.cache.deleteFile(event.fullPath)
+                .then(() => this.pathsInCache[event.fullPath] = true)
+                .then(() => this.events.emit('fileDeleted', event));
         });
 
-        this.events.on('directoryCreated', ({fullPath}) => this.cache.ensureDirectory(fullPath));
-        this.events.on('directoryDeleted', ({fullPath}) => this.cache.deleteDirectory(fullPath, true));
+        this.fs.events.on('directoryCreated', event => {
+            this.cache.ensureDirectory(event.fullPath)
+                .then(() => this.events.emit('directoryCreated', event))
+        });
+
+        this.fs.events.on('directoryDeleted', event => {
+            this.cache.deleteDirectory(event.fullPath, true)
+                .then(() => this.events.emit('directoryDeleted', event))
+        });
     }
 
     saveFile(fullPath:string, newContent:string):Promise<void> {
@@ -79,7 +91,10 @@ export class CacheFs implements FileSystem {
 
     loadDirectoryTree(): Promise<Directory> {
         if (this.isTreeCached) return this.cache.loadDirectoryTree();
-        return this.cacheTree().then(() => this.cache.loadDirectoryTree());
+        return this.cacheTree().then(() => {
+            this.isTreeCached = true;
+            return this.loadDirectoryTree();
+        });
     }
 
     private cacheTree(): Promise<FileSystem> {
