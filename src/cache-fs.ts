@@ -24,7 +24,7 @@ export class CacheFs implements FileSystem {
     private isTreeCached: boolean = false;
     private pathsInCache: PathInCache = {};
 
-    constructor(public readonly fs: FileSystem) {
+    constructor(private fs: FileSystem) {
         this.baseUrl = fs.baseUrl;
         this.cache = new MemoryFileSystem();
 

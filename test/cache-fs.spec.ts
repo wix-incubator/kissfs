@@ -1,7 +1,6 @@
 import {EventEmitter} from 'eventemitter3';
 import * as Promise from 'bluebird';
 import {expect} from 'chai';
-import * as sinon from 'sinon';
 import {EventsMatcher} from '../test-kit/drivers/events-matcher';
 import {SlowFs} from '../test-kit/drivers/slow-fs';
 import {FileSystem} from '../src/api';
@@ -23,7 +22,7 @@ describe(`the cache file system implementation`, () => {
     describe(`using slow FileSystem`, () => {
         const fileName = 'foo.txt';
         const content = 'content';
-        const timeout = 500;
+        const timeout = 200;
 
         let timer;
         let fs: FileSystem;
@@ -31,34 +30,35 @@ describe(`the cache file system implementation`, () => {
         let startTimestamp: number;
 
         beforeEach(() => {
-            timer = sinon.useFakeTimers();
             startTimestamp = Date.now();
-            slow = new SlowFs(timer, timeout)
+            slow = new SlowFs(timeout)
             fs = new CacheFs(slow)
         });
 
-        afterEach(() => timer.restore());
 
         it('loads file faster after it has been saved', () => {
-            fs.saveFile(fileName, content)
+            return fs.saveFile(fileName, content)
                 .then(() => fs.loadTextFile(fileName))
-                .then(() => expect(Date.now() - startTimestamp).to.be.equal(timeout))
+                .then(() => expect(Date.now() - startTimestamp).to.be.lessThan(timeout * 2));
         })
 
         it('loads file faster after it has been saved from outside', () => {
-            fs.events.on('fileCreated', () => {
-                fs.loadTextFile(fileName).then(
-                    () => expect(Date.now() - startTimestamp).to.be.equal(timeout)
-                )
-            })
-            slow.saveFile(fileName, content);
+            const onFileCreated = new Promise((resolve, reject) => {
+                    fs.events.once('fileCreated', () => {
+                        fs.loadTextFile(fileName)
+                            .then(() => resolve(Date.now() - startTimestamp))
+                    })
+                })
+
+            slow.saveFile(fileName, content)
+            return expect(onFileCreated).to.be.eventually.lessThan(timeout * 2)
+
         })
 
         it('loads tree faster after it has been loaded before', () => {
-            fs.loadDirectoryTree()
-                .then(data => fs.loadDirectoryTree())
-                .then(() => expect(Date.now() - startTimestamp).to.be.equal(timeout))
+            return fs.loadDirectoryTree()
+                .then(() => fs.loadDirectoryTree())
+                .then(() => expect(Date.now() - startTimestamp).to.be.lessThan(timeout * 2))
         })
-
     });
 });
