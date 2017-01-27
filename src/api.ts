@@ -61,8 +61,10 @@ export interface EventAspect<S,O>{
 }
 
 export type FileSystemEventName = 'fileCreated' | 'fileChanged' | 'fileDeleted' | 'directoryCreated' | 'directoryDeleted';
-export type FileSystemEventHandler = FileCreatedEvent | FileChangedEvent | FileDeletedEvent | DirectoryCreatedEvent | DirectoryDeletedEvent;
 export const fileSystemEventNames: FileSystemEventName[] = ['fileCreated', 'fileChanged', 'fileDeleted', 'directoryCreated', 'directoryDeleted'];
+export type FileSystemEventHandler = FileCreatedEvent | FileChangedEvent | FileDeletedEvent | DirectoryCreatedEvent | DirectoryDeletedEvent;
+
+export const fileSystemMethods = ['saveFile', 'deleteFile', 'deleteDirectory', 'loadTextFile', 'loadDirectoryTree', 'ensureDirectory'];
 
 export type EventEmitter =
     EventAspect<'fileCreated', FileCreatedEvent> &
@@ -73,7 +75,6 @@ export type EventEmitter =
         EventAspect<FileSystemEventName, FileSystemEventHandler> &
         {eventNames(): Array<FileSystemEventName>};
 
-export const fsMethods = ['saveFile', 'deleteFile', 'deleteDirectory', 'loadTextFile', 'loadDirectoryTree', 'ensureDirectory'];
 export interface FileSystem {
     saveFile(fullPath:string, newContent:string): Promise<void>;
     deleteFile(fullPath:string):Promise<void>;
