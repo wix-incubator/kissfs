@@ -28,15 +28,16 @@ describe(`the wamp client filesystem implementation`, () => {
     };
 
     beforeEach(() => server().then(serverAndClient => {
-        console.log('AFTER SERVER');
         return wampRouter = serverAndClient.router
     }));
 
-    afterEach(() => {
-        return new Promise(resolve => {
-            wampRouter.close();
-            setTimeout(() => resolve(), 100);
-        });
+    afterEach(done => {
+        console.log('SERVER CLOSE');
+        wampRouter.close();
+        setTimeout(() => {
+            console.log('AFTER CLOSE');
+            done()
+        }, 500);
     });
 
     assertFileSystemContract(getFS, eventMatcherOptions);
