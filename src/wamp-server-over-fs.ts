@@ -37,9 +37,9 @@ export default function wampServerOverFs(fs: FileSystem, port = 3000): Promise<W
                 session.register(`${wampRealmPrefix}${ev}`, (data: string[]) => fs[ev](...data).then(res => res));
             });
 
-            resolve({router, connection});
         };
 
         connection.open();
+        resolve({router, connection});
     });
 }
