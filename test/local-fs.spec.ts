@@ -37,7 +37,15 @@ describe(`the local filesystem implementation`, () => {
     function getFS() {
         testPath = join(rootPath, 'fs_'+(counter++));
         mkdirSync(testPath);
-        return new LocalFileSystem(testPath).init();
+        return new LocalFileSystem(
+            testPath,
+            [
+                'node_modules',
+                '.git',
+                '.idea',
+                'dist'
+            ]
+        ).init();
     }
 
     const eventMatcherOptions: EventsMatcher.Options = {
@@ -105,6 +113,15 @@ describe(`the local filesystem implementation`, () => {
                     return Promise.resolve();
                 })
                 .then(() => expect(fs.loadTextFile(fileName)).to.eventually.equals(newContent));
+        });
+
+        it(`ignores 'node_modules' in path`, () => {
+            const path = join(testPath, 'node_modules');
+            mkdirSync(path);
+            writeFileSync(join(path, fileName), content);
+            return expect(fs.loadDirectoryTree()).to.eventually.eql(
+                { name: '', type: 'dir', fullPath: '', children: [] }
+            )
         });
     });
 });

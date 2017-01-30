@@ -1,6 +1,4 @@
-import {FileSystem, Directory, pathSeparator, FileSystemNode} from "./api";
-import {InternalEventsEmitter, getPathNodes, makeEventsEmitter} from "./utils";
-import {MemoryFileSystem} from './memory-fs';
+import * as anymatch from 'anymatch';
 import {
     walk, WalkEventFile,
     ensureDir as ensureDir_,
@@ -15,6 +13,15 @@ import * as Promise from 'bluebird';
 import { watch } from 'chokidar';
 import * as path from 'path';
 import { FSWatcher, Stats } from 'fs';
+import {FileSystem, Directory, pathSeparator, FileSystemNode} from "./api";
+import {
+    InternalEventsEmitter,
+    getPathNodes,
+    makeEventsEmitter,
+    foldersListToAnymatchRules
+} from "./utils";
+import {MemoryFileSystem} from './memory-fs';
+
 
 const ensureDir = Promise.promisify<void, string>(ensureDir_);
 const readFile = Promise.promisify<string, string, string>(readFile_);
@@ -24,25 +31,21 @@ const rmdir = Promise.promisify<void, string>(rmdir_ as (dir: string, callback: 
 const stat = Promise.promisify<Stats, string>(stat_);
 const access = Promise.promisify<void, string>(access_);
 
-// TODO test, move to constructor argument and use in all methods
-const blacklist = ['node_modules', '.git', '.idea', 'dist'];
-function isBlackListed(file: string) {
-    file = file.split(path.sep).pop() || '';
-    return blacklist.some((listItem) => listItem === file);
-}
-
 // TODO extract chokidar watch mechanism to configuration
 export class LocalFileSystem implements FileSystem {
     public readonly events: InternalEventsEmitter = makeEventsEmitter();
     private watcher: FSWatcher;
-    constructor(public baseUrl) {
+    private ignore?: Array<string>
 
+    constructor(public baseUrl, ignore) {
+        if (ignore) this.ignore = foldersListToAnymatchRules(ignore);
     }
+
     init(): Promise<LocalFileSystem>{
         this.watcher = watch([this.baseUrl], {
             //  usePolling:true,
             //  interval:100,
-            ignored: isBlackListed,
+            ignored: this.ignore,
             //    atomic: false, //todo 50?
             cwd: this.baseUrl
         });
@@ -142,27 +145,30 @@ export class LocalFileSystem implements FileSystem {
         return readFile(path.join(this.baseUrl, relPath), 'utf8');
     }
 
-    loadDirectoryTree (): Promise<Directory> {
+    loadDirectoryTree(): Promise<Directory> {
+
         // using an in-memory instance to build the result
         const promises:Array<Promise<void>> = [];
         const memFs = new MemoryFileSystem();
         return Promise.fromCallback<Directory>((callback) => {
-            const baseUrl = this.baseUrl;
+            const {baseUrl, ignore} = this;
             walk(baseUrl)
-                .on('readable', function () {
+                .on('readable', function() {
                     let item:WalkEventFile;
                     while ((item = this.read())) {
                         const itemPath = path.relative(baseUrl, item.path).split(path.sep).join(pathSeparator);
-                        if (item.stats.isDirectory()){
+                        if (anymatch(ignore, itemPath)) {
+                            return;
+                        } else if (item.stats.isDirectory()) {
                             promises.push(memFs.ensureDirectory(itemPath));
-                        } else if (item.stats.isFile()){
+                        } else if (item.stats.isFile()) {
                             promises.push(memFs.saveFile(itemPath, ''));
                         } else {
                             console.warn(`unknown node type at ${itemPath}`, item);
                         }
                     }
                 })
-                .on('end', function () {
+                .on('end', function() {
                     Promise.all(promises)
                         .then(() => memFs.loadDirectoryTree())
                         .then(callback.bind(null, null));
