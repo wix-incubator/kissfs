@@ -27,7 +27,10 @@ describe(`the wamp client filesystem implementation`, () => {
         timeout: 30
     };
 
-    beforeEach(() => server().then(serverAndClient => wampRouter = serverAndClient.router));
+    beforeEach(() => server().then(serverAndClient => {
+        console.log('AFTER SERVER');
+        return wampRouter = serverAndClient.router
+    }));
 
     afterEach(() => {
         return new Promise(resolve => {

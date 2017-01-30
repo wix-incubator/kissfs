@@ -28,18 +28,22 @@ export default function wampServerOverFs(fs: FileSystem, port = 3000): Promise<W
             url: `ws://127.0.0.1:${port}/`,
         });
 
+        console.log('AFTER CONNECTION');
+
         connection.onopen = (session: Session) => {
+            console.log('ON OPEN');
             fileSystemEventNames.forEach(fsEvent => {
                 fs.events.on(fsEvent, data => session.publish(`${wampRealmPrefix}${fsEvent}`, [data]));
             });
-
+            console.log('BOUND fileSystemEventNames');
             fileSystemMethods.forEach(ev => {
                 session.register(`${wampRealmPrefix}${ev}`, (data: string[]) => fs[ev](...data).then(res => res));
             });
+            console.log('REGISTERED fileSystemMethods');
 
+            resolve({router, connection});
         };
 
         connection.open();
-        resolve({router, connection});
     });
 }
