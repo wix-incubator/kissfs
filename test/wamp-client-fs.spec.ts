@@ -35,7 +35,7 @@ describe(`the wamp client filesystem implementation`, () => {
     afterEach(() => {
         return new Promise(resolve => {
             wampRouter.close();
-            resolve();
+            setTimeout(() => resolve(), 100);
         });
     });
 
