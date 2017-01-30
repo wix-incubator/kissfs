@@ -26,18 +26,21 @@ describe(`the wamp client filesystem implementation`, () => {
         noExtraEventsGrace: 10,
         timeout: 30
     };
-
+    let testLen: number;
     beforeEach(() => server().then(serverAndClient => {
+        console.log('BEFORE EACH');
+        testLen = Date.now()
         return wampRouter = serverAndClient.router
-    }));
+    }).catch(e => console.log('EEE:', e)));
 
     afterEach(done => {
         console.log('SERVER CLOSE');
         wampRouter.close();
         setTimeout(() => {
             console.log('AFTER CLOSE');
+            console.log(Date.now() - testLen);
             done()
-        }, 500);
+        }, 1000);
     });
 
     assertFileSystemContract(getFS, eventMatcherOptions);
