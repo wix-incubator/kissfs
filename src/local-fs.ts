@@ -18,7 +18,7 @@ import {
     InternalEventsEmitter,
     getPathNodes,
     makeEventsEmitter,
-    foldersListToAnymatchRules
+    pathsToAnymatchRules
 } from "./utils";
 import {MemoryFileSystem} from './memory-fs';
 
@@ -38,7 +38,7 @@ export class LocalFileSystem implements FileSystem {
     private ignore?: Array<string>
 
     constructor(public baseUrl, ignore) {
-        if (ignore) this.ignore = foldersListToAnymatchRules(ignore);
+        if (ignore) this.ignore = pathsToAnymatchRules(ignore);
     }
 
     init(): Promise<LocalFileSystem>{
@@ -66,9 +66,9 @@ export class LocalFileSystem implements FileSystem {
                     }
                 });
 
-                this.watcher.on('add', (relPath:string)=>
+                this.watcher.on('add', (relPath:string) =>
                     this.loadTextFile(relPath)
-                        .then((content)=>this.events.emit('fileCreated', {
+                        .then(content => this.events.emit('fileCreated', {
                             type: 'fileCreated',
                             fullPath: relPath.split(path.sep).join(pathSeparator),
                             newContent: content

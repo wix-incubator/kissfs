@@ -19,6 +19,12 @@ describe(`the local filesystem implementation`, () => {
     let dirCleanup, rootPath, testPath;
     let counter = 0;
 
+    const dirName = 'dir';
+    const fileName = 'foo.txt';
+    const content = 'content';
+    const ignoredDir = 'ignored';
+    const ignoredFile = join(dirName, 'ignored.txt');
+
     before(done => {
         dir({unsafeCleanup:true}, (err, path, cleanupCallback) => {
             dirCleanup = cleanupCallback;
@@ -39,12 +45,7 @@ describe(`the local filesystem implementation`, () => {
         mkdirSync(testPath);
         return new LocalFileSystem(
             testPath,
-            [
-                'node_modules',
-                '.git',
-                '.idea',
-                'dist'
-            ]
+            [ignoredDir, ignoredFile]
         ).init();
     }
 
@@ -59,10 +60,6 @@ describe(`the local filesystem implementation`, () => {
     describe(`external changes`, () => {
         let fs: FileSystem;
         let matcher: EventsMatcher;
-
-        const dirName = 'dir';
-        const fileName = 'foo.txt';
-        const content = 'content';
 
         beforeEach(() => {
             matcher = new EventsMatcher(eventMatcherOptions);
@@ -115,13 +112,16 @@ describe(`the local filesystem implementation`, () => {
                 .then(() => expect(fs.loadTextFile(fileName)).to.eventually.equals(newContent));
         });
 
-        it(`ignores 'node_modules' in path`, () => {
-            const path = join(testPath, 'node_modules');
-            mkdirSync(path);
-            writeFileSync(join(path, fileName), content);
-            return expect(fs.loadDirectoryTree()).to.eventually.eql(
-                { name: '', type: 'dir', fullPath: '', children: [] }
-            )
+        it(`ignores events from ignored dir`, () => {
+            mkdirSync(join(testPath, ignoredDir))
+            return matcher.expect([])
+        });
+
+        it(`ignores events from ignored file`, () => {
+            mkdirSync(join(testPath, dirName))
+            return matcher.expect([{type: 'directoryCreated', fullPath: dirName}])
+                .then(() => writeFileSync(join(testPath, ignoredFile), content))
+                .then(() => matcher.expect([]))
         });
     });
 });

@@ -32,6 +32,7 @@
   },
   "homepage": "https://github.com/wix/kissfs#readme",
   "devDependencies": {
+    "@types/autobahn": "^0.9.33",
     "@types/bluebird": "3.0.35",
     "@types/bluebird-retry": "0.0.30",
     "@types/chai": "3.4.34",
@@ -43,7 +44,6 @@
     "@types/node": "6.0.48",
     "@types/sinon": "1.16.34",
     "@types/tmp": "0.0.31",
-    "@types/autobahn": "^0.9.33",
     "bluebird-retry": "^0.8.0",
     "chai": "3.5.0",
     "chai-as-promised": "6.0.0",
@@ -77,6 +77,7 @@
     "chokidar": "1.6.1",
     "eventemitter3": "2.0.2",
     "fs-extra": "1.0.0",
+    "is-glob": "3.1.0",
     "lodash": "4.17.2",
     "wamp-server": "^0.0.5"
   }
