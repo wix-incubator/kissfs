@@ -35,10 +35,14 @@ const access = Promise.promisify<void, string>(access_);
 export class LocalFileSystem implements FileSystem {
     public readonly events: InternalEventsEmitter = makeEventsEmitter();
     private watcher: FSWatcher;
-    private ignore?: Array<string>
+    private ignore: Array<string> = [];
+    private isIgnored: (path: string) => boolean = (path: string) => false;
 
     constructor(public baseUrl, ignore) {
-        if (ignore) this.ignore = pathsToAnymatchRules(ignore);
+        if (ignore) {
+            this.ignore = pathsToAnymatchRules(ignore);
+            this.isIgnored = anymatch(this.ignore)
+        };
     }
 
     init(): Promise<LocalFileSystem>{
@@ -97,6 +101,10 @@ export class LocalFileSystem implements FileSystem {
     }
 
     saveFile(relPath: string, newContent: string): Promise<void> {
+        if (this.isIgnored(relPath)) {
+            return Promise.reject(new Error(`Unable to save ignored path: '${relPath}'`));
+        }
+
         const pathArr = getPathNodes(relPath);
         const name = pathArr.pop();
         const fullPath = path.join(this.baseUrl, ...pathArr);
@@ -107,6 +115,9 @@ export class LocalFileSystem implements FileSystem {
     deleteFile(relPath: string): Promise<void> {
         if (!relPath){
             return Promise.reject(new Error(`Can't delete root directory`));
+        }
+        if (this.isIgnored(relPath)) {
+            return Promise.reject(new Error(`Unable to delete ignored path: '${relPath}'`));
         }
         const fullPath = path.join(this.baseUrl, ...getPathNodes(relPath));
         return access(fullPath)
@@ -127,6 +138,9 @@ export class LocalFileSystem implements FileSystem {
         if (pathArr.length === 0){
             return Promise.reject(new Error(`Can't delete root directory`));
         }
+        if (this.isIgnored(relPath)) {
+            return Promise.reject(new Error(`Unable to delete ignored path: '${relPath}'`));
+        }
         const fullPath = path.join(this.baseUrl, ...pathArr);
         return access(fullPath)
             .then(() => stat(fullPath), err => null)
@@ -142,22 +156,24 @@ export class LocalFileSystem implements FileSystem {
     }
 
     loadTextFile(relPath: string): Promise<string> {
+        if (this.isIgnored(relPath)) {
+            return Promise.reject(new Error(`Unable to read ignored path: '${relPath}'`));
+        }
         return readFile(path.join(this.baseUrl, relPath), 'utf8');
     }
 
     loadDirectoryTree(): Promise<Directory> {
-
         // using an in-memory instance to build the result
         const promises:Array<Promise<void>> = [];
         const memFs = new MemoryFileSystem();
         return Promise.fromCallback<Directory>((callback) => {
-            const {baseUrl, ignore} = this;
+            const {baseUrl, isIgnored} = this;
             walk(baseUrl)
                 .on('readable', function() {
                     let item:WalkEventFile;
                     while ((item = this.read())) {
                         const itemPath = path.relative(baseUrl, item.path).split(path.sep).join(pathSeparator);
-                        if (anymatch(ignore, itemPath)) {
+                        if (isIgnored(itemPath)) {
                             return;
                         } else if (item.stats.isDirectory()) {
                             promises.push(memFs.ensureDirectory(itemPath));
@@ -177,6 +193,9 @@ export class LocalFileSystem implements FileSystem {
     }
 
     ensureDirectory(relPath: string): Promise<void> {
+        if (this.isIgnored(relPath)) {
+            return Promise.reject(new Error(`Unable to read ignored path: '${relPath}'`));
+        }
         const pathArr = getPathNodes(relPath);
         const fullPath = path.join(this.baseUrl, ...pathArr);
         return ensureDir(fullPath);

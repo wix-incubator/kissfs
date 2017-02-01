@@ -77,6 +77,26 @@ export function assertFileSystemContract(fsProvider: () => Promise<FileSystem>, 
                 .then(() => matcher.expect([]));
         });
 
+        it(`saving ignored file - fails`, function() {
+            return expect(fs.saveFile(ignoredFile, 'foo')).to.be.rejectedWith(Error)
+        });
+
+        it(`deleting ignored file - fails`, function() {
+            return expect(fs.deleteFile(ignoredFile)).to.be.rejectedWith(Error)
+        });
+
+        it(`deleting ignored directory - fails`, function() {
+            return expect(fs.deleteDirectory(ignoredDir)).to.be.rejectedWith(Error)
+        });
+
+        it(`loading ignored file - fails`, function() {
+            return expect(fs.loadTextFile(ignoredFile)).to.be.rejectedWith(Error)
+        });
+
+        it(`ensuring existence ignored directory - fails`, function() {
+            return expect(fs.ensureDirectory(ignoredDir)).to.be.rejectedWith(Error)
+        });
+
         it(`saving a new file (and a new directory to hold it)`, function() {
             return fs.saveFile('foo/bar.txt', 'baz')
                 .then(() => matcher.expect([{type: 'directoryCreated', fullPath:'foo'}, {type: 'fileCreated', fullPath:'foo/bar.txt', newContent:'baz'}]))
