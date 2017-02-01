@@ -1,6 +1,6 @@
-import {assertFileSystemContract} from './implementation-suite'
+import {assertFileSystemContract, ignoredDir, ignoredFile} from './implementation-suite'
 import {EventsMatcher} from '../test-kit/drivers/events-matcher';
-import {FileSystem} from '../src/api';
+import {FileSystem, pathSeparator} from '../src/api';
 import {LocalFileSystem} from '../src/nodejs';
 import {dir} from 'tmp';
 import {
@@ -22,8 +22,6 @@ describe(`the local filesystem implementation`, () => {
     const dirName = 'dir';
     const fileName = 'foo.txt';
     const content = 'content';
-    const ignoredDir = 'ignored';
-    const ignoredFile = join(dirName, 'ignored.txt');
 
     before(done => {
         dir({unsafeCleanup:true}, (err, path, cleanupCallback) => {
@@ -118,10 +116,26 @@ describe(`the local filesystem implementation`, () => {
         });
 
         it(`ignores events from ignored file`, () => {
+            const [dirName] = ignoredFile.split(pathSeparator);
             mkdirSync(join(testPath, dirName))
             return matcher.expect([{type: 'directoryCreated', fullPath: dirName}])
                 .then(() => writeFileSync(join(testPath, ignoredFile), content))
                 .then(() => matcher.expect([]))
+        });
+
+        it(`loadDirectoryTree() ignores ignored folder and file`, () => {
+            const [dirName] = ignoredFile.split(pathSeparator);
+            const expectedStructure = {
+                name: '',
+                type: 'dir',
+                fullPath: '',
+                children: [{ name: dirName, type: 'dir', fullPath: dirName, children: []}]
+            };
+
+            mkdirSync(join(testPath, ignoredDir))
+            mkdirSync(join(testPath, dirName))
+            writeFileSync(join(testPath, ignoredFile), content)
+            return expect(fs.loadDirectoryTree()).to.eventually.deep.equal(expectedStructure)
         });
     });
 });

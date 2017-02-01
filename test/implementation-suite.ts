@@ -1,8 +1,11 @@
 import {expect} from "chai";
-import {FileSystem, fileSystemEventNames} from '../src/api';
+import {FileSystem, fileSystemEventNames, pathSeparator} from '../src/api';
 import {EventsMatcher} from '../test-kit/drivers/events-matcher';
 import * as Promise from 'bluebird';
 import {EventEmitter} from 'eventemitter3';
+
+export const ignoredDir = 'ignored';
+export const ignoredFile = `foo${pathSeparator}ignored.txt`;
 
 export function assertFileSystemContract(fsProvider: () => Promise<FileSystem>, options:EventsMatcher.Options) {
     describe(`filesystem contract`, () => {
@@ -63,7 +66,7 @@ export function assertFileSystemContract(fsProvider: () => Promise<FileSystem>, 
                 .then(() => matcher.expect([]));
         });
 
-        it(`saving a file over a file in its path- fails`, function() {
+        it(`saving a file over a file in its path - fails`, function() {
             return fs.saveFile('foo', 'foo')
                 .then(() => matcher.expect([{type: 'fileCreated', fullPath:'foo', newContent:'foo'}]))
                 .then(() => expect(fs.saveFile('foo/bar.txt', 'bar')).to.be.rejectedWith(Error))
