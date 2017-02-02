@@ -1,7 +1,3 @@
-import {assertFileSystemContract, ignoredDir, ignoredFile} from './implementation-suite'
-import {EventsMatcher} from '../test-kit/drivers/events-matcher';
-import {FileSystem, pathSeparator} from '../src/api';
-import {LocalFileSystem} from '../src/nodejs';
 import {dir} from 'tmp';
 import {
     mkdirSync,
@@ -14,6 +10,11 @@ import {join} from 'path';
 import {expect} from 'chai';
 import * as Promise from 'bluebird';
 import {EventEmitter} from 'eventemitter3';
+
+import {assertFileSystemContract, ignoredDir, ignoredFile} from './implementation-suite'
+import {EventsMatcher} from '../test-kit/drivers/events-matcher';
+import {FileSystem, pathSeparator} from '../src/api';
+import {LocalFileSystem} from '../src/nodejs';
 
 describe(`the local filesystem implementation`, () => {
     let dirCleanup, rootPath, testPath;
@@ -110,6 +111,11 @@ describe(`the local filesystem implementation`, () => {
                 .then(() => expect(fs.loadTextFile(fileName)).to.eventually.equals(newContent));
         });
 
+        it(`loading a non-existing file - fails`, function() {
+            return expect(fs.loadTextFile('foo.txt')).to.be.rejectedWith(Error);
+        });
+
+
         it(`ignores events from ignored dir`, () => {
             mkdirSync(join(testPath, ignoredDir))
             return matcher.expect([])
@@ -136,6 +142,40 @@ describe(`the local filesystem implementation`, () => {
             mkdirSync(join(testPath, dirName))
             writeFileSync(join(testPath, ignoredFile), content)
             return expect(fs.loadDirectoryTree()).to.eventually.deep.equal(expectedStructure)
+        });
+
+        it(`deleting ignored file - fails`, function() {
+            const [dirName] = ignoredFile.split(pathSeparator);
+            mkdirSync(join(testPath, dirName))
+            writeFileSync(join(testPath, ignoredFile), content)
+
+            return expect(fs.deleteFile(ignoredFile)).to.be.rejectedWith(Error)
+        });
+
+        it(`deleting ignored directory - fails`, function() {
+            mkdirSync(join(testPath, ignoredDir))
+
+            return expect(fs.deleteDirectory(ignoredDir)).to.be.rejectedWith(Error)
+        });
+
+        it(`loading ignored file - fails`, function() {
+            const [dirName] = ignoredFile.split(pathSeparator);
+            mkdirSync(join(testPath, dirName))
+            writeFileSync(join(testPath, ignoredFile), content)
+
+            return expect(fs.loadTextFile(ignoredFile)).to.be.rejectedWith(Error)
+        });
+
+        it(`saving ignored file - fails`, function() {
+            return expect(fs.saveFile(ignoredFile, 'foo')).to.be.rejectedWith(Error)
+        });
+
+        it(`deleting ignored file - fails`, function() {
+            return expect(fs.deleteFile(ignoredFile)).to.be.rejectedWith(Error)
+        });
+
+        it(`saving ignored dir - fails`, function() {
+            return expect(fs.ensureDirectory(ignoredDir)).to.be.rejectedWith(Error)
         });
     });
 });

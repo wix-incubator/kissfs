@@ -38,7 +38,7 @@ export class LocalFileSystem implements FileSystem {
     private ignore: Array<string> = [];
     private isIgnored: (path: string) => boolean = (path: string) => false;
 
-    constructor(public baseUrl, ignore) {
+    constructor(public baseUrl, ignore?: Array<string>) {
         if (ignore) {
             this.ignore = pathsToAnymatchRules(ignore);
             this.isIgnored = anymatch(this.ignore)
@@ -134,7 +134,7 @@ export class LocalFileSystem implements FileSystem {
     }
 
     deleteDirectory(relPath: string, recursive?: boolean): Promise<void> {
-        var pathArr = getPathNodes(relPath);
+        const pathArr = getPathNodes(relPath);
         if (pathArr.length === 0){
             return Promise.reject(new Error(`Can't delete root directory`));
         }
@@ -194,7 +194,7 @@ export class LocalFileSystem implements FileSystem {
 
     ensureDirectory(relPath: string): Promise<void> {
         if (this.isIgnored(relPath)) {
-            return Promise.reject(new Error(`Unable to read ignored path: '${relPath}'`));
+            return Promise.reject(new Error(`Unable to read and write ignored path: '${relPath}'`));
         }
         const pathArr = getPathNodes(relPath);
         const fullPath = path.join(this.baseUrl, ...pathArr);
