@@ -31,7 +31,7 @@ export default function wampServerOverFs(fs: FileSystem, port = 3000): Promise<W
         console.log('AFTER CONNECTION');
 
         connection.onopen = (session: Session) => {
-            console.log('ON OPEN');
+            console.log('ON OPEN, SESSION:', session);
             fileSystemEventNames.forEach(fsEvent => {
                 fs.events.on(fsEvent, data => session.publish(`${wampRealmPrefix}${fsEvent}`, [data]));
             });
