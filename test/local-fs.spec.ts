@@ -111,11 +111,6 @@ describe(`the local filesystem implementation`, () => {
                 .then(() => expect(fs.loadTextFile(fileName)).to.eventually.equals(newContent));
         });
 
-        it(`loading a non-existing file - fails`, function() {
-            return expect(fs.loadTextFile('foo.txt')).to.be.rejectedWith(Error);
-        });
-
-
         it(`ignores events from ignored dir`, () => {
             mkdirSync(join(testPath, ignoredDir))
             return matcher.expect([])
