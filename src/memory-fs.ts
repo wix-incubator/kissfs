@@ -100,7 +100,7 @@ export class MemoryFileSystem implements FileSystem {
     deleteFile(fullPath:string):Promise<void> {
         const pathArr = getPathNodes(fullPath);
         const parent = (pathArr.length)? this.getPathTarget(pathArr.slice(0, pathArr.length - 1)) : null;
-        if (isFakeDir(parent)) {
+        if (isFakeDir(parent) && !this.isIgnored(fullPath)) {
             const node = parent.children[pathArr[pathArr.length - 1]];
             if (isFakeFile(node)) {
                 delete parent.children[node.name];
@@ -118,7 +118,7 @@ export class MemoryFileSystem implements FileSystem {
             return Promise.reject(new Error(`Can't delete root directory`));
         }
         const parent = this.getPathTarget(pathArr.slice(0, pathArr.length - 1));
-        if (isFakeDir(parent)) {
+        if (isFakeDir(parent) && !this.isIgnored(fullPath)) {
             const node = parent.children[pathArr[pathArr.length - 1]];
             if (isFakeFile(node)) {
                 return Promise.reject(new Error(`File is not a directory '${fullPath}'`));
@@ -154,6 +154,9 @@ export class MemoryFileSystem implements FileSystem {
     }
 
     loadTextFile(fullPath): Promise<string> {
+        if (this.isIgnored(fullPath)) {
+            return Promise.reject(new Error(`Unable to read ignored path: '${fullPath}'`));
+        }
         const pathArr = getPathNodes(fullPath);
         const parent = (pathArr.length) ? this.getPathTarget(pathArr.slice(0, pathArr.length - 1)) : null;
         if (isFakeDir(parent)) {

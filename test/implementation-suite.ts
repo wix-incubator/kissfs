@@ -195,12 +195,29 @@ export function assertFileSystemContract(fsProvider: () => Promise<FileSystem>, 
                 .then(() => matcher.expect([]));
         });
 
+        it(`deleting ignored file succeeds`, function() {
+            return fs.deleteFile(ignoredFile)
+                .then(() => matcher.expect([]))
+                .then(() => expect(fs.loadDirectoryTree()).to.eventually.have.property('children').eql([]));
+        });
+
+        it(`deleting ignored directory succeeds`, function() {
+            return fs.deleteDirectory(ignoredDir)
+                .then(() => matcher.expect([]))
+                .then(() => expect(fs.loadDirectoryTree()).to.eventually.have.property('children').eql([]));
+        });
+
         it(`saving ignored file - fails`, function() {
-            return expect(fs.saveFile(ignoredFile, 'foo')).to.be.rejectedWith(Error)
+            return expect(fs.saveFile(ignoredFile, 'foo')).to.be.rejectedWith(Error);
         });
 
         it(`saving ignored dir - fails`, function() {
-            return expect(fs.ensureDirectory(ignoredDir)).to.be.rejectedWith(Error)
+            return expect(fs.ensureDirectory(ignoredDir)).to.be.rejectedWith(Error);
+        });
+
+        it(`loading existed ignored file - fails`, function() {
+            return fs.ensureDirectory(dirName)
+                .then(() => expect(fs.loadTextFile(ignoredFile)).to.be.rejectedWith(Error));
         });
 
     });

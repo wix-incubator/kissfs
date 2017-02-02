@@ -140,36 +140,11 @@ describe(`the local filesystem implementation`, () => {
             return expect(fs.loadDirectoryTree()).to.eventually.deep.equal(expectedStructure)
         });
 
-        it(`deleting ignored file - fails`, function() {
-            mkdirSync(join(testPath, dirName))
-            writeFileSync(join(testPath, ignoredFile), content)
-
-            return expect(fs.deleteFile(ignoredFile)).to.be.rejectedWith(Error)
-        });
-
-        it(`deleting ignored directory - fails`, function() {
-            mkdirSync(join(testPath, ignoredDir))
-
-            return expect(fs.deleteDirectory(ignoredDir)).to.be.rejectedWith(Error)
-        });
-
-        it(`loading ignored file - fails`, function() {
+        it(`loading existed ignored file - fails`, function() {
             mkdirSync(join(testPath, dirName))
             writeFileSync(join(testPath, ignoredFile), content)
 
             return expect(fs.loadTextFile(ignoredFile)).to.be.rejectedWith(Error)
         });
-
-        // it(`saving ignored file - fails`, function() {
-        //     return expect(fs.saveFile(ignoredFile, 'foo')).to.be.rejectedWith(Error)
-        // });
-
-        it(`deleting ignored file - fails`, function() {
-            return expect(fs.deleteFile(ignoredFile)).to.be.rejectedWith(Error)
-        });
-
-        // it(`saving ignored dir - fails`, function() {
-        //     return expect(fs.ensureDirectory(ignoredDir)).to.be.rejectedWith(Error)
-        // });
     });
 });

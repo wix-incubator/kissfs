@@ -117,7 +117,7 @@ export class LocalFileSystem implements FileSystem {
             return Promise.reject(new Error(`Can't delete root directory`));
         }
         if (this.isIgnored(relPath)) {
-            return Promise.reject(new Error(`Unable to delete ignored path: '${relPath}'`));
+            return Promise.resolve();
         }
         const fullPath = path.join(this.baseUrl, ...getPathNodes(relPath));
         return access(fullPath)
@@ -139,7 +139,7 @@ export class LocalFileSystem implements FileSystem {
             return Promise.reject(new Error(`Can't delete root directory`));
         }
         if (this.isIgnored(relPath)) {
-            return Promise.reject(new Error(`Unable to delete ignored path: '${relPath}'`));
+            return Promise.resolve();
         }
         const fullPath = path.join(this.baseUrl, ...pathArr);
         return access(fullPath)
