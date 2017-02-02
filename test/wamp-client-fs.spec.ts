@@ -7,14 +7,14 @@ import {MemoryFileSystem} from '../src/memory-fs';
 import wampServerOverFs from '../src/wamp-server-over-fs';
 import {WampServer, WampRouter, wampRealm} from '../src/wamp-server-over-fs';
 import WampClientFileSystem from '../src/wamp-client-fs';
-import {assertFileSystemContract} from './implementation-suite'
+import {assertFileSystemContract, ignoredDir, ignoredFile} from './implementation-suite'
 
 describe(`the wamp client filesystem implementation`, () => {
 
     let wampRouter: WampRouter;
 
     function server(): Promise<WampServer> {
-        return wampServerOverFs(new MemoryFileSystem());
+        return wampServerOverFs(new MemoryFileSystem(undefined, [ignoredDir, ignoredFile]));
     }
 
     function getFS(): Promise<FileSystem> {

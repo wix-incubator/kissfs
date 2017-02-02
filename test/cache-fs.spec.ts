@@ -6,12 +6,12 @@ import {SlowFs} from '../test-kit/drivers/slow-fs';
 import {FileSystem} from '../src/api';
 import {CacheFs} from '../src/cache-fs';
 import {MemoryFileSystem} from '../src/memory-fs';
-import {assertFileSystemContract} from './implementation-suite';
+import {assertFileSystemContract, ignoredDir, ignoredFile} from './implementation-suite';
 
 describe(`the cache file system implementation`, () => {
 
     assertFileSystemContract(
-        () => Promise.resolve(new CacheFs(new MemoryFileSystem())),
+        () => Promise.resolve(new CacheFs(new MemoryFileSystem(undefined, [ignoredDir, ignoredFile]))),
         {
             interval: 1,
             noExtraEventsGrace: 10,

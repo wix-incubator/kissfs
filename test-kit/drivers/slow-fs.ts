@@ -9,6 +9,7 @@ import {
 
 import {MemoryFileSystem} from "../../src/memory-fs";
 import {InternalEventsEmitter, makeEventsEmitter} from "../../src/utils";
+import {ignoredDir, ignoredFile} from "../../test/implementation-suite";
 
 export class SlowFs implements FileSystem {
     public readonly events: InternalEventsEmitter;
@@ -16,7 +17,7 @@ export class SlowFs implements FileSystem {
     public baseUrl: string;
 
     constructor(private delay: number) {
-        this.fs = new MemoryFileSystem();
+        this.fs = new MemoryFileSystem(undefined, [ignoredDir, ignoredFile]);
         this.events = this.fs.events as InternalEventsEmitter;
     }
 
