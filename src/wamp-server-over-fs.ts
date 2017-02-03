@@ -44,6 +44,8 @@ export default function wampServerOverFs(fs: FileSystem, port = 3000): Promise<W
             resolve({router, connection});
         };
 
+        connection.onclose = (reason, details) => {console.log('CLOSED CALLBACK'); return false;}
+
         connection.open();
     });
 }

@@ -12,13 +12,15 @@ import {assertFileSystemContract} from './implementation-suite'
 describe(`the wamp client filesystem implementation`, () => {
 
     let wampRouter: WampRouter;
+    let port = 3000;
+    let connection;
 
     function server(): Promise<WampServer> {
         return wampServerOverFs(new MemoryFileSystem());
     }
 
     function getFS(): Promise<FileSystem> {
-        return new WampClientFileSystem(`ws://127.0.0.1:3000/`, wampRealm).init();
+        return new WampClientFileSystem(`ws://127.0.0.1:${port}/`, wampRealm).init();
     }
 
     const eventMatcherOptions: EventsMatcher.Options = {
@@ -30,17 +32,14 @@ describe(`the wamp client filesystem implementation`, () => {
     beforeEach(() => server().then(serverAndClient => {
         console.log('BEFORE EACH');
         testLen = Date.now()
-        return wampRouter = serverAndClient.router
+        wampRouter = serverAndClient.router
+        connection = serverAndClient.connection
     }).catch(e => console.log('EEE:', e)));
 
-    afterEach(done => {
+    afterEach(() => {
         console.log('SERVER CLOSE');
+        connection.close();
         wampRouter.close();
-        setTimeout(() => {
-            console.log('AFTER CLOSE');
-            console.log(Date.now() - testLen);
-            done()
-        }, 1000);
     });
 
     assertFileSystemContract(getFS, eventMatcherOptions);
