@@ -1,7 +1,13 @@
 import * as Promise from 'bluebird';
-import {FileSystem, Directory, pathSeparator, FileSystemNode} from "./api";
-import {InternalEventsEmitter, getPathNodes, makeEventsEmitter} from "./utils";
+import * as anymatch from 'anymatch';
 import {last, map} from 'lodash';
+import {FileSystem, Directory, pathSeparator, FileSystemNode} from "./api";
+import {
+    InternalEventsEmitter,
+    getPathNodes,
+    makeEventsEmitter,
+    pathsToAnymatchRules
+} from "./utils";
 
 type FakeNode = FakeDir|FakeFile;
 
@@ -28,9 +34,15 @@ function isFakeFile(node : FakeNode|null): node is FakeFile{
 export class MemoryFileSystem implements FileSystem {
     public readonly events: InternalEventsEmitter = makeEventsEmitter();
     private readonly root = new FakeDir('', '', {});
+    private ignore: Array<string> = [];
+    private isIgnored: (path: string) => boolean = (path: string) => false;
 
-    constructor(public baseUrl = 'http://fake') {
+    constructor(public baseUrl = 'http://fake', ignore?: Array<string>) {
         this.baseUrl += '/';
+        if (ignore) {
+            this.ignore = pathsToAnymatchRules(ignore);
+            this.isIgnored = anymatch(this.ignore)
+        };
     }
 
     private getPathTarget(pathArr: string[]): FakeDir | null {
@@ -47,6 +59,10 @@ export class MemoryFileSystem implements FileSystem {
     }
 
     saveFile(fullPath:string, newContent:string):Promise<void> {
+        if (this.isIgnored(fullPath)) {
+            return Promise.reject(new Error(`Unable to save ignored path: '${fullPath}'`));
+        }
+
         const pathArr = getPathNodes(fullPath);
         const name = pathArr.pop();
         if (name) {
@@ -84,7 +100,7 @@ export class MemoryFileSystem implements FileSystem {
     deleteFile(fullPath:string):Promise<void> {
         const pathArr = getPathNodes(fullPath);
         const parent = (pathArr.length)? this.getPathTarget(pathArr.slice(0, pathArr.length - 1)) : null;
-        if (isFakeDir(parent)) {
+        if (isFakeDir(parent) && !this.isIgnored(fullPath)) {
             const node = parent.children[pathArr[pathArr.length - 1]];
             if (isFakeFile(node)) {
                 delete parent.children[node.name];
@@ -102,7 +118,7 @@ export class MemoryFileSystem implements FileSystem {
             return Promise.reject(new Error(`Can't delete root directory`));
         }
         const parent = this.getPathTarget(pathArr.slice(0, pathArr.length - 1));
-        if (isFakeDir(parent)) {
+        if (isFakeDir(parent) && !this.isIgnored(fullPath)) {
             const node = parent.children[pathArr[pathArr.length - 1]];
             if (isFakeFile(node)) {
                 return Promise.reject(new Error(`File is not a directory '${fullPath}'`));
@@ -119,6 +135,9 @@ export class MemoryFileSystem implements FileSystem {
     }
 
     ensureDirectory(fullPath:string):Promise<void> {
+        if (this.isIgnored(fullPath)) {
+            return Promise.reject(new Error(`Unable to read and write ignored path: '${fullPath}'`));
+        }
         return Promise.reduce(getPathNodes(fullPath), (current, dirName, _i, _l) => {
             const next = current.children[dirName];
             if (isFakeDir(next)) {
@@ -134,7 +153,10 @@ export class MemoryFileSystem implements FileSystem {
         }, this.root).return();
     }
 
-    loadTextFile(fullPath):Promise<string>{
+    loadTextFile(fullPath): Promise<string> {
+        if (this.isIgnored(fullPath)) {
+            return Promise.reject(new Error(`Unable to read ignored path: '${fullPath}'`));
+        }
         const pathArr = getPathNodes(fullPath);
         const parent = (pathArr.length) ? this.getPathTarget(pathArr.slice(0, pathArr.length - 1)) : null;
         if (isFakeDir(parent)) {
@@ -148,7 +170,7 @@ export class MemoryFileSystem implements FileSystem {
         return Promise.reject(new Error(`Cannot find file ${fullPath}`));
     }
 
-    loadDirectoryTree (): Promise<Directory> {
+    loadDirectoryTree(): Promise<Directory> {
         return Promise.resolve(this.parseTree(this.root) as Directory);
     }
 
