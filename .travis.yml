@@ -5,22 +5,21 @@ node_js:
   - "6"
   - "4"
 os:
-  - linux
   - osx
 
-env: CXX=g++-4.8
+# env: CXX=g++-4.8
 
-# matrix:
-#   include:
-#     - os: linux
-#       env: CXX=g++-4.8
-#       node_js: "7"
-#     - os: linux
-#       env: CXX=g++-4.8
-#       node_js: "6"
-#     - os: linux
-#       env: CXX=g++-4.8
-#       node_js: "4"
+matrix:
+  include:
+    - os: linux
+      env: CXX=g++-4.8
+      node_js: "7"
+    - os: linux
+      env: CXX=g++-4.8
+      node_js: "6"
+    - os: linux
+      env: CXX=g++-4.8
+      node_js: "4"
 
 addons:
   firefox: "latest"
