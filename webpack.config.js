@@ -36,7 +36,7 @@ module.exports = {
     context: __dirname,
     entry: {
         test: ['./test/browser'],
-        webtest: ['mocha!./test/browser']
+        webtest: ['mocha-loader!./test/browser']
     },
     devtool: 'eval',
     output: output,

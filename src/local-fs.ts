@@ -1,6 +1,6 @@
 import * as anymatch from 'anymatch';
 import {
-    walk, WalkEventFile,
+    WalkEventFile,
     ensureDir as ensureDir_,
     readFile as readFile_,
     writeFile as writeFile_,
@@ -9,6 +9,7 @@ import {
     access as access_,
     stat as stat_
 } from 'fs-extra';
+import * as walk from 'klaw';
 import * as Promise from 'bluebird';
 import { watch } from 'chokidar';
 import * as path from 'path';
