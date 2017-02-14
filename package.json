@@ -60,7 +60,6 @@
     "mocha-env-reporter": "2.0.4",
     "mocha-loader": "1.1.0",
     "ncp": "2.0.0",
-    "npminject": "1.0.172",
     "rimraf": "2.5.4",
     "sinon": "2.0.0-pre.5",
     "source-map-support": "0.4.11",
