@@ -135,6 +135,8 @@ describe(`the local filesystem implementation`, () => {
             };
 
             mkdirSync(join(testPath, ignoredDir))
+            mkdirSync(join(testPath, ignoredDir, 'name-with-dashes'))
+            mkdirSync(join(testPath, ignoredDir, 'name-with-dashes', '.name_starts_with_dot'))
             mkdirSync(join(testPath, dirName))
             writeFileSync(join(testPath, ignoredFile), content)
             return expect(fs.loadDirectoryTree()).to.eventually.deep.equal(expectedStructure)
