@@ -49,7 +49,7 @@
     "chai-as-promised": "6.0.0",
     "chai-subset": "1.4.0",
     "json-loader": "0.5.4",
-    "karma": "1.4.1",
+    "karma": "1.5.0",
     "karma-chrome-launcher": "2.0.0",
     "karma-env-reporter": "1.0.13",
     "karma-firefox-launcher": "1.0.0",
