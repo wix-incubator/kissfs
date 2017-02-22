@@ -10,7 +10,7 @@ export type WampServer = {
 };
 
 export type WampRouter = {
-    close: void
+    close: () => void
 };
 
 export const wampRealmPrefix = 'com.kissfs.';

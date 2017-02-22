@@ -107,7 +107,7 @@ export class LocalFileSystem implements FileSystem {
         }
 
         const pathArr = getPathNodes(relPath);
-        const name = pathArr.pop();
+        const name = pathArr.pop() || '';
         const fullPath = path.join(this.baseUrl, ...pathArr);
         return ensureDir(fullPath)
             .then(()=> writeFile(path.join(fullPath, name), newContent));
