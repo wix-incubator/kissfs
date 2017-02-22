@@ -12,7 +12,7 @@ export function pathsToAnymatchRules(paths:Array<string>): Array<string>{
     return paths.reduce((anymatchRules, path) => {
         anymatchRules.push(path);
         if (!isGlob(path)) {
-            anymatchRules.push(`${path}/**`, `${path}/**/*.**`);
+            anymatchRules.push(`${path}/**`, `${path}/**/*.**`, `${path}/**/*.**/**`);
         }
         return anymatchRules;
     }, [] as Array<string>);
