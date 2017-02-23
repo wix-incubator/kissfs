@@ -28,8 +28,18 @@ describe(`the wamp client filesystem implementation`, () => {
         timeout: 30
     };
 
-    function retry(callback: () => boolean, delay: number = 100) {
-        if (!callback()) setTimeout(callback, delay)
+    function retry(callback: () => boolean, delay: number = 10, attempts: number = 50) {
+        return new Promise((resolve, reject) => {
+            let tries = attempts;
+            (function test(cb, delay) {
+                if (!cb()) {
+                    if (tries) {
+                        tries--;
+                        setTimeout(() => test(cb, delay), delay)
+                    } else return reject()
+                } else return resolve()
+            })(callback, delay);
+        })
     }
 
     beforeEach(() => server().then(clientAndServer => wampServer = clientAndServer));
@@ -37,7 +47,7 @@ describe(`the wamp client filesystem implementation`, () => {
     afterEach(() => {
         return new Promise(resolve => {
             wampServer.router.close();
-            resolve();
+            return retry(wampServer.isConnectionClosed).then(() => resolve());
         });
     });
 
