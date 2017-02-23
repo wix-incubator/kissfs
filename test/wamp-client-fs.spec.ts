@@ -12,15 +12,14 @@ import {assertFileSystemContract, ignoredDir, ignoredFile} from './implementatio
 
 describe(`the wamp client filesystem implementation`, () => {
 
-    let wampRouter: WampRouter;
-    let connection: Connection;
+    let wampServer: WampServer;
 
     function server(): Promise<WampServer> {
-        return wampServerOverFs(new MemoryFileSystem(undefined, [ignoredDir, ignoredFile]), 8080);
+        return wampServerOverFs(new MemoryFileSystem(undefined, [ignoredDir, ignoredFile]), 3000);
     }
 
     function getFS(): Promise<FileSystem> {
-        return new WampClientFileSystem(`ws://localhost:8080`, wampRealm).init();
+        return new WampClientFileSystem(`ws://127.0.0.1:3000`, wampRealm).init();
     }
 
     const eventMatcherOptions: EventsMatcher.Options = {
@@ -29,15 +28,15 @@ describe(`the wamp client filesystem implementation`, () => {
         timeout: 30
     };
 
-    beforeEach(() => server().then(clientAndServer => {
-        wampRouter = clientAndServer.router;
-        connection = clientAndServer.connection;
-    }));
+    function retry(callback: () => boolean, delay: number = 100) {
+        if (!callback()) setTimeout(callback, delay)
+    }
+
+    beforeEach(() => server().then(clientAndServer => wampServer = clientAndServer));
 
     afterEach(() => {
         return new Promise(resolve => {
-            connection.close();
-            wampRouter.close();
+            wampServer.router.close();
             resolve();
         });
     });

@@ -1,16 +1,18 @@
 import * as Promise from 'bluebird';
 import {Connection, Session} from 'autobahn';
 import {FileSystem, fileSystemEventNames, fileSystemMethods} from './api';
-
+import {Server} from 'ws';
 const Router = require('wamp-server');
 
 export type WampServer = {
     router: WampRouter,
-    connection: Connection
+    connection: Connection,
+    isConnectionClosed: () => boolean
 };
 
 export type WampRouter = {
     close: () => void
+    wss: Server
 };
 
 export const wampRealmPrefix = 'com.kissfs.';
@@ -30,7 +32,9 @@ export default function wampServerOverFs(fs: FileSystem, port = 3000): Promise<W
 
         console.log('AFTER CONNECTION');
 
+        let isConnectionClosed = true;
         connection.onopen = (session: Session) => {
+            isConnectionClosed = false;
             console.log('ON OPEN, SESSION:', Boolean(session));
             fileSystemEventNames.forEach(fsEvent => {
                 fs.events.on(fsEvent, data => session.publish(`${wampRealmPrefix}${fsEvent}`, [data]));
@@ -41,10 +45,18 @@ export default function wampServerOverFs(fs: FileSystem, port = 3000): Promise<W
             });
             console.log('REGISTERED fileSystemMethods');
 
-            resolve({router, connection});
+            resolve({
+                router,
+                connection,
+                isConnectionClosed: () => isConnectionClosed
+            });
         };
 
-        connection.onclose = (reason, details) => {console.log('CLOSED CALLBACK'); return false;}
+        connection.onclose = (reason, details) => {
+            isConnectionClosed = true;
+            console.log('CLOSED CALLBACK');
+            return false;
+        }
 
         connection.open();
     });
