@@ -1,5 +1,4 @@
 import * as Promise from 'bluebird';
-import * as anymatch from 'anymatch';
 import {last, map} from 'lodash';
 import {FileSystem, Directory, pathSeparator, FileSystemNode} from "./api";
 import {

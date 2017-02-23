@@ -1,4 +1,3 @@
-import * as anymatch from 'anymatch';
 import {
     WalkEventFile,
     ensureDir as ensureDir_,
