@@ -53,9 +53,7 @@ export class LocalFileSystem implements FileSystem {
             cwd: this.baseUrl
         });
 
-        this.watcher.on('error', err => {
-            console.log('Error in LocalFileSystem watch', err);
-        });
+        this.watcher.on('error', err => console.log('Error in LocalFileSystem watch', err));
 
         return new Promise<LocalFileSystem>(resolve=>{
             this.watcher.once('ready', () => {

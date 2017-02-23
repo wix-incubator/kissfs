@@ -9,7 +9,7 @@ export function getPathNodes(path:string):Array<string>{
     return path.split(pathSeparator).filter(n => n.length !== 0);
 }
 
-function pathsToAnymatchRules(paths:Array<string>): Array<string>{
+function extendMathersWithGlob(paths:Array<string>): Array<string>{
     return paths.reduce((anymatchRules, path) => {
         anymatchRules.push(path);
         if (!isGlob(path)) {
@@ -20,7 +20,7 @@ function pathsToAnymatchRules(paths:Array<string>): Array<string>{
 }
 
 export function getIsIgnored(matchers: string[], options: Object = {dot: true}): (path: string) => boolean {
-    const patterns = pathsToAnymatchRules(matchers);
+    const patterns = extendMathersWithGlob(matchers);
     return (path: string) => micromatch.any(path, patterns, options);
 }
 
