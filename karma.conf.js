@@ -1,7 +1,7 @@
 // Karma configuration
 
 module.exports = function (config) {
-    const karmaConfig = {
+    var karmaConfig = {
 
         // base path that will be used to resolve all patterns (eg. files, exclude)
         basePath: '',
@@ -60,7 +60,7 @@ module.exports = function (config) {
 
         // start these browsers
         // available browser launchers: https://npmjs.org/browse/keyword/karma-launcher
-        browsers: ['Chrome', 'Firefox'],
+        browsers: ['Chrome'],
 
 
         // Continuous Integration mode
@@ -82,6 +82,5 @@ module.exports = function (config) {
     if (process.env.TRAVIS) {
         karmaConfig.browsers = ['Firefox']; // ['chrome_travis_ci', 'Firefox'];
     }
-
     config.set(karmaConfig)
 }

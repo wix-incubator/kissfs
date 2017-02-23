@@ -1,7 +1,3 @@
-import {assertFileSystemContract} from './implementation-suite'
-import {EventsMatcher} from '../test-kit/drivers/events-matcher';
-import {FileSystem} from '../src/api';
-import {LocalFileSystem} from '../src/nodejs';
 import {dir} from 'tmp';
 import {
     mkdirSync,
@@ -14,6 +10,18 @@ import {join} from 'path';
 import {expect} from 'chai';
 import * as Promise from 'bluebird';
 import {EventEmitter} from 'eventemitter3';
+
+import {
+    assertFileSystemContract,
+    dirName,
+    fileName,
+    content,
+    ignoredDir,
+    ignoredFile
+} from './implementation-suite'
+import {EventsMatcher} from '../test-kit/drivers/events-matcher';
+import {FileSystem, pathSeparator} from '../src/api';
+import {LocalFileSystem} from '../src/nodejs';
 
 describe(`the local filesystem implementation`, () => {
     let dirCleanup, rootPath, testPath;
@@ -37,7 +45,10 @@ describe(`the local filesystem implementation`, () => {
     function getFS() {
         testPath = join(rootPath, 'fs_'+(counter++));
         mkdirSync(testPath);
-        return new LocalFileSystem(testPath).init();
+        return new LocalFileSystem(
+            testPath,
+            [ignoredDir, ignoredFile]
+        ).init();
     }
 
     const eventMatcherOptions: EventsMatcher.Options = {
@@ -51,10 +62,6 @@ describe(`the local filesystem implementation`, () => {
     describe(`external changes`, () => {
         let fs: FileSystem;
         let matcher: EventsMatcher;
-
-        const dirName = 'dir';
-        const fileName = 'foo.txt';
-        const content = 'content';
 
         beforeEach(() => {
             matcher = new EventsMatcher(eventMatcherOptions);
@@ -105,6 +112,39 @@ describe(`the local filesystem implementation`, () => {
                     return Promise.resolve();
                 })
                 .then(() => expect(fs.loadTextFile(fileName)).to.eventually.equals(newContent));
+        });
+
+        it(`ignores events from ignored dir`, () => {
+            mkdirSync(join(testPath, ignoredDir))
+            return matcher.expect([])
+        });
+
+        it(`ignores events from ignored file`, () => {
+            mkdirSync(join(testPath, dirName))
+            return matcher.expect([{type: 'directoryCreated', fullPath: dirName}])
+                .then(() => writeFileSync(join(testPath, ignoredFile), content))
+                .then(() => matcher.expect([]))
+        });
+
+        it(`loadDirectoryTree() ignores ignored folder and file`, () => {
+            const expectedStructure = {
+                name: '',
+                type: 'dir',
+                fullPath: '',
+                children: [{ name: dirName, type: 'dir', fullPath: dirName, children: []}]
+            };
+
+            mkdirSync(join(testPath, ignoredDir))
+            mkdirSync(join(testPath, dirName))
+            writeFileSync(join(testPath, ignoredFile), content)
+            return expect(fs.loadDirectoryTree()).to.eventually.deep.equal(expectedStructure)
+        });
+
+        it(`loading existed ignored file - fails`, function() {
+            mkdirSync(join(testPath, dirName))
+            writeFileSync(join(testPath, ignoredFile), content)
+
+            return expect(fs.loadTextFile(ignoredFile)).to.be.rejectedWith(Error)
         });
     });
 });

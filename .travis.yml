@@ -5,12 +5,31 @@ node_js:
   - "6"
   - "4"
 os:
-  - linux
-  - osx 
+  - osx
+
+# env: CXX=g++-4.8
+
+matrix:
+  include:
+    - os: linux
+      env: CXX=g++-4.8
+      node_js: "7"
+    - os: linux
+      env: CXX=g++-4.8
+      node_js: "6"
+    - os: linux
+      env: CXX=g++-4.8
+      node_js: "4"
+
 addons:
   firefox: "latest"
+  apt:
+    sources:
+      - ubuntu-toolchain-r-test
+    packages:
+      - g++-4.8
 
 before_script:
-  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then export CHROME_BIN=chromium-browser ; fi 
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then export CHROME_BIN=chromium-browser ; fi
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then export DISPLAY=:99.0; fi
-  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sh -e /etc/init.d/xvfb start; fi 
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sh -e /etc/init.d/xvfb start; fi
