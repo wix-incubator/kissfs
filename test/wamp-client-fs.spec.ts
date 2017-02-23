@@ -16,11 +16,11 @@ describe(`the wamp client filesystem implementation`, () => {
     let connection: Connection;
 
     function server(): Promise<WampServer> {
-        return wampServerOverFs(new MemoryFileSystem(undefined, [ignoredDir, ignoredFile]));
+        return wampServerOverFs(new MemoryFileSystem(undefined, [ignoredDir, ignoredFile]), 5555);
     }
 
     function getFS(): Promise<FileSystem> {
-        return new WampClientFileSystem(`ws://127.0.0.1:3000/`, wampRealm).init();
+        return new WampClientFileSystem(`ws://0.0.0.0:5555`, wampRealm).init();
     }
 
     const eventMatcherOptions: EventsMatcher.Options = {
