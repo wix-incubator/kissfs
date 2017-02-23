@@ -10,12 +10,12 @@ export function getPathNodes(path:string):Array<string>{
 }
 
 function extendMathersWithGlob(paths:Array<string>): Array<string>{
-    return paths.reduce((anymatchRules, path) => {
-        anymatchRules.push(path);
+    return paths.reduce((extended, path) => {
+        extended.push(path);
         if (!isGlob(path)) {
-            anymatchRules.push(`${path}/**`);
+            extended.push(`${path}/**`);
         }
-        return anymatchRules;
+        return extended;
     }, [] as Array<string>);
 }
 
