@@ -1,7 +1,6 @@
 import * as Promise from 'bluebird';
 import {Connection, Session} from 'autobahn';
 import {FileSystem, fileSystemEventNames, fileSystemMethods} from './api';
-import {Server} from 'ws';
 const Router = require('wamp-server');
 
 export type WampServer = {
@@ -12,7 +11,6 @@ export type WampServer = {
 
 export type WampRouter = {
     close: () => void
-    wss: Server
 };
 
 export const wampRealmPrefix = 'com.kissfs.';
