@@ -28,16 +28,20 @@ describe(`the wamp client filesystem implementation`, () => {
         timeout: 30
     };
 
-    function retry(callback: () => boolean, delay: number = 10, attempts: number = 50) {
-        return new Promise((resolve, reject) => {
+    function retry(callback: () => boolean, delay: number = 10, attempts: number = 50): Promise<void> {
+        return new Promise<void>((resolve, reject) => {
             let tries = attempts;
             (function test(cb, delay) {
                 if (!cb()) {
                     if (tries) {
                         tries--;
                         setTimeout(() => test(cb, delay), delay)
-                    } else return reject()
-                } else return resolve()
+                    } else {
+                        return reject();
+                    }
+                } else {
+                    return resolve();
+                }
             })(callback, delay);
         })
     }
