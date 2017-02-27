@@ -3,10 +3,14 @@ import {Connection, Session} from 'autobahn';
 import {FileSystem, fileSystemEventNames, fileSystemMethods} from './api';
 const Router = require('wamp-server');
 
+
+export class WampConnection extends Connection {
+    isConnected: boolean
+}
+
 export type WampServer = {
     router: WampRouter,
-    connection: Connection,
-    isConnectionClosed: () => boolean
+    connection: WampConnection
 };
 
 export type WampRouter = {
@@ -28,10 +32,7 @@ export default function wampServerOverFs(fs: FileSystem, port = 3000): Promise<W
             url: `ws://127.0.0.1:${port}/`,
         });
 
-        let isConnectionClosed = true;
         connection.onopen = (session: Session) => {
-            isConnectionClosed = false;
-
             fileSystemEventNames.forEach(fsEvent => {
                 fs.events.on(fsEvent, data => session.publish(`${wampRealmPrefix}${fsEvent}`, [data]));
             });
@@ -42,15 +43,9 @@ export default function wampServerOverFs(fs: FileSystem, port = 3000): Promise<W
 
             resolve({
                 router,
-                connection,
-                isConnectionClosed: () => isConnectionClosed
-            });
+                connection
+            } as WampServer);
         };
-
-        connection.onclose = () => {
-            isConnectionClosed = true;
-            return false;
-        }
 
         connection.open();
     });

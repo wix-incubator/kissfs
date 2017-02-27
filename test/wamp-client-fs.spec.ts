@@ -1,5 +1,6 @@
 import {EventEmitter} from 'eventemitter3';
 import * as Promise from 'bluebird';
+import * as retry from 'bluebird-retry';
 import {expect} from 'chai';
 import {Connection} from 'autobahn';
 import {EventsMatcher} from '../test-kit/drivers/events-matcher';
@@ -28,30 +29,15 @@ describe(`the wamp client filesystem implementation`, () => {
         timeout: 30
     };
 
-    function retry(callback: () => boolean, delay: number = 10, attempts: number = 50): Promise<void> {
-        return new Promise<void>((resolve, reject) => {
-            let tries = attempts;
-            (function test(cb, delay) {
-                if (!cb()) {
-                    if (tries) {
-                        tries--;
-                        setTimeout(() => test(cb, delay), delay)
-                    } else {
-                        return reject();
-                    }
-                } else {
-                    return resolve();
-                }
-            })(callback, delay);
-        })
-    }
-
     beforeEach(() => server().then(clientAndServer => wampServer = clientAndServer));
 
     afterEach(() => {
         return new Promise(resolve => {
             wampServer.router.close();
-            return retry(wampServer.isConnectionClosed).then(() => resolve());
+            return retry(
+                () => wampServer.connection.isConnected ? Promise.reject('') : Promise.resolve(),
+                {interval: 100, max_tries: 10}
+            ).then(() => resolve())
         });
     });
 
