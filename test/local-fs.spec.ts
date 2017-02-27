@@ -133,10 +133,24 @@ describe(`the local filesystem implementation`, () => {
                 fullPath: '',
                 children: [{ name: dirName, type: 'dir', fullPath: dirName, children: []}]
             };
-
             mkdirSync(join(testPath, ignoredDir))
             mkdirSync(join(testPath, dirName))
             writeFileSync(join(testPath, ignoredFile), content)
+            return expect(fs.loadDirectoryTree()).to.eventually.deep.equal(expectedStructure)
+        });
+
+        it(`loadDirectoryTree() ignores ignored folder with special characters`, () => {
+            const expectedStructure = {
+                name: '',
+                type: 'dir',
+                fullPath: '',
+                children: [{ name: dirName, type: 'dir', fullPath: dirName, children: []}]
+            };
+            mkdirSync(join(testPath, ignoredDir))
+            mkdirSync(join(testPath, ignoredDir, 'name-with-dashes'))
+            mkdirSync(join(testPath, ignoredDir, 'name-with-dashes', '.name_starts_with_dot'))
+            mkdirSync(join(testPath, ignoredDir, 'name-with-dashes', '.name_starts_with_dot', '.name_starts_with_dot'))
+            mkdirSync(join(testPath, dirName))
             return expect(fs.loadDirectoryTree()).to.eventually.deep.equal(expectedStructure)
         });
 

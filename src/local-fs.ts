@@ -1,4 +1,3 @@
-import * as anymatch from 'anymatch';
 import {
     WalkEventFile,
     ensureDir as ensureDir_,
@@ -19,10 +18,9 @@ import {
     InternalEventsEmitter,
     getPathNodes,
     makeEventsEmitter,
-    pathsToAnymatchRules
+    getIsIgnored
 } from "./utils";
 import {MemoryFileSystem} from './memory-fs';
-
 
 const ensureDir = Promise.promisify<void, string>(ensureDir_);
 const readFile = Promise.promisify<string, string, string>(readFile_);
@@ -41,8 +39,7 @@ export class LocalFileSystem implements FileSystem {
 
     constructor(public baseUrl, ignore?: Array<string>) {
         if (ignore) {
-            this.ignore = pathsToAnymatchRules(ignore);
-            this.isIgnored = anymatch(this.ignore)
+            this.isIgnored = getIsIgnored(ignore)
         };
     }
 
@@ -50,14 +47,12 @@ export class LocalFileSystem implements FileSystem {
         this.watcher = watch([this.baseUrl], {
             //  usePolling:true,
             //  interval:100,
-            ignored: this.ignore,
+            ignored: path => this.isIgnored(path),
             //    atomic: false, //todo 50?
             cwd: this.baseUrl
         });
 
-        this.watcher.on('error', err => {
-            console.log('Error in LocalFileSystem watch', err);
-        });
+        this.watcher.on('error', err => console.log('Error in LocalFileSystem watch', err));
 
         return new Promise<LocalFileSystem>(resolve=>{
             this.watcher.once('ready', () => {

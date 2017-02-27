@@ -1,12 +1,11 @@
 import * as Promise from 'bluebird';
-import * as anymatch from 'anymatch';
 import {last, map} from 'lodash';
 import {FileSystem, Directory, pathSeparator, FileSystemNode} from "./api";
 import {
     InternalEventsEmitter,
     getPathNodes,
     makeEventsEmitter,
-    pathsToAnymatchRules
+    getIsIgnored
 } from "./utils";
 
 type FakeNode = FakeDir|FakeFile;
@@ -40,8 +39,7 @@ export class MemoryFileSystem implements FileSystem {
     constructor(public baseUrl = 'http://fake', ignore?: Array<string>) {
         this.baseUrl += '/';
         if (ignore) {
-            this.ignore = pathsToAnymatchRules(ignore);
-            this.isIgnored = anymatch(this.ignore)
+            this.isIgnored = getIsIgnored(ignore)
         };
     }
 
