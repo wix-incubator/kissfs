@@ -2,7 +2,6 @@ import {EventEmitter} from 'eventemitter3';
 import * as Promise from 'bluebird';
 import * as retry from 'bluebird-retry';
 import {expect} from 'chai';
-import {Connection} from 'autobahn';
 import {EventsMatcher} from '../test-kit/drivers/events-matcher';
 import {FileSystem} from '../src/api';
 import {MemoryFileSystem} from '../src/memory-fs';
