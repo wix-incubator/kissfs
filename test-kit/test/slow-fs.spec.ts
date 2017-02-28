@@ -6,6 +6,7 @@ import {SlowFs} from '../drivers/slow-fs';
 
 describe('the slow (delayed) file system imeplementation', ()=>{
     const delay = 200;
+    const accuracyFactor = 0.99;
     assertFileSystemContract(() => Promise.resolve(new SlowFs(delay)), {interval:1, noExtraEventsGrace:10, timeout:30});
 
     describe(`delayed methods`, () => {
@@ -24,14 +25,14 @@ describe('the slow (delayed) file system imeplementation', ()=>{
             return fs.ensureDirectory(dirName)
                 .then(() => fs.loadDirectoryTree())
                 .then(() => fs.deleteDirectory(dirName))
-                .then(() => expect(Date.now() - startTimestamp).to.be.at.least(delay * 3))
+                .then(() => expect(Date.now() - startTimestamp).to.be.at.least(delay * 3 * accuracyFactor))
         });
 
         it(`delay the file saving, reading and deleting`, () => {
             return fs.saveFile(fileName, content)
                 .then(() => fs.loadTextFile(fileName))
                 .then(() => fs.deleteFile(fileName))
-                .then(() => expect(Date.now() - startTimestamp).to.be.at.least(delay * 3))
+                .then(() => expect(Date.now() - startTimestamp).to.be.at.least(delay * 3 * accuracyFactor))
         });
     });
 });
