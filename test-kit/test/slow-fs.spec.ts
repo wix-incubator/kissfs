@@ -4,7 +4,7 @@ import {FileSystem} from '../../src/api';
 import {assertFileSystemContract} from '../../test/implementation-suite';
 import {SlowFs} from '../drivers/slow-fs';
 
-describe('the slow (delayed) file system imeplementation', ()=>{
+describe('the slow (delayed) file system imeplementation', () => {
     const delay = 200;
     const accuracyFactor = 0.9;
     assertFileSystemContract(() => Promise.resolve(new SlowFs(delay)), {interval:1, noExtraEventsGrace:10, timeout:30});
