@@ -72,15 +72,19 @@ export class LocalFileSystem implements FileSystem {
                             type: 'fileCreated',
                             fullPath: relPath.split(path.sep).join(pathSeparator),
                             newContent: content
-                        })));
+                        }))
+                        .catch(error => this.events.emit('fileSystemError', {error}))
+                    );
 
-                this.watcher.on('change', (relPath:string)=>
+                this.watcher.on('change', (relPath:string) =>
                     this.loadTextFile(relPath)
                         .then((content)=>this.events.emit('fileChanged', {
                             type: 'fileChanged',
                             fullPath: relPath.split(path.sep).join(pathSeparator),
                             newContent: content
-                        })));
+                        }))
+                        .catch(error => this.events.emit('fileSystemError', {error}))
+                    );
                 this.watcher.on('unlinkDir', (relPath:string)=>
                     this.events.emit('directoryDeleted', {
                         type: 'directoryDeleted',

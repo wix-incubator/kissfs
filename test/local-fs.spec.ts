@@ -8,6 +8,7 @@ import {
 
 import {join} from 'path';
 import {expect} from 'chai';
+import * as sinon from 'sinon';
 import * as Promise from 'bluebird';
 import {EventEmitter} from 'eventemitter3';
 
@@ -112,6 +113,14 @@ describe(`the local filesystem implementation`, () => {
                     return Promise.resolve();
                 })
                 .then(() => expect(fs.loadTextFile(fileName)).to.eventually.equals(newContent));
+        });
+
+        it(`ignores events from ignored dir in watcher`, () => {
+            const spy = sinon.spy();
+            fs.events.on('fileSystemError', spy)
+            mkdirSync(join(testPath, ignoredDir))
+            writeFileSync(join(testPath, ignoredDir, fileName), content)
+            return Promise.delay(200).then(() => expect(spy).not.have.been.called)
         });
 
         it(`ignores events from ignored dir`, () => {

@@ -8,7 +8,7 @@ import {EventEmitter} from 'eventemitter3';
 export const dirName = 'foo';
 export const fileName = 'bar.txt';
 export const content = 'content';
-export const ignoredDir = 'ignored';
+export const ignoredDir = '.ignored';
 export const ignoredFile = `${dirName}${pathSeparator}ignored.txt`;
 
 export function assertFileSystemContract(fsProvider: () => Promise<FileSystem>, options:EventsMatcher.Options) {

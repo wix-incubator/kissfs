@@ -14,6 +14,8 @@ function extendMathersWithGlob(paths:Array<string>): Array<string>{
         extended.push(path);
         if (!isGlob(path)) {
             extended.push(`${path}/**`);
+            extended.push(`**/${path}`);
+            extended.push(`**/${path}/**`);
         }
         return extended;
     }, [] as Array<string>);

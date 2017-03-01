@@ -47,6 +47,11 @@ export interface DirectoryDeletedEvent{
     fullPath:string
 }
 
+export interface FileSystemErrorEvent{
+    type:'fileSystemError',
+    error: Object
+}
+
 export type ListenerFn<T> = (event: T) => void;
 
 export interface EventAspect<S,O>{
@@ -60,9 +65,9 @@ export interface EventAspect<S,O>{
     off(event: S, fn?: ListenerFn<O>, context?: any, once?: boolean): this;
 }
 
-export type FileSystemEventName = 'fileCreated' | 'fileChanged' | 'fileDeleted' | 'directoryCreated' | 'directoryDeleted';
-export const fileSystemEventNames: FileSystemEventName[] = ['fileCreated', 'fileChanged', 'fileDeleted', 'directoryCreated', 'directoryDeleted'];
-export type FileSystemEventHandler = FileCreatedEvent | FileChangedEvent | FileDeletedEvent | DirectoryCreatedEvent | DirectoryDeletedEvent;
+export type FileSystemEventName = 'fileCreated' | 'fileChanged' | 'fileDeleted' | 'directoryCreated' | 'directoryDeleted' | 'fileSystemError';
+export const fileSystemEventNames: FileSystemEventName[] = ['fileCreated', 'fileChanged', 'fileDeleted', 'directoryCreated', 'directoryDeleted', 'fileSystemError'];
+export type FileSystemEventHandler = FileCreatedEvent | FileChangedEvent | FileDeletedEvent | DirectoryCreatedEvent | DirectoryDeletedEvent | FileSystemErrorEvent;
 
 export const fileSystemMethods = ['saveFile', 'deleteFile', 'deleteDirectory', 'loadTextFile', 'loadDirectoryTree', 'ensureDirectory'];
 
