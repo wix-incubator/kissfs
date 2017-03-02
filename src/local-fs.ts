@@ -73,7 +73,7 @@ export class LocalFileSystem implements FileSystem {
                             fullPath: relPath.split(path.sep).join(pathSeparator),
                             newContent: content
                         }))
-                        .catch(error => this.events.emit('fileSystemError', {error}))
+                        .catch(() => {})
                     );
 
                 this.watcher.on('change', (relPath:string) =>
@@ -83,7 +83,7 @@ export class LocalFileSystem implements FileSystem {
                             fullPath: relPath.split(path.sep).join(pathSeparator),
                             newContent: content
                         }))
-                        .catch(error => this.events.emit('fileSystemError', {error}))
+                        .catch(() => {})
                     );
                 this.watcher.on('unlinkDir', (relPath:string)=>
                     this.events.emit('directoryDeleted', {

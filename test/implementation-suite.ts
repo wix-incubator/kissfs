@@ -5,7 +5,7 @@ import * as Promise from 'bluebird';
 import {EventEmitter} from 'eventemitter3';
 
 
-export const dirName = 'foo';
+export const dirName = '.foo';
 export const fileName = 'bar.txt';
 export const content = 'content';
 export const ignoredDir = '.ignored';
