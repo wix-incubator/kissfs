@@ -5,7 +5,9 @@
 Extensible and reactive file-system library that keeps it simple
 
 ## User documentation
-:kiss:fs is all about supplying a standard API for the most basic file-system operations: CRUD of modest sized text files and directories, and registering changes. If you're looking to build a folder tree visualizer or manager, or a tool for viewing and editing any text file in a directory tree, :kiss:fs is what you're looking for. For simplicity and supportability, we are keeping the focus narrow so that it can be widely implemented. There is currently no support for meta-data (timestamps, permissions, etc.), binary content or data streams. So if you're writing a log viewer or an all-in-one file system manager, this may not be the right tool for you and we suggest you try [vinyl](https://github.com/gulpjs/vinyl).
+:kiss:fs supplies a standard API for the most basic file-system operations: CRUD of modest sized text files and directories, and registering changes. If you're looking to build a folder tree visualizer or manager, or a tool for viewing and editing any text file in a directory tree, :kiss:fs is what you're looking for. For simplicity and supportability, we are keeping the focus narrow so that it can be widely implemented and extended over multiple file system types. For example, use it to run a rename script on an in memory directory for testing purposes and then run the same script on the directories requiring the change. 
+
+There is currently no support for meta-data (timestamps, permissions, etc.), binary content or data streams. So if you're writing a log viewer or an all-in-one file system manager, this may not be the right tool for you and we suggest you try [vinyl](https://github.com/gulpjs/vinyl).
 
 Feedback, questions and contributions always welcome via issues.
 
