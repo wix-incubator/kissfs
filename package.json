@@ -1,6 +1,6 @@
 {
   "name": "kissfs",
-  "version": "0.0.45",
+  "version": "0.0.46",
   "description": "Extensible and reactive file-system library that keeps it simple",
   "main": "dist/src/nodejs.js",
   "browser": "dist/src/browser.js",
@@ -33,7 +33,7 @@
   "homepage": "https://github.com/wix/kissfs#readme",
   "devDependencies": {
     "@types/autobahn": "0.9.33",
-    "@types/bluebird": "3.0.37",
+    "@types/bluebird": "3.5.0",
     "@types/bluebird-retry": "0.0.31",
     "@types/chai": "3.4.35",
     "@types/chai-as-promised": "0.0.29",
@@ -59,7 +59,7 @@
     "mocha-env-reporter": "2.0.4",
     "mocha-loader": "1.1.1",
     "ncp": "2.0.0",
-    "npminject": "1.0.214",
+    "npminject": "1.0.215",
     "rimraf": "2.6.1",
     "sinon": "2.0.0-pre.6",
     "source-map-support": "0.4.11",
