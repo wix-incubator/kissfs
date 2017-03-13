@@ -122,7 +122,7 @@ export class MemoryFileSystem implements FileSystem {
         const pathArr = getPathNodes(fullPath);
         const parent = pathArr.length ? this.getPathTarget(pathArr.slice(0, pathArr.length - 1)) : null;
         if (isMemoryDir(parent) && !this.isIgnored(fullPath)) {
-            const node = find(parent.children, {name: pathArr[pathArr.length - 1]});
+            const node = find(parent.children, {name: last(pathArr)});
             if (isMemoryFile(node)) {
                 parent.children = parent.children.filter(({name}) => name !== node.name);
                 this.events.emit('fileDeleted', {type: 'fileDeleted', fullPath});
@@ -140,7 +140,7 @@ export class MemoryFileSystem implements FileSystem {
         }
         const parent = this.getPathTarget(pathArr.slice(0, pathArr.length - 1));
         if (isMemoryDir(parent) && !this.isIgnored(fullPath)) {
-            const node = find(parent.children, {name: pathArr[pathArr.length - 1]});
+            const node = find(parent.children, {name: last(pathArr)});
             if (isMemoryFile(node)) {
                 return Promise.reject(new Error(`File is not a directory '${fullPath}'`));
             } else if(isMemoryDir(node)){
@@ -184,7 +184,7 @@ export class MemoryFileSystem implements FileSystem {
         const pathArr = getPathNodes(fullPath);
         const parent = (pathArr.length) ? this.getPathTarget(pathArr.slice(0, pathArr.length - 1)) : null;
         if (isMemoryDir(parent)) {
-            const node = find(parent.children, {name: pathArr[pathArr.length - 1]});
+            const node = find(parent.children, {name: last(pathArr)});
             if (isMemoryFile(node)) {
                 return Promise.resolve(node.content);
             } else if (isMemoryDir(node)) {
