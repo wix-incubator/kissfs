@@ -17,8 +17,9 @@ import {
     getIsIgnored
 } from "./utils";
 
+
 export class MemoryFile implements File {
-    public readonly type: 'file' = 'file';
+    public readonly type = 'file';
     constructor(
         public readonly name: string,
         public readonly fullPath: string,
@@ -27,20 +28,22 @@ export class MemoryFile implements File {
 }
 
 export class MemoryDir implements Directory {
-    public readonly type: 'dir' = 'dir';
+    public readonly type = 'dir';
     constructor(
         public readonly name: string,
         public readonly fullPath: string,
-        public children: Array<MemoryFile|MemoryDir> = []
+        public children: Array<MemoryNode> = []
     ) {}
 }
 
-export function isMemoryFile(node?: MemoryDir|MemoryFile|null): node is MemoryFile{
+export type MemoryNode = MemoryDir | MemoryFile;
+
+export function isMemoryFile(node?: MemoryNode | null): node is MemoryFile{
     if (!node) return false;
     return isFile(node) && typeof node.content === 'string';
 }
 
-export function isMemoryDir(node?: MemoryDir|MemoryFile|null): node is MemoryDir{
+export function isMemoryDir(node?: MemoryNode | null): node is MemoryDir{
     if (!node) return false;
     return isDir(node);
 }
@@ -195,7 +198,7 @@ export class MemoryFileSystem implements FileSystem {
         return Promise.resolve(this.parseTree(this.root) as Directory);
     }
 
-    private parseTree(treeRoot: MemoryFile|MemoryDir): MemoryFile|MemoryDir {
+    private parseTree(treeRoot: MemoryNode): MemoryNode {
         const res:any = {
             name: treeRoot.name,
             type: treeRoot.type,

@@ -8,7 +8,7 @@ export interface FileSystemNode{
 }
 
 export interface Directory extends FileSystemNode{
-    children:Array<Directory|File>;
+    children:Array<FileSystemNode>;
     type:'dir';
 }
 
