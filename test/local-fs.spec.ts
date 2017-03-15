@@ -26,6 +26,7 @@ import {LocalFileSystem} from '../src/nodejs';
 describe(`the local filesystem implementation`, () => {
     let dirCleanup, rootPath, testPath;
     let counter = 0;
+    let disposableFileSystem;
 
     before(done => {
         dir({unsafeCleanup:true}, (err, path, cleanupCallback) => {
@@ -37,18 +38,26 @@ describe(`the local filesystem implementation`, () => {
     after(() => {
         try {
             dirCleanup();
+
         } catch(e) {
             console.log('cleanup error', e);
+        }
+    });
+    afterEach(() =>{
+        if (disposableFileSystem)
+        {
+        disposableFileSystem.dispose();
         }
     });
 
     function getFS() {
         testPath = join(rootPath, 'fs_'+(counter++));
         mkdirSync(testPath);
-        return new LocalFileSystem(
+        disposableFileSystem = new LocalFileSystem(
             testPath,
             [ignoredDir, ignoredFile]
-        ).init();
+        );
+        return disposableFileSystem.init();
     }
 
     const eventMatcherOptions: EventsMatcher.Options = {

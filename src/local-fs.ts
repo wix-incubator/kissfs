@@ -36,6 +36,7 @@ export class LocalFileSystem implements FileSystem {
     private watcher: FSWatcher;
     private ignore: Array<string> = [];
     private isIgnored: (path: string) => boolean = (path: string) => false;
+    
 
     constructor(public baseUrl, ignore?: Array<string>) {
         if (ignore) {
@@ -94,6 +95,10 @@ export class LocalFileSystem implements FileSystem {
                 resolve(this);
             });
         });
+    }
+
+    dispose(){
+        this.watcher.close();
     }
 
     saveFile(relPath: string, newContent: string): Promise<void> {
