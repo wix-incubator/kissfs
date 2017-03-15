@@ -49,7 +49,6 @@ describe(`the local filesystem implementation`, () => {
         disposableFileSystem.dispose();
         }
     });
-
     function getFS() {
         testPath = join(rootPath, 'fs_'+(counter++));
         mkdirSync(testPath);
@@ -59,19 +58,15 @@ describe(`the local filesystem implementation`, () => {
         );
         return disposableFileSystem.init();
     }
-
     const eventMatcherOptions: EventsMatcher.Options = {
         interval: 50,
         noExtraEventsGrace: 150,
         timeout: 1500
     };
-
     assertFileSystemContract(getFS, eventMatcherOptions);
-
     describe(`external changes`, () => {
         let fs: FileSystem;
         let matcher: EventsMatcher;
-
         beforeEach(() => {
             matcher = new EventsMatcher(eventMatcherOptions);
             return getFS().then(newFs => {
@@ -80,7 +75,6 @@ describe(`the local filesystem implementation`, () => {
                     'fileCreated', 'fileChanged', 'fileDeleted', 'directoryCreated', 'directoryDeleted');
             });
         });
-
         it(`handles dir creation`, () => {
             const path = join(testPath, dirName);
             mkdirSync(path);
@@ -89,31 +83,26 @@ describe(`the local filesystem implementation`, () => {
                     {children: [], fullPath: dirName, name: dirName, type:'dir'}
                 ]);
         });
-
         it(`handles dir deletion`, () => {
             const path = join(testPath, dirName);
             mkdirSync(path);
             rmdirSync(path);
             return expect(fs.loadDirectoryTree()).to.eventually.have.property('children').eql([]);
         });
-
         it(`handles file creation`, () => {
             const path = join(testPath, fileName);
             writeFileSync(path, content);
             return expect(fs.loadTextFile(fileName)).to.eventually.equals(content);
         });
-
         it(`handles file deletion`, () => {
             const path = join(testPath, fileName);
             writeFileSync(path, content);
             unlinkSync(path);
             return expect(fs.loadTextFile(fileName)).to.eventually.be.rejected;
         });
-
         it(`handles file change`, () => {
             const path = join(testPath, fileName);
             const newContent = `_${content}`;
-
             writeFileSync(path, content);
             return matcher.expect([{type: 'fileCreated', fullPath: fileName, newContent: content}])
                 .then(() => {
@@ -122,19 +111,16 @@ describe(`the local filesystem implementation`, () => {
                 })
                 .then(() => expect(fs.loadTextFile(fileName)).to.eventually.equals(newContent));
         });
-
         it(`ignores events from ignored dir`, () => {
             mkdirSync(join(testPath, ignoredDir))
             return matcher.expect([])
         });
-
         it(`ignores events from ignored file`, () => {
             mkdirSync(join(testPath, dirName))
             return matcher.expect([{type: 'directoryCreated', fullPath: dirName}])
                 .then(() => writeFileSync(join(testPath, ignoredFile), content))
                 .then(() => matcher.expect([]))
         });
-
         it(`loadDirectoryTree() ignores ignored folder and file`, () => {
             const expectedStructure = {
                 name: '',
