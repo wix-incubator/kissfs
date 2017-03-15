@@ -20,7 +20,7 @@ import {
     ignoredFile
 } from './implementation-suite'
 import {EventsMatcher} from '../test-kit/drivers/events-matcher';
-import {FileSystem, pathSeparator} from '../src/api';
+import {FileSystem, pathSeparator, fileSystemEventNames} from '../src/api';
 import {LocalFileSystem} from '../src/nodejs';
 
 describe(`the local filesystem implementation`, () => {
@@ -53,7 +53,6 @@ describe(`the local filesystem implementation`, () => {
 
     const eventMatcherOptions: EventsMatcher.Options = {
         interval: 50,
-        noExtraEventsGrace: 150,
         timeout: 1500
     };
 
@@ -67,8 +66,7 @@ describe(`the local filesystem implementation`, () => {
             matcher = new EventsMatcher(eventMatcherOptions);
             return getFS().then(newFs => {
                 fs = newFs
-                matcher.track(fs.events as any as EventEmitter,
-                    'fileCreated', 'fileChanged', 'fileDeleted', 'directoryCreated', 'directoryDeleted');
+                matcher.track(fs.events as any as EventEmitter, ...fileSystemEventNames);
             });
         });
 
@@ -154,11 +152,26 @@ describe(`the local filesystem implementation`, () => {
             return expect(fs.loadDirectoryTree()).to.eventually.deep.equal(expectedStructure)
         });
 
-        it(`loading existed ignored file - fails`, function() {
+        it(`loading existed ignored file - fails`, () => {
             mkdirSync(join(testPath, dirName))
             writeFileSync(join(testPath, ignoredFile), content)
 
             return expect(fs.loadTextFile(ignoredFile)).to.be.rejectedWith(Error)
+        });
+
+        it(`emits 'unexpectedError' if 'loadTextFile' rejected in watcher 'add' callback`, () => {
+            fs.loadTextFile = path => Promise.reject('go away!');
+            const path = join(testPath, fileName);
+            writeFileSync(path, content);
+            return matcher.expect([{type: 'unexpectedError'}]);
+        });
+
+        it(`emits 'unexpectedError' if 'loadTextFile' rejected in watcher 'change' callback`, () => {
+            const path = join(testPath, fileName);
+            return fs.saveFile(fileName, content)
+                .then(() => fs.loadTextFile = path => Promise.reject('go away!'))
+                .then(() => fs.saveFile(fileName, `_${content}`))
+                .then(() => matcher.expect([{type: 'unexpectedError'}]))
         });
     });
 });

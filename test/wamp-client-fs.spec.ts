@@ -24,7 +24,6 @@ describe(`the wamp client filesystem implementation`, () => {
 
     const eventMatcherOptions: EventsMatcher.Options = {
         interval: 1,
-        noExtraEventsGrace: 10,
         timeout: 30
     };
 

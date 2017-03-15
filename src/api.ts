@@ -1,55 +1,59 @@
 import * as Promise from 'bluebird';
 export const pathSeparator = '/';
 
-export interface FileSystemNode{
+export interface FileSystemNode {
     name:string;
     fullPath:string;
     type:'dir'|'file';
 }
 
-export interface Directory extends FileSystemNode{
+export interface Directory extends FileSystemNode {
     children:Array<FileSystemNode>;
     type:'dir';
 }
 
-export function isDir(node : Directory|File): node is Directory{
+export function isDir(node : Directory|File): node is Directory {
     return node.type === 'dir';
 }
 
-export interface File extends FileSystemNode{
+export interface File extends FileSystemNode {
     type:'file';
 }
 
-export interface FileCreatedEvent{
+export interface UnexpectedErrorEvent {
+    type:'unexpectedError'
+}
+
+export interface FileCreatedEvent {
     type:'fileCreated',
     fullPath:string,
     newContent: string
 }
 
-export interface FileChangedEvent{
+export interface FileChangedEvent {
     type:'fileChanged',
     fullPath:string,
     newContent: string
 }
 
-export interface FileDeletedEvent{
+export interface FileDeletedEvent {
     type:'fileDeleted',
     fullPath:string
 }
 
-export interface DirectoryCreatedEvent{
+export interface DirectoryCreatedEvent {
     type:'directoryCreated',
     fullPath:string,
 }
 
-export interface DirectoryDeletedEvent{
+export interface DirectoryDeletedEvent {
     type:'directoryDeleted',
     fullPath:string
 }
 
 export type ListenerFn<T> = (event: T) => void;
 
-export interface EventAspect<S,O>{
+export interface EventAspect<S,O> {
     listeners(event: S, exists: boolean): Array<ListenerFn<O>> | boolean;
     listeners(event: S): Array<ListenerFn<O>>;
     on(event: S, fn: ListenerFn<O>, context?: any): this;
@@ -60,14 +64,15 @@ export interface EventAspect<S,O>{
     off(event: S, fn?: ListenerFn<O>, context?: any, once?: boolean): this;
 }
 
-export type FileSystemEventName = 'fileCreated' | 'fileChanged' | 'fileDeleted' | 'directoryCreated' | 'directoryDeleted';
-export const fileSystemEventNames: FileSystemEventName[] = ['fileCreated', 'fileChanged', 'fileDeleted', 'directoryCreated', 'directoryDeleted'];
-export type FileSystemEventHandler = FileCreatedEvent | FileChangedEvent | FileDeletedEvent | DirectoryCreatedEvent | DirectoryDeletedEvent;
+export type FileSystemEventName = 'unexpectedError' | 'fileCreated' | 'fileChanged' | 'fileDeleted' | 'directoryCreated' | 'directoryDeleted';
+export const fileSystemEventNames: FileSystemEventName[] = ['unexpectedError', 'fileCreated', 'fileChanged', 'fileDeleted', 'directoryCreated', 'directoryDeleted'];
+export type FileSystemEventHandler = UnexpectedErrorEvent | FileCreatedEvent | FileChangedEvent | FileDeletedEvent | DirectoryCreatedEvent | DirectoryDeletedEvent;
 
 export const fileSystemMethods = ['saveFile', 'deleteFile', 'deleteDirectory', 'loadTextFile', 'loadDirectoryTree', 'ensureDirectory'];
 
 export type EventEmitter =
-    EventAspect<'fileCreated', FileCreatedEvent> &
+    EventAspect<'unexpectedError', UnexpectedErrorEvent> &
+        EventAspect<'fileCreated', FileCreatedEvent> &
         EventAspect<'fileChanged', FileChangedEvent> &
         EventAspect<'fileDeleted', FileDeletedEvent> &
         EventAspect<'directoryCreated', DirectoryCreatedEvent> &

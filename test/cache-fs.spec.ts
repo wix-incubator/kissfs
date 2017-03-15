@@ -14,7 +14,6 @@ describe(`the cache file system implementation`, () => {
         () => Promise.resolve(new CacheFs(new MemoryFileSystem(undefined, [ignoredDir, ignoredFile]))),
         {
             interval: 1,
-            noExtraEventsGrace: 10,
             timeout: 30
         }
     );

@@ -1,7 +1,9 @@
-import {expect} from "chai";
+import {expect} from 'chai';
+import {isEmpty} from 'lodash';
 import * as Promise from 'bluebird';
 import * as retry from 'bluebird-retry';
 import {EventEmitter} from 'eventemitter3';
+import {waitIfThrow} from './waitIfThrow';
 
 export interface EventObj{
     type:string;
@@ -10,8 +12,8 @@ export interface EventObj{
 export namespace EventsMatcher {
     export type Options = {
         interval: number;
-        noExtraEventsGrace: number;
         timeout: number;
+        max_tries?: number;
     };
 }
 export class EventsMatcher{
@@ -31,6 +33,12 @@ export class EventsMatcher{
     }
 
     private checkEvents(events: Array<EventObj>){
+        if (isEmpty(events)) {
+            return waitIfThrow(() => expect(this.events.length, `length of dispathched events to be 0`).to.eql(0))
+                .then(() => {
+                    this.events = [];
+                })
+        }
         try {
             expect(this.events).to.containSubset(events);
             this.events = [];
