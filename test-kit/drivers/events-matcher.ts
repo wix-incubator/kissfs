@@ -16,7 +16,7 @@ export namespace EventsMatcher {
         max_tries?: number;
     };
 }
-export class EventsMatcher{
+export class EventsMatcher {
     private events: Array<EventObj> = [];
     constructor(private options:EventsMatcher.Options){}
 
