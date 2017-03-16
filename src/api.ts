@@ -12,6 +12,10 @@ export interface Directory extends FileSystemNode {
     type:'dir';
 }
 
+export function isFile(node: FileSystemNode): node is File{
+    return node.type === 'file';
+}
+
 export function isDir(node : FileSystemNode): node is Directory {
     return node.type === 'dir';
 }
