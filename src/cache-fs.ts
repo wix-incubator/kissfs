@@ -1,14 +1,14 @@
 import * as Promise from 'bluebird';
 import {
     FileSystem,
+    FileSystemNode,
     Directory,
     File,
     isDir,
     fileSystemMethods
-} from "./api";
-
-import {MemoryFileSystem} from "./memory-fs";
-import {InternalEventsEmitter, makeEventsEmitter} from "./utils";
+} from './api';
+import {MemoryFileSystem} from './memory-fs';
+import {InternalEventsEmitter, makeEventsEmitter} from './utils';
 
 type PathInCache = {
     [prop: string]: boolean
@@ -24,9 +24,76 @@ export class CacheFs implements FileSystem {
     private isTreeCached: boolean = false;
     private pathsInCache: PathInCache = {};
 
-    constructor(private fs: FileSystem) {
+    constructor(private fs: FileSystem, private rescanOnError: boolean = true) {
         this.baseUrl = fs.baseUrl;
         this.cache = new MemoryFileSystem();
+
+        this.fs.events.on('unexpectedError', event => {
+            if (!this.rescanOnError) return this.events.emit('unexpectedError', event);
+
+            this.cache.loadDirectoryTree().then(tree => {
+                let toChange = Object.keys(this.pathsInCache);
+
+                this.isTreeCached = false;
+
+                const left = {};
+                const right = {};
+                const toAdd: FileSystemNode[] = [];
+                const toDelete: FileSystemNode[] = [];
+
+                function parse(a: FileSystemNode[], accumulator) {
+                    a.forEach(child => {
+                        if (isDir(child)) parse(child.children, accumulator);
+                        accumulator[child.fullPath] = child;
+                    })
+                };
+
+                parse(tree.children, left);
+                this.loadDirectoryTree().then(fsTree => {
+
+                    parse(fsTree.children, right);
+
+                    Object.keys(left).forEach(key => {
+                        if (!right[key]) {
+                            toDelete.push(left[key]);
+                            toChange = toChange.filter(path => path !== key);
+                        }
+                        if (left[key].content) toChange.push(left[key]);
+                    });
+
+                    Object.keys(right).forEach(key => {
+                        if (!left[key]) toAdd.push(right[key]);
+                    });
+
+                    toDelete.forEach(node => {
+                        this.emit(
+                            `${isDir(node) ? 'directory' : 'file'}Deleted`,
+                            {fullPath: node.fullPath}
+                        );
+                    });
+
+                    toAdd.forEach(node => {
+                        if (isDir(node)) {
+                            this.emit(
+                                'directoryCreated',
+                                {fullPath: node.fullPath}
+                            );
+                            return;
+                        }
+                        this.loadTextFile(node.fullPath).then(file => {
+                            this.emit('fileCreated', {
+                                fullPath: node.fullPath,
+                                newContent: file
+                            });
+                        });
+                    });
+
+                    toChange.forEach(fullPath => this.loadTextFile(fullPath).then(newContent => {
+                        this.emit('fileChanged', {fullPath, newContent});
+                    }))
+                })
+            })
+        });
 
         this.fs.events.on('fileCreated', event => {
             const {fullPath, newContent} = event;
@@ -97,7 +164,13 @@ export class CacheFs implements FileSystem {
         });
     }
 
+    private emit(type, data) {
+        this.events.emit(type, {type, ...data});
+    }
+
     private cacheTree(): Promise<FileSystem> {
+        this.cache = new MemoryFileSystem();
+        this.pathsInCache = {};
         return this.fs.loadDirectoryTree()
             .then(tree => this.fill(tree))
     }
