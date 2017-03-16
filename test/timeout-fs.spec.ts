@@ -60,36 +60,3 @@ describe('the timeout file system imeplementation', ()=>{
 
     });
 });
-
-
-
-
-
-
-    // describe(`delayed methods`, () => {
-    //     let fs: FileSystem;
-    //     let startTimestamp: number;
-    //     const dirName = 'dir';
-    //     const fileName = 'foo.txt';
-    //     const content = 'content';
-
-    //     beforeEach(() => {
-    //         startTimestamp = Date.now();
-    //         return Promise.resolve(new SlowFs(delay)).then(newFs => fs = newFs);
-    //     });
-
-    //     it(`delay the dir creation, reading tree and deleting`, () => {
-    //         return fs.ensureDirectory(dirName)
-    //             .then(() => fs.loadDirectoryTree())
-    //             .then(() => fs.deleteDirectory(dirName))
-    //             .then(() => expect(Date.now() - startTimestamp).to.be.at.least(delay * 3 * accuracyFactor))
-    //     });
-
-    //     it(`delay the file saving, reading and deleting`, () => {
-    //         return fs.saveFile(fileName, content)
-    //             .then(() => fs.loadTextFile(fileName))
-    //             .then(() => fs.deleteFile(fileName))
-    //             .then(() => expect(Date.now() - startTimestamp).to.be.at.least(delay * 3 * accuracyFactor))
-    //     });
-    // });
-
