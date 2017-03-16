@@ -2,26 +2,38 @@ import * as Promise from 'bluebird';
 export const pathSeparator = '/';
 
 export interface FileSystemNode {
-    name:string;
-    fullPath:string;
     type:'dir'|'file';
+    name:string,
+    fullPath:string,
 }
 
-export interface Directory extends FileSystemNode {
-    children:Array<FileSystemNode>;
-    type:'dir';
+export class Directory implements FileSystemNode {
+    public type:'dir' = 'dir';
+
+    constructor(
+        public name:string,
+        public fullPath:string,
+        public children:Array<FileSystemNode> = []
+    ) {}
 }
 
-export function isFile(node: FileSystemNode): node is File{
+export class File implements FileSystemNode {
+    public type: 'file' = 'file';
+    constructor(
+        public name:string,
+        public fullPath:string,
+        public content?: string
+    ) {}
+}
+
+export function isFile(node?: FileSystemNode | null): node is File{
+    if (!node) return false;
     return node.type === 'file';
 }
 
-export function isDir(node : FileSystemNode): node is Directory {
+export function isDir(node?: FileSystemNode | null): node is Directory {
+    if (!node) return false;
     return node.type === 'dir';
-}
-
-export interface File extends FileSystemNode {
-    type:'file';
 }
 
 export interface UnexpectedErrorEvent {
