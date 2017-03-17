@@ -12,7 +12,7 @@ export interface EventObj{
 export namespace EventsMatcher {
     export type Options = {
         interval: number;
-        timeout: number;
+        timeout?: number;
         max_tries?: number;
     };
 }

@@ -44,9 +44,8 @@ describe(`the local filesystem implementation`, () => {
         }
     });
     afterEach(() =>{
-        if (disposableFileSystem)
-        {
-        disposableFileSystem.dispose();
+        if (disposableFileSystem) {
+            disposableFileSystem.dispose();
         }
     });
     function getFS() {
@@ -58,10 +57,12 @@ describe(`the local filesystem implementation`, () => {
         );
         return disposableFileSystem.init();
     }
+
     const eventMatcherOptions: EventsMatcher.Options = {
-        interval: 50,
-        timeout: 1500
+        interval: 100,
+        max_tries: 20
     };
+
     assertFileSystemContract(getFS, eventMatcherOptions);
     describe(`external changes`, () => {
         let fs: FileSystem;
