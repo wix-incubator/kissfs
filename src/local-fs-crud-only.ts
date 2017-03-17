@@ -88,7 +88,7 @@ export class LocalFileSystemCrudOnly implements FileSystem {
             .then(stats => {
                 if (stats) {
                     if (stats.isDirectory()) {
-                        return recursive ? remove(fullPath): rmdir(fullPath);
+                        return recursive ? remove(fullPath) : rmdir(fullPath);
                     } else {
                         throw new Error(`not a directory: ${relPath}`);
                     }
