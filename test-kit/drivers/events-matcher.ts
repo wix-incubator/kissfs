@@ -36,8 +36,13 @@ export class EventsMatcher {
 
     private checkEvents(events: Array<EventObj>){
         if (isEmpty(events)) {
-            return waitIfThrow(() => expect(this.events.length, `length of dispathched events to be 0`).to.eql(0))
+            return waitIfThrow(() => expect(
+                    this.events.length,
+                    `${this.events} to be empty`
+                ).to.eql(0)
+            )
         }
+
         try {
             expect(this.events).to.containSubset(events);
             return Promise.resolve();
