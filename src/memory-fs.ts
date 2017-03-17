@@ -8,22 +8,23 @@ import {
     getIsIgnored
 } from "./utils";
 
-type FakeNode = FakeDir|FakeFile;
+export type FakeNode = FakeDir|FakeFile;
 
-class FakeDir {
+export class FakeDir {
     readonly type = 'dir';
     constructor(public name: string, public fullPath: string, public children: {[name: string]: FakeNode }){}
 }
 
-class FakeFile {
+export class FakeFile {
     readonly type = 'file';
     constructor(public name: string, public fullPath: string, public content: string){}
 }
 
-function isFakeDir(node : FakeNode|null): node is FakeDir{
+export function isFakeDir(node : FakeNode|null): node is FakeDir{
     return node != null && node.type === 'dir';
 }
-function isFakeFile(node : FakeNode|null): node is FakeFile{
+
+export function isFakeFile(node : FakeNode|null): node is FakeFile{
     return node != null && node.type === 'file';
 }
 
@@ -32,7 +33,7 @@ function isFakeFile(node : FakeNode|null): node is FakeFile{
  */
 export class MemoryFileSystem implements FileSystem {
     public readonly events: InternalEventsEmitter = makeEventsEmitter();
-    private readonly root = new FakeDir('', '', {});
+    protected readonly root = new FakeDir('', '', {});
     private ignore: Array<string> = [];
     private isIgnored: (path: string) => boolean = (path: string) => false;
 
@@ -43,7 +44,7 @@ export class MemoryFileSystem implements FileSystem {
         };
     }
 
-    private getPathTarget(pathArr: string[]): FakeDir | null {
+    protected getPathTarget(pathArr: string[]): FakeDir | null {
         var current: FakeDir = this.root;
         while (pathArr.length ) {
             const key = pathArr.shift();
@@ -172,7 +173,7 @@ export class MemoryFileSystem implements FileSystem {
         return Promise.resolve(this.parseTree(this.root) as Directory);
     }
 
-    private parseTree(treeRoot : FakeNode): FileSystemNode {
+    protected parseTree(treeRoot : FakeNode): FileSystemNode {
         const res:any = {
             name: treeRoot.name,
             type: treeRoot.type,
