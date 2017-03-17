@@ -38,7 +38,7 @@ export class EventsMatcher {
         if (isEmpty(events)) {
             return waitIfThrow(() => expect(
                     this.events.length,
-                    `${this.events} to be empty`
+                    `${JSON.stringify(this.events)} to be empty`
                 ).to.eql(0)
             )
         }
