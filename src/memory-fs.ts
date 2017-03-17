@@ -117,7 +117,7 @@ export class MemoryFileSystem implements FileSystem {
                     return Promise.reject(new Error(`Directory is not empty '${fullPath}'`));
                 } else {
                     parent.children = parent.children.filter(({name}) => name !== node.name);
-                    this.events.emit('directoryDeleted', {type: 'directoryDeleted', fullPath});
+                    this.recursiveEmitDeletion(node)
                 }
             }
         }
@@ -177,5 +177,13 @@ export class MemoryFileSystem implements FileSystem {
             res.children = treeRoot.children.map(this.parseTree, this);
         }
         return res;
+    }
+
+    private recursiveEmitDeletion(node: Directory) {
+        this.events.emit('directoryDeleted', {type: 'directoryDeleted', fullPath: node.fullPath});
+        node.children.forEach(child => {
+            if (isDir(child)) this.recursiveEmitDeletion(child)
+            this.events.emit('fileDeleted', {type: 'fileDeleted', fullPath: child.fullPath});
+        })
     }
 }
