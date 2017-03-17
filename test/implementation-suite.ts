@@ -85,7 +85,10 @@ export function assertFileSystemContract(fsProvider: () => Promise<FileSystem>, 
 
         it(`saving a new file (and a new directory to hold it)`, function() {
             return fs.saveFile(`${dirName}/${fileName}`, content)
-                .then(() => matcher.expect([{type: 'directoryCreated', fullPath:dirName}, {type: 'fileCreated', fullPath:`${dirName}/${fileName}`, newContent:content}]))
+                .then(() => matcher.expect([
+                    {type: 'directoryCreated', fullPath:dirName},
+                    {type: 'fileCreated', fullPath:`${dirName}/${fileName}`, newContent:content}
+                ]))
                 .then(() => expect(fs.loadDirectoryTree()).to.become({
                     type:'dir', name:'', fullPath:'', children:[
                         {type:'dir', name:dirName, fullPath:dirName, children:[
