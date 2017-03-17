@@ -29,19 +29,17 @@ export class EventsMatcher {
 
     expect(events: Array<EventObj>) {
         return retry(this.checkEvents.bind(this, events), this.options)
-            .catch(e => {throw e.failure;}); // restore original error from bluebird-retry
+            .catch(e => {throw e.failure;}) // restore original error from bluebird-retry
+            .finally(() => this.events = [])
+
     }
 
     private checkEvents(events: Array<EventObj>){
         if (isEmpty(events)) {
             return waitIfThrow(() => expect(this.events.length, `length of dispathched events to be 0`).to.eql(0))
-                .then(() => {
-                    this.events = [];
-                })
         }
         try {
             expect(this.events).to.containSubset(events);
-            this.events = [];
             return Promise.resolve();
         } catch(e){
             return Promise.reject(e);
