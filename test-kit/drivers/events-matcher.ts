@@ -22,6 +22,7 @@ export class EventsMatcher {
 
     track(emitter: EventEmitter, ...eventNames: Array<string>) {
         eventNames.forEach(eventName => emitter.on(eventName, (event: EventObj) => {
+            console.log('emitted', eventName)
             expect(event.type, `type of event dispatched as ${eventName}`).to.eql(eventName);
             this.events.push(event);
         }))
