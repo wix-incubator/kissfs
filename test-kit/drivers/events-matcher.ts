@@ -1,7 +1,9 @@
-import {expect} from "chai";
+import {expect} from 'chai';
+import {isEmpty} from 'lodash';
 import * as Promise from 'bluebird';
 import * as retry from 'bluebird-retry';
 import {EventEmitter} from 'eventemitter3';
+import {waitIfThrow} from './waitIfThrow';
 
 export interface EventObj{
     type:string;
@@ -10,16 +12,17 @@ export interface EventObj{
 export namespace EventsMatcher {
     export type Options = {
         interval: number;
-        noExtraEventsGrace: number;
-        timeout: number;
+        timeout?: number;
+        max_tries?: number;
     };
 }
-export class EventsMatcher{
+export class EventsMatcher {
     private events: Array<EventObj> = [];
     constructor(private options:EventsMatcher.Options){}
 
     track(emitter: EventEmitter, ...eventNames: Array<string>) {
         eventNames.forEach(eventName => emitter.on(eventName, (event: EventObj) => {
+            console.log('emitted', eventName)
             expect(event.type, `type of event dispatched as ${eventName}`).to.eql(eventName);
             this.events.push(event);
         }))
@@ -27,13 +30,22 @@ export class EventsMatcher{
 
     expect(events: Array<EventObj>) {
         return retry(this.checkEvents.bind(this, events), this.options)
-            .catch(e => {throw e.failure;}); // restore original error from bluebird-retry
+            .catch(e => {throw e.failure;}) // restore original error from bluebird-retry
+            .finally(() => this.events = [])
+
     }
 
     private checkEvents(events: Array<EventObj>){
+        if (isEmpty(events)) {
+            return waitIfThrow(() => expect(
+                    this.events.length,
+                    `${JSON.stringify(this.events)} to be empty`
+                ).to.eql(0)
+            )
+        }
+
         try {
             expect(this.events).to.containSubset(events);
-            this.events = [];
             return Promise.resolve();
         } catch(e){
             return Promise.reject(e);

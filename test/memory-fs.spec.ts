@@ -7,6 +7,6 @@ import {FileSystem} from '../src/api';
 describe('the in memory implementation', function() {
     assertFileSystemContract(
         () => Promise.resolve(new MemoryFileSystem(undefined, [ignoredDir, ignoredFile])),
-        {interval:1, noExtraEventsGrace:10, timeout:30}
+        {interval:1, timeout:30}
     );
 });

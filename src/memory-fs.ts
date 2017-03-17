@@ -1,6 +1,15 @@
 import * as Promise from 'bluebird';
-import {last, map} from 'lodash';
-import {FileSystem, Directory, pathSeparator, FileSystemNode} from "./api";
+import {last, map, find} from 'lodash';
+import {
+    FileSystem,
+    Directory,
+    File,
+    pathSeparator,
+    FileSystemNode,
+    isDir,
+    isFile
+} from "./api";
+
 import {
     InternalEventsEmitter,
     getPathNodes,
@@ -8,47 +17,26 @@ import {
     getIsIgnored
 } from "./utils";
 
-type FakeNode = FakeDir|FakeFile;
-
-class FakeDir {
-    readonly type = 'dir';
-    constructor(public name: string, public fullPath: string, public children: {[name: string]: FakeNode }){}
-}
-
-class FakeFile {
-    readonly type = 'file';
-    constructor(public name: string, public fullPath: string, public content: string){}
-}
-
-function isFakeDir(node : FakeNode|null): node is FakeDir{
-    return node != null && node.type === 'dir';
-}
-function isFakeFile(node : FakeNode|null): node is FakeFile{
-    return node != null && node.type === 'file';
-}
-
-/**
- * naive in-memory implementation of the FileSystem interface
- */
 export class MemoryFileSystem implements FileSystem {
     public readonly events: InternalEventsEmitter = makeEventsEmitter();
-    private readonly root = new FakeDir('', '', {});
+    private readonly root = new Directory('', '');
     private ignore: Array<string> = [];
     private isIgnored: (path: string) => boolean = (path: string) => false;
 
-    constructor(public baseUrl = 'http://fake', ignore?: Array<string>) {
+    constructor(public baseUrl = 'http://memory', ignore?: Array<string>) {
         this.baseUrl += '/';
         if (ignore) {
             this.isIgnored = getIsIgnored(ignore)
         };
     }
 
-    private getPathTarget(pathArr: string[]): FakeDir | null {
-        var current: FakeDir = this.root;
-        while (pathArr.length ) {
-            const key = pathArr.shift();
-            if (key && current.children && current.children[key] && isFakeDir(current.children[key])) {
-                current = <FakeDir>current.children[key];
+    private getPathTarget(pathArr: string[]): Directory | null {
+        var current: Directory = this.root;
+        while (pathArr.length) {
+            const name = pathArr.shift();
+            if (name && current.children) {
+                const node = find(current.children, {name})
+                current = isDir(node) ? node : current;
             } else {
                 return null;
             }
@@ -68,20 +56,24 @@ export class MemoryFileSystem implements FileSystem {
             return this.ensureDirectory(parentPath)
                 .then(()=> {
                     const parent = this.getPathTarget(pathArr);
-                    if(parent){
+                    if (parent) {
                         let type;
-                        const existingChild = parent.children[name];
-                        if (isFakeDir(existingChild)){
+                        const existingChild = find(parent.children, {name});
+                        if (isDir(existingChild)) {
                             return Promise.reject(new Error(`file save error for path '${fullPath}'`));
-                        } else if (isFakeFile(existingChild)){
+                        } else if (isFile(existingChild)) {
                             if (existingChild.content === newContent){
                                 return Promise.resolve();
                             }
                             type = 'fileChanged';
+                            parent.children = parent.children.map(
+                                file => file.name === name ? new File(name, fullPath, newContent) : file
+                            );
                         } else {
                             type = 'fileCreated';
+                            parent.children.push(new File(name, fullPath, newContent))
                         }
-                        parent.children[name] = new FakeFile(name, fullPath, newContent);
+
                         this.events.emit(type, {type, fullPath, newContent});
                         return Promise.resolve();
                     } else {
@@ -97,13 +89,13 @@ export class MemoryFileSystem implements FileSystem {
 
     deleteFile(fullPath:string):Promise<void> {
         const pathArr = getPathNodes(fullPath);
-        const parent = (pathArr.length)? this.getPathTarget(pathArr.slice(0, pathArr.length - 1)) : null;
-        if (isFakeDir(parent) && !this.isIgnored(fullPath)) {
-            const node = parent.children[pathArr[pathArr.length - 1]];
-            if (isFakeFile(node)) {
-                delete parent.children[node.name];
+        const parent = pathArr.length ? this.getPathTarget(pathArr.slice(0, pathArr.length - 1)) : null;
+        if (isDir(parent) && !this.isIgnored(fullPath)) {
+            const node = find(parent.children, {name: last(pathArr)});
+            if (isFile(node)) {
+                parent.children = parent.children.filter(({name}) => name !== node.name);
                 this.events.emit('fileDeleted', {type: 'fileDeleted', fullPath});
-            } else if (isFakeDir(node)){
+            } else if (isDir(node)){
                 return Promise.reject(new Error(`Directory is not a file '${fullPath}'`));
             }
         }
@@ -116,16 +108,16 @@ export class MemoryFileSystem implements FileSystem {
             return Promise.reject(new Error(`Can't delete root directory`));
         }
         const parent = this.getPathTarget(pathArr.slice(0, pathArr.length - 1));
-        if (isFakeDir(parent) && !this.isIgnored(fullPath)) {
-            const node = parent.children[pathArr[pathArr.length - 1]];
-            if (isFakeFile(node)) {
+        if (isDir(parent) && !this.isIgnored(fullPath)) {
+            const node = find(parent.children, {name: last(pathArr)});
+            if (isFile(node)) {
                 return Promise.reject(new Error(`File is not a directory '${fullPath}'`));
-            } else if(node){
-                if (!recursive && Object.keys(node.children).length) {
+            } else if(isDir(node)){
+                if (!recursive && node.children.length) {
                     return Promise.reject(new Error(`Directory is not empty '${fullPath}'`));
                 } else {
-                    delete parent.children[node.name];
-                    this.events.emit('directoryDeleted', {type: 'directoryDeleted', fullPath});
+                    parent.children = parent.children.filter(({name}) => name !== node.name);
+                    this.recursiveEmitDeletion(node)
                 }
             }
         }
@@ -136,15 +128,18 @@ export class MemoryFileSystem implements FileSystem {
         if (this.isIgnored(fullPath)) {
             return Promise.reject(new Error(`Unable to read and write ignored path: '${fullPath}'`));
         }
-        return Promise.reduce(getPathNodes(fullPath), (current, dirName, _i, _l) => {
-            const next = current.children[dirName];
-            if (isFakeDir(next)) {
+        return Promise.reduce(getPathNodes(fullPath), (current, name) => {
+            const next = find(current.children, {name});
+            if (isDir(next)) {
                 return next;
-            } else if (isFakeFile(next)) {
+            } else if (isFile(next)) {
                 return Promise.reject(new Error(`File is not a directory ${next.fullPath}`));
             } else {
-                const newDir = new FakeDir(dirName, current.fullPath ? [current.fullPath, dirName].join(pathSeparator) : dirName, {});
-                current.children[dirName] = newDir;
+                const newDir = new Directory(
+                    name,
+                    current.fullPath ? [current.fullPath, name].join(pathSeparator) : name,
+                );
+                current.children.push(newDir)
                 this.events.emit('directoryCreated', {type:'directoryCreated', fullPath:newDir.fullPath});
                 return newDir;
             }
@@ -157,11 +152,11 @@ export class MemoryFileSystem implements FileSystem {
         }
         const pathArr = getPathNodes(fullPath);
         const parent = (pathArr.length) ? this.getPathTarget(pathArr.slice(0, pathArr.length - 1)) : null;
-        if (isFakeDir(parent)) {
-            const node = parent.children[pathArr[pathArr.length - 1]];
-            if (isFakeFile(node)) {
-                return Promise.resolve(node.content);
-            } else if (isFakeDir(node)) {
+        if (isDir(parent)) {
+            const node = find(parent.children, {name: last(pathArr)});
+            if (isFile(node)) {
+                return Promise.resolve(node.content || '');
+            } else if (isDir(node)) {
                 return Promise.reject(new Error(`File is a directory ${fullPath}`));
             }
         }
@@ -172,15 +167,23 @@ export class MemoryFileSystem implements FileSystem {
         return Promise.resolve(this.parseTree(this.root) as Directory);
     }
 
-    private parseTree(treeRoot : FakeNode): FileSystemNode {
+    private parseTree(treeRoot: FileSystemNode): FileSystemNode {
         const res:any = {
             name: treeRoot.name,
             type: treeRoot.type,
             fullPath: treeRoot.fullPath
         };
-        if (isFakeDir(treeRoot)) {
-            res.children = map(treeRoot.children, child => this.parseTree(child));
+        if (isDir(treeRoot)) {
+            res.children = treeRoot.children.map(this.parseTree, this);
         }
         return res;
+    }
+
+    private recursiveEmitDeletion(node: Directory) {
+        this.events.emit('directoryDeleted', {type: 'directoryDeleted', fullPath: node.fullPath});
+        node.children.forEach(child => {
+            if (isDir(child)) this.recursiveEmitDeletion(child)
+            this.events.emit('fileDeleted', {type: 'fileDeleted', fullPath: child.fullPath});
+        })
     }
 }
