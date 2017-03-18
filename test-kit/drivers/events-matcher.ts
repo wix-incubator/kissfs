@@ -25,16 +25,24 @@ export class EventsMatcher{
         }))
     }
 
-    expect(events: Array<EventObj>) {
+
+    private expectEvents(events: Array<EventObj>):Promise<void>{
         if (events.length) {
             return retry(this.checkEvents.bind(this, events), this.options)
+                .then(()=>undefined)
                 .catch(e => {
                     throw e.failure;
-                }); // restore original error from bluebird-retry
+                });
         } else {
-            return Promise.delay(this.options.timeout)
-                .then(()=>expect(this.events).to.eql([]));
+            expect(this.events).to.eql([]);
+            return Promise.resolve();
         }
+    }
+
+    expect(events: Array<EventObj>):Promise<void>{
+        return this.expectEvents(events)
+                .delay(this.options.noExtraEventsGrace)
+                .then(()=>{expect(this.events, 'no further events after matching').to.eql([]);});
     }
 
     private checkEvents(events: Array<EventObj>){
