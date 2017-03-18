@@ -26,8 +26,15 @@ export class EventsMatcher{
     }
 
     expect(events: Array<EventObj>) {
-        return retry(this.checkEvents.bind(this, events), this.options)
-            .catch(e => {throw e.failure;}); // restore original error from bluebird-retry
+        if (events.length) {
+            return retry(this.checkEvents.bind(this, events), this.options)
+                .catch(e => {
+                    throw e.failure;
+                }); // restore original error from bluebird-retry
+        } else {
+            return Promise.delay(this.options.timeout)
+                .then(()=>expect(this.events).to.eql([]));
+        }
     }
 
     private checkEvents(events: Array<EventObj>){
