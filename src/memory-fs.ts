@@ -65,10 +65,8 @@ export class MemoryFileSystem implements FileSystem {
                             if (existingChild.content === newContent){
                                 return Promise.resolve();
                             }
+                            existingChild.content = newContent
                             type = 'fileChanged';
-                            parent.children = parent.children.map(
-                                file => file.name === name ? new File(name, fullPath, newContent) : file
-                            );
                         } else {
                             type = 'fileCreated';
                             parent.children.push(new File(name, fullPath, newContent))
