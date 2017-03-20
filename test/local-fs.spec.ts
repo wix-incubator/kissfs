@@ -10,7 +10,6 @@ import {join} from 'path';
 import {expect} from 'chai';
 import * as Promise from 'bluebird';
 import {EventEmitter} from 'eventemitter3';
-
 import {
     assertFileSystemContract,
     dirName,
@@ -20,7 +19,7 @@ import {
     ignoredFile
 } from './implementation-suite'
 import {EventsMatcher} from '../test-kit/drivers/events-matcher';
-import {FileSystem, pathSeparator} from '../src/api';
+import {FileSystem, pathSeparator, fileSystemEventNames} from '../src/api';
 import {LocalFileSystem} from '../src/nodejs';
 
 describe(`the local filesystem implementation`, () => {
@@ -44,9 +43,8 @@ describe(`the local filesystem implementation`, () => {
         }
     });
     afterEach(() =>{
-        if (disposableFileSystem)
-        {
-        disposableFileSystem.dispose();
+        if (disposableFileSystem) {
+            disposableFileSystem.dispose();
         }
     });
     function getFS() {
@@ -71,8 +69,7 @@ describe(`the local filesystem implementation`, () => {
             matcher = new EventsMatcher(eventMatcherOptions);
             return getFS().then(newFs => {
                 fs = newFs
-                matcher.track(fs.events as any as EventEmitter,
-                    'fileCreated', 'fileChanged', 'fileDeleted', 'directoryCreated', 'directoryDeleted');
+                matcher.track(fs.events as any as EventEmitter, ...fileSystemEventNames);
             });
         });
 
