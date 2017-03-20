@@ -31,7 +31,7 @@ export class MemoryFileSystem implements FileSystem {
     }
 
     private getPathTarget(pathArr: string[]): Directory | null {
-        var current: Directory = this.root;
+        let current: Directory = this.root;
         while (pathArr.length) {
             const name = pathArr.shift();
             if (name && current.children) {
