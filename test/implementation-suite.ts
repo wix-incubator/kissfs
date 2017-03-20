@@ -153,13 +153,17 @@ export function assertFileSystemContract(fsProvider: () => Promise<FileSystem>, 
         });
 
         it(`deleting non-empty directory with recursive flag`, function() {
-            return fs.saveFile(`${dirName}/_${dirName}/${fileName}`, content)
+            const filePath = `${dirName}/_${dirName}/${fileName}`;
+            return fs.saveFile(filePath, content)
                 .then(() => matcher.expect([
                     {type: 'directoryCreated', fullPath:dirName},
                     {type: 'directoryCreated', fullPath:`${dirName}/_${dirName}`},
-                    {type: 'fileCreated', fullPath:`${dirName}/_${dirName}/${fileName}`, newContent:content}]))
+                    {type: 'fileCreated', fullPath:filePath, newContent:content}]))
                 .then(() => fs.deleteDirectory(dirName, true))
-                .then(() => matcher.expect([{type: 'directoryDeleted', fullPath:dirName}]))
+                .then(() => matcher.expect([
+                    {type: 'directoryDeleted', fullPath:dirName},
+                    {type: 'fileDeleted', fullPath:filePath}
+                ]))
                 .then(() => expect(fs.loadDirectoryTree()).to.eventually.have.property('children').eql([]))
                 .then(() => matcher.expect([]));
         });

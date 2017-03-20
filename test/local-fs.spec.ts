@@ -148,7 +148,13 @@ describe(`the local filesystem implementation`, () => {
             mkdirSync(join(testPath, dirName))
             return expect(fs.loadDirectoryTree()).to.eventually.deep.equal(expectedStructure)
         });
+        it(`ignores events in dot-folders and files`, () => {
+            mkdirSync(join(testPath, ignoredDir));
+            mkdirSync(join(testPath, ignoredDir, `.${dirName}`));
+            writeFileSync(join(testPath, ignoredDir, `.${dirName}`, `.${fileName}`), content);
 
+            return matcher.expect([]);
+        });
         it(`loading existed ignored file - fails`, function() {
             mkdirSync(join(testPath, dirName))
             writeFileSync(join(testPath, ignoredFile), content)
