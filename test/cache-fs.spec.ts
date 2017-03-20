@@ -71,32 +71,46 @@ describe(`the cache file system implementation`, () => {
                 .then(() => fs.loadDirectoryTree())
                 .then(() => expect(Date.now() - startTimestamp).to.be.lessThan(timeout * 2))
         })
+    });
+
+    describe(`unexpected error behaviour`, () => {
+        let fs: FileSystem;
+        let original: FileSystem;
+        let matcher: EventsMatcher;
+
+        beforeEach(() => {
+            original = new MemoryFileSystem();
+            fs = new CacheFs(original);
+            matcher = new EventsMatcher({
+                interval: 2,
+                noExtraEventsGrace: 150,
+                timeout: 300
+            });
+            matcher.track(fs.events as any as EventEmitter, ...fileSystemEventNames)
+        });
 
         it('emits `fileCreated` if there is not cached file after error', () => {
-            slow.events.removeAllListeners('fileCreated')
-            return slow.saveFile(fileName, content)
+            original.events.removeAllListeners('fileCreated')
+            return original.saveFile(fileName, content)
                 .then(() => matcher.expect([]))
-                .then(() => (slow.events as InternalEventsEmitter).emit('unexpectedError', {type: 'unexpectedError'}))
-                .delay(timeout * 3)
+                .then(() => (original.events as InternalEventsEmitter).emit('unexpectedError', {type: 'unexpectedError'}))
                 .then(() => matcher.expect([{type: 'fileCreated', fullPath: fileName, newContent: content}]))
         })
 
         it('emits `directoryCreated` if there is not cached dir after error', () => {
-            slow.events.removeAllListeners('directoryCreated');
-            return slow.ensureDirectory(dirName)
+            original.events.removeAllListeners('directoryCreated');
+            return original.ensureDirectory(dirName)
                 .then(() => matcher.expect([]))
-                .then(() => (slow.events as InternalEventsEmitter).emit('unexpectedError', {type: 'unexpectedError'}))
-                .delay(timeout * 3)
+                .then(() => (original.events as InternalEventsEmitter).emit('unexpectedError', {type: 'unexpectedError'}))
                 .then(() => matcher.expect([{type: 'directoryCreated', fullPath: dirName}]))
         })
 
         it('emits `fileDeleted` if there is cached file and no real file after error', () => {
             return fs.saveFile(fileName, content).then(() => {
-                slow.events.removeAllListeners('fileDeleted');
-                return slow.deleteFile(fileName)
+                original.events.removeAllListeners('fileDeleted');
+                return original.deleteFile(fileName)
                     .then(() => matcher.expect([{type: 'fileCreated', fullPath: fileName}]))
-                    .then(() => (slow.events as InternalEventsEmitter).emit('unexpectedError', {type: 'unexpectedError'}))
-                    .delay(timeout * 3)
+                    .then(() => (original.events as InternalEventsEmitter).emit('unexpectedError', {type: 'unexpectedError'}))
                     .then(() => matcher.expect([{type: 'fileDeleted', fullPath: fileName}]))
 
             })
@@ -104,20 +118,19 @@ describe(`the cache file system implementation`, () => {
 
         it('emits `directoryDeleted` if there is cached dir and no real dir after error', () => {
             return fs.ensureDirectory(dirName).then(() => {
-                slow.events.removeAllListeners('directoryDeleted');
-                return slow.deleteDirectory(dirName)
+                original.events.removeAllListeners('directoryDeleted');
+                return original.deleteDirectory(dirName)
                     .then(() => matcher.expect([{type: 'directoryCreated', fullPath: dirName}]))
-                    .then(() => (slow.events as InternalEventsEmitter).emit('unexpectedError', {type: 'unexpectedError'}))
-                    .delay(timeout * 3)
+                    .then(() => (original.events as InternalEventsEmitter).emit('unexpectedError', {type: 'unexpectedError'}))
                     .then(() => matcher.expect([{type: 'directoryDeleted', fullPath: dirName}]))
             })
         })
 
         it('emits `unexpectedError` if cache created with `rescanOnError = false` flag', () => {
-            const fs = new CacheFs(slow, false);
+            const fs = new CacheFs(original, false);
             const matcher = new EventsMatcher(eventMatcherOptions);
             matcher.track(fs.events as any as EventEmitter, ...fileSystemEventNames);
-            (slow.events as InternalEventsEmitter).emit('unexpectedError', {type: 'unexpectedError'});
+            (original.events as InternalEventsEmitter).emit('unexpectedError', {type: 'unexpectedError'});
             return matcher.expect([{type: 'unexpectedError'}]);
         })
     });

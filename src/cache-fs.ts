@@ -169,14 +169,14 @@ export class CacheFs implements FileSystem {
                             'directoryCreated',
                             {fullPath: node.fullPath}
                         );
-                        return;
-                    }
-                    this.loadTextFile(node.fullPath).then(newContent => {
-                        this.emit('fileCreated', {
-                            fullPath: node.fullPath,
-                            newContent
+                    } else {
+                        this.loadTextFile(node.fullPath).then(newContent => {
+                            this.emit('fileCreated', {
+                                fullPath: node.fullPath,
+                                newContent
+                            });
                         });
-                    });
+                    }
                 });
 
                 toChange.forEach(fullPath => this.loadTextFile(fullPath).then(newContent => {

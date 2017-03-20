@@ -9,7 +9,13 @@ import {LocalFileSystemCrudOnly} from './local-fs-crud-only';
 export class LocalFileSystem extends LocalFileSystemCrudOnly implements FileSystem {
     private watcher: FSWatcher;
 
-    constructor(public baseUrl, ignore?: Array<string>) {
+    constructor(
+        public baseUrl,
+        ignore?: Array<string>,
+        private retrySettings: retry.Options = {
+            interval: 100,
+            max_tries: 3
+        }) {
         super(baseUrl, ignore)
     }
 
@@ -26,10 +32,6 @@ export class LocalFileSystem extends LocalFileSystemCrudOnly implements FileSyst
 
         return new Promise<LocalFileSystem>(resolve => {
             this.watcher.once('ready', () => {
-                const retrySettings = {
-                    interval: 100,
-                    max_tries: 3
-                };
 
                 this.watcher.on('addDir', (relPath:string, stats:Stats)=> {
                         if (relPath) { // ignore event of root folder creation
@@ -48,7 +50,7 @@ export class LocalFileSystem extends LocalFileSystemCrudOnly implements FileSyst
                                 fullPath: relPath.split(path.sep).join(pathSeparator),
                                 newContent: content
                             })),
-                        retrySettings
+                        this.retrySettings
                     ).catch(() => this.events.emit('unexpectedError', {type: 'unexpectedError'}));
                 });
 
@@ -60,7 +62,7 @@ export class LocalFileSystem extends LocalFileSystemCrudOnly implements FileSyst
                                 fullPath: relPath.split(path.sep).join(pathSeparator),
                                 newContent: content
                             })),
-                        retrySettings
+                        this.retrySettings
                     ).catch(() => this.events.emit('unexpectedError', {type: 'unexpectedError'}));
                 });
 
