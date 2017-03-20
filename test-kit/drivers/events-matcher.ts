@@ -25,11 +25,10 @@ export class EventsMatcher{
         }))
     }
 
-
     private expectEvents(events: Array<EventObj>):Promise<void>{
         if (events.length) {
             return retry(this.checkEvents.bind(this, events), this.options)
-                .then(()=>undefined)
+                .then(() => undefined)
                 .catch(e => {
                     throw e.failure;
                 });
@@ -42,7 +41,9 @@ export class EventsMatcher{
     expect(events: Array<EventObj>):Promise<void>{
         return this.expectEvents(events)
                 .delay(this.options.noExtraEventsGrace)
-                .then(()=>{expect(this.events, 'no further events after matching').to.eql([]);});
+                .then(() => {
+                    expect(this.events, 'no further events after matching').to.eql([]);
+                });
     }
 
     private checkEvents(events: Array<EventObj>){
