@@ -1,7 +1,12 @@
 import * as Promise from 'bluebird';
 import {expect} from 'chai';
 import {FileSystem} from '../../src/api';
-import {assertFileSystemContract} from '../../test/implementation-suite';
+import {
+    assertFileSystemContract,
+    dirName,
+    fileName,
+    content
+} from '../../test/implementation-suite'
 import {SlowFs} from '../drivers/slow-fs';
 
 describe('the slow (delayed) file system imeplementation', ()=>{
@@ -12,9 +17,6 @@ describe('the slow (delayed) file system imeplementation', ()=>{
     describe(`delayed methods`, () => {
         let fs: FileSystem;
         let startTimestamp: number;
-        const dirName = 'dir';
-        const fileName = 'foo.txt';
-        const content = 'content';
 
         beforeEach(() => {
             startTimestamp = Date.now();
