@@ -5,7 +5,7 @@ import {expect} from 'chai';
 import {EventsMatcher} from '../test-kit/drivers/events-matcher';
 import {FileSystem} from '../src/api';
 import {MemoryFileSystem} from '../src/memory-fs';
-import wampServerOverFs from '../src/wamp-server-over-fs';
+import {wampServerOverFs} from '../src/wamp-server-over-fs';
 import {WampServer, WampRouter, wampRealm} from '../src/wamp-server-over-fs';
 import WampClientFileSystem from '../src/wamp-client-fs';
 import {assertFileSystemContract, ignoredDir, ignoredFile} from './implementation-suite'
