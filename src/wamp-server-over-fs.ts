@@ -16,7 +16,7 @@ export type WampRouter = {
 export const wampRealmPrefix = 'com.kissfs.';
 export const wampRealm = `${wampRealmPrefix}driver`;
 
-export default function wampServerOverFs(fs: FileSystem, port = 3000): Promise<WampServer> {
+export function wampServerOverFs(fs: FileSystem, port = 3000): Promise<WampServer> {
     return new Promise<WampServer>(resolve => {
         const router: WampRouter = new Router({
             port,
