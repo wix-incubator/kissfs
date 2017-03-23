@@ -1,7 +1,7 @@
 import {FileSystem, Directory,EventEmitter, pathSeparator, FileSystemNode} from "./api";
 import * as Promise from 'bluebird';
 
-export class TimeoutFs implements FileSystem{
+export class TimeoutFileSystem implements FileSystem{
     constructor(private timeout: number, private fs: FileSystem) {}
 
     get events():EventEmitter{

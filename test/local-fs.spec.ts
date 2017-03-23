@@ -1,4 +1,5 @@
 import {dir} from 'tmp';
+
 import {
     mkdirSync,
     rmdirSync,
@@ -10,6 +11,7 @@ import {join} from 'path';
 import {expect} from 'chai';
 import * as Promise from 'bluebird';
 import {EventEmitter} from 'eventemitter3';
+
 import {
     assertFileSystemContract,
     dirName,
@@ -18,8 +20,15 @@ import {
     ignoredDir,
     ignoredFile
 } from './implementation-suite'
+
 import {EventsMatcher} from '../test-kit/drivers/events-matcher';
-import {FileSystem, pathSeparator, fileSystemEventNames} from '../src/api';
+
+import {
+    FileSystem,
+    pathSeparator,
+    fileSystemEventNames
+} from '../src/universal';
+
 import {LocalFileSystem} from '../src/nodejs';
 
 describe(`the local filesystem implementation`, () => {

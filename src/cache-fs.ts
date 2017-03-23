@@ -60,7 +60,7 @@ function getTreesDiff(cached: FileSystemNodesMap, real: FileSystemNodesMap): Tre
     return diff;
 }
 
-export class CacheFs implements FileSystem {
+export class CacheFileSystem implements FileSystem {
     public readonly events: InternalEventsEmitter = makeEventsEmitter();
 
     public baseUrl: string;
