@@ -1,8 +1,7 @@
 import * as Promise from 'bluebird';
 import {expect} from 'chai';
 import {assertFileSystemContract, ignoredDir, ignoredFile} from './implementation-suite'
-import {MemoryFileSystem} from "../src/browser";
-import {FileSystem} from '../src/api';
+import {MemoryFileSystem, FileSystem} from "../src/universal";
 
 describe('the in memory implementation', function() {
     assertFileSystemContract(

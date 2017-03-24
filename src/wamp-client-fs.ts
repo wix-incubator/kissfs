@@ -3,7 +3,7 @@ import {Connection, Session} from 'autobahn';
 import {FileSystem, fileSystemEventNames, Directory} from './api';
 import {InternalEventsEmitter, makeEventsEmitter} from "./utils";
 
-export default class WampClientFileSystem implements FileSystem {
+export class WampClientFileSystem implements FileSystem {
     public readonly events: InternalEventsEmitter = makeEventsEmitter();
     private connection: Connection;
     private session: Session;

@@ -1,6 +1,5 @@
 import * as Promise from 'bluebird';
 import {expect} from 'chai';
-import {FileSystem} from '../src/api';
 import {
     assertFileSystemContract,
     ignoredDir,
@@ -10,15 +9,14 @@ import {
     content
 } from './implementation-suite'
 import {SlowFs} from '../test-kit/drivers/slow-fs';
-import {MemoryFileSystem} from '../src/memory-fs';
-import {TimeoutFs} from '../src/timeout-fs';
+import {MemoryFileSystem, TimeoutFileSystem, FileSystem} from '../src/universal';
 
 describe('the timeout file system imeplementation', () => {
     const timeout = 200;
     const accuracyFactor = 0.9;
 
     assertFileSystemContract(() =>
-        Promise.resolve(new TimeoutFs(timeout , new MemoryFileSystem(undefined, [ignoredDir, ignoredFile]))),
+        Promise.resolve(new TimeoutFileSystem(timeout , new MemoryFileSystem(undefined, [ignoredDir, ignoredFile]))),
         {interval:1, noExtraEventsGrace:10, timeout:30}
     );
 
@@ -30,7 +28,7 @@ describe('the timeout file system imeplementation', () => {
 
         beforeEach(() => {
             startTimestamp = Date.now();
-            fs = new TimeoutFs(timeout, new SlowFs(delay));
+            fs = new TimeoutFileSystem(timeout, new SlowFs(delay));
         });
 
         it(`ensureDirectory exit before delay is over`, () => {

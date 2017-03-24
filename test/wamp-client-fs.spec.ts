@@ -2,12 +2,9 @@ import {EventEmitter} from 'eventemitter3';
 import * as Promise from 'bluebird';
 import * as retry from 'bluebird-retry';
 import {expect} from 'chai';
+import {WampServer, WampRouter, wampRealm, wampServerOverFs} from '../src/nodejs';
+import {FileSystem, WampClientFileSystem, MemoryFileSystem} from '../src/universal';
 import {EventsMatcher} from '../test-kit/drivers/events-matcher';
-import {FileSystem} from '../src/api';
-import {MemoryFileSystem} from '../src/memory-fs';
-import {wampServerOverFs} from '../src/wamp-server-over-fs';
-import {WampServer, WampRouter, wampRealm} from '../src/wamp-server-over-fs';
-import WampClientFileSystem from '../src/wamp-client-fs';
 import {assertFileSystemContract, ignoredDir, ignoredFile} from './implementation-suite'
 
 describe(`the wamp client filesystem implementation`, () => {

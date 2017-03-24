@@ -4,9 +4,14 @@ import * as Promise from 'bluebird';
 import {expect} from 'chai';
 import {EventsMatcher} from '../test-kit/drivers/events-matcher';
 import {SlowFs} from '../test-kit/drivers/slow-fs';
-import {FileSystem, fileSystemEventNames} from '../src/api';
-import {CacheFs} from '../src/cache-fs';
-import {MemoryFileSystem} from '../src/memory-fs';
+
+import {
+    FileSystem,
+    fileSystemEventNames,
+    CacheFileSystem,
+    MemoryFileSystem
+} from '../src/universal';
+
 import {
     assertFileSystemContract,
     ignoredDir,
@@ -25,7 +30,7 @@ describe(`the cache file system implementation`, () => {
     };
 
     assertFileSystemContract(
-        () => Promise.resolve(new CacheFs(new MemoryFileSystem(undefined, [ignoredDir, ignoredFile]))),
+        () => Promise.resolve(new CacheFileSystem(new MemoryFileSystem(undefined, [ignoredDir, ignoredFile]))),
         eventMatcherOptions
     );
 
@@ -41,7 +46,7 @@ describe(`the cache file system implementation`, () => {
         beforeEach(() => {
             startTimestamp = Date.now();
             slow = new SlowFs(timeout)
-            fs = new CacheFs(slow)
+            fs = new CacheFileSystem(slow)
             matcher = new EventsMatcher(eventMatcherOptions);
             matcher.track(fs.events as any as EventEmitter, ...fileSystemEventNames)
         });
@@ -80,7 +85,7 @@ describe(`the cache file system implementation`, () => {
 
         beforeEach(() => {
             original = new MemoryFileSystem();
-            fs = new CacheFs(original);
+            fs = new CacheFileSystem(original);
             matcher = new EventsMatcher({
                 interval: 2,
                 noExtraEventsGrace: 150,
@@ -127,7 +132,7 @@ describe(`the cache file system implementation`, () => {
         })
 
         it('emits `unexpectedError` if cache created with `rescanOnError = false` flag', () => {
-            const fs = new CacheFs(original, false);
+            const fs = new CacheFileSystem(original, false);
             const matcher = new EventsMatcher(eventMatcherOptions);
             matcher.track(fs.events as any as EventEmitter, ...fileSystemEventNames);
             (original.events as InternalEventsEmitter).emit('unexpectedError', {type: 'unexpectedError'});
