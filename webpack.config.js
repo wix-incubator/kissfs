@@ -10,7 +10,7 @@ var loaders = {
             loader: 'ts-loader?logLevel=warn' // &transpileOnly=true
         },
         {
-            test: /autobahn\/package.json$/,
+            test: /autobahn\/package\.json$/,
             loader: 'json-loader'
         }
     ],
