@@ -2,7 +2,8 @@ import * as Promise from 'bluebird';
 import * as retry from 'bluebird-retry';
 import {watch} from 'chokidar';
 import * as path from 'path';
-import { FSWatcher, Stats } from 'fs';
+import {Stats} from 'fs';
+import {FSWatcher} from 'chokidar';
 import {FileSystem, pathSeparator} from "./api";
 import {LocalFileSystemCrudOnly} from './local-fs-crud-only';
 

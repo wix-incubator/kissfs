@@ -1,12 +1,11 @@
 import * as Promise from 'bluebird';
 import {Connection, Session} from 'autobahn';
-import {WampConnection} from 'connection';
 import {FileSystem, fileSystemEventNames, fileSystemMethods} from './api';
 const Router = require('wamp-server');
 
 export type WampServer = {
     router: WampRouter,
-    connection: WampConnection
+    connection: Connection
 };
 
 export type WampRouter = {
@@ -23,10 +22,10 @@ export function wampServerOverFs(fs: FileSystem, port = 3000): Promise<WampServe
             realms: [wampRealm]
         });
 
-        const connection: WampConnection = new Connection({
+        const connection = new Connection({
             realm: wampRealm,
             url: `ws://127.0.0.1:${port}/`,
-        }) as WampConnection;
+        });
 
         connection.onopen = (session: Session) => {
             fileSystemEventNames.forEach(fsEvent => {

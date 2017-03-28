@@ -32,7 +32,7 @@ describe(`the wamp client filesystem implementation`, () => {
             wampServer.router.close();
             const errMsg = `WAMP connection hasn't been closed after the previous test`;
             return retry(
-                () => wampServer.connection.isConnected ? Promise.reject(errMsg) : Promise.resolve(),
+                () => (wampServer.connection as any).isConnected ? Promise.reject(errMsg) : Promise.resolve(),
                 {interval: 100, max_tries: 10}
             ).then(() => resolve())
         });
