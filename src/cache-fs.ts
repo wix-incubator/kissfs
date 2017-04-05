@@ -64,7 +64,7 @@ export class CacheFileSystem implements FileSystem {
     public readonly events: InternalEventsEmitter = makeEventsEmitter();
 
     public baseUrl: string;
-    private cache: FileSystem;
+    private cache: MemoryFileSystem;
     private isTreeCached: boolean = false;
     private pathsInCache: PathInCache = {};
 
@@ -80,32 +80,33 @@ export class CacheFileSystem implements FileSystem {
 
         this.fs.events.on('fileCreated', event => {
             const {fullPath, newContent} = event;
-            this.cache.saveFile(fullPath, newContent)
-                .then(() => this.pathsInCache[fullPath] = true)
-                .then(() => this.events.emit('fileCreated', event));
+
+            this.cache.saveFileSync(fullPath, newContent);
+            this.pathsInCache[fullPath] = true;
+            this.events.emit('fileCreated', event)
         });
 
         this.fs.events.on('fileChanged', event => {
             const {fullPath, newContent} = event;
-            this.cache.saveFile(fullPath, newContent)
-                .then(() => this.pathsInCache[fullPath] = true)
-                .then(() => this.events.emit('fileChanged', event));
+            this.cache.saveFileSync(fullPath, newContent);
+            this.pathsInCache[fullPath] = true;
+            this.events.emit('fileChanged', event);
         });
 
         this.fs.events.on('fileDeleted', event => {
-            this.cache.deleteFile(event.fullPath)
-                .then(() => this.pathsInCache[event.fullPath] = true)
-                .then(() => this.events.emit('fileDeleted', event));
+            this.cache.deleteFileSync(event.fullPath);
+            this.pathsInCache[event.fullPath] = true;
+            this.events.emit('fileDeleted', event);
         });
 
         this.fs.events.on('directoryCreated', event => {
-            this.cache.ensureDirectory(event.fullPath)
-                .then(() => this.events.emit('directoryCreated', event));
+            this.cache.ensureDirectorySync(event.fullPath);
+            this.events.emit('directoryCreated', event);
         });
 
         this.fs.events.on('directoryDeleted', event => {
-            this.cache.deleteDirectory(event.fullPath, true)
-                .then(() => this.events.emit('directoryDeleted', event));
+            this.cache.deleteDirectorySync(event.fullPath, true);
+            this.events.emit('directoryDeleted', event);
         });
     }
 
@@ -151,41 +152,41 @@ export class CacheFileSystem implements FileSystem {
     }
 
     private rescanOnError() {
-        this.cache.loadDirectoryTree().then(cachedTree => {
-            this.isTreeCached = false;
-            this.loadDirectoryTree().then(realTree => {
-                const {toDelete, toAdd, toChange} = getTreesDiff(
-                    nodesToMap(cachedTree.children),
-                    nodesToMap(realTree.children)
-                );
+        const cachedTree = this.cache.loadDirectoryTreeSync();
+        this.isTreeCached = false;
 
-                toDelete.forEach(node => {
+        this.loadDirectoryTree().then(realTree => {
+            const {toDelete, toAdd, toChange} = getTreesDiff(
+                nodesToMap(cachedTree.children),
+                nodesToMap(realTree.children)
+            );
+
+            toDelete.forEach(node => {
+                this.emit(
+                    `${isDir(node) ? 'directory' : 'file'}Deleted`,
+                    {fullPath: node.fullPath}
+                );
+            });
+
+            toAdd.forEach(node => {
+                if (isDir(node)) {
                     this.emit(
-                        `${isDir(node) ? 'directory' : 'file'}Deleted`,
+                        'directoryCreated',
                         {fullPath: node.fullPath}
                     );
-                });
-
-                toAdd.forEach(node => {
-                    if (isDir(node)) {
-                        this.emit(
-                            'directoryCreated',
-                            {fullPath: node.fullPath}
-                        );
-                    } else {
-                        this.loadTextFile(node.fullPath).then(newContent => {
-                            this.emit('fileCreated', {
-                                fullPath: node.fullPath,
-                                newContent
-                            });
+                } else {
+                    this.loadTextFile(node.fullPath).then(newContent => {
+                        this.emit('fileCreated', {
+                            fullPath: node.fullPath,
+                            newContent
                         });
-                    }
-                });
+                    });
+                }
+            });
 
-                toChange.forEach(fullPath => this.loadTextFile(fullPath).then(newContent => {
-                    this.emit('fileChanged', {fullPath, newContent});
-                }))
-            })
+            toChange.forEach(fullPath => this.loadTextFile(fullPath).then(newContent => {
+                this.emit('fileChanged', {fullPath, newContent});
+            }))
         })
     }
 
