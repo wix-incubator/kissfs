@@ -45,8 +45,7 @@ export class MemoryFileSystem implements FileSystem {
     }
 
     saveFile(fullPath:string, newContent:string): Promise<void> {
-        // return Promise.try(() => this.saveFileSync(fullPath, newContent));
-        return Promise.resolve(this.saveFileSync(fullPath, newContent));
+        return Promise.try(() => this.saveFileSync(fullPath, newContent));
     }
 
     deleteFile(fullPath:string): Promise<void> {

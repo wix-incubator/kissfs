@@ -109,12 +109,15 @@ export class CacheFileSystem implements FileSystem {
         });
     }
 
-    saveFile(fullPath:string, newContent:string):Promise<void> {
+    saveFile(fullPath:string, newContent:string): Promise<void> {
         return this.fs.saveFile(fullPath, newContent)
-            .then(() => this.cache.saveFile(fullPath, newContent));
+            .then(() => this.cache.saveFile(fullPath, newContent))
+            .then(() => {
+                this.pathsInCache[fullPath] = true
+            });
     }
 
-    deleteFile(fullPath:string):Promise<void> {
+    deleteFile(fullPath:string): Promise<void> {
         return this.fs.deleteFile(fullPath)
             .then(() => this.cache.deleteFile(fullPath));
     }
@@ -129,7 +132,7 @@ export class CacheFileSystem implements FileSystem {
             .then(() => this.cache.ensureDirectory(fullPath));
     }
 
-    loadTextFile(fullPath): Promise<string>{
+    loadTextFile(fullPath): Promise<string> {
         if (this.pathsInCache[fullPath]) return this.cache.loadTextFile(fullPath)
         return this.fs.loadTextFile(fullPath)
             .then(file => {
