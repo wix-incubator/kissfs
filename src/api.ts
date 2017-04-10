@@ -37,7 +37,8 @@ export function isDir(node?: FileSystemNode | null): node is Directory {
 }
 
 export interface UnexpectedErrorEvent {
-    type:'unexpectedError'
+    type:'unexpectedError',
+    stack?: string
 }
 
 export interface FileCreatedEvent {
@@ -103,6 +104,7 @@ export interface FileSystem {
     loadTextFile(fullPath:string): Promise<string>;
     loadDirectoryTree(): Promise<Directory>;
     ensureDirectory(fullPath:string): Promise<void>;
+    dispose(): void;
     readonly events:EventEmitter;
     readonly baseUrl: string;
 }

@@ -35,4 +35,8 @@ export class TimeoutFileSystem implements FileSystem{
     ensureDirectory(fullPath:string): Promise<void>{
         return this.fs.ensureDirectory(fullPath).timeout(this.timeout);
     }
+
+    dispose() {
+        this.fs.dispose();
+    }
 }

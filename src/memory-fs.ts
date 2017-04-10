@@ -185,6 +185,8 @@ export class MemoryFileSystem implements FileSystem {
         return this.parseTree(this.root) as Directory
     }
 
+    dispose() {}
+
     private parseTree(treeRoot: FileSystemNode): FileSystemNode {
         const res:any = {
             name: treeRoot.name,

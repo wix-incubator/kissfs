@@ -29,7 +29,7 @@ export function wampServerOverFs(fs: FileSystem, port = 3000): Promise<WampServe
 
         connection.onopen = (session: Session) => {
             fileSystemEventNames.forEach(fsEvent => {
-                fs.events.on(fsEvent, data => session.publish(`${wampRealmPrefix}${fsEvent}`, [data]));
+                fs.events.on(fsEvent, data => session.isOpen && session.publish(`${wampRealmPrefix}${fsEvent}`, [data]));
             });
 
             fileSystemMethods.forEach(ev => {
@@ -41,6 +41,11 @@ export function wampServerOverFs(fs: FileSystem, port = 3000): Promise<WampServe
                 connection
             });
         };
+
+        connection.onclose = (reason, details) => {
+            if (!details.will_retry) fs.dispose();
+            return details.will_retry;
+        }
 
         connection.open();
     });

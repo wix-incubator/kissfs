@@ -141,4 +141,6 @@ export class LocalFileSystemCrudOnly implements FileSystem {
         const fullPath = path.join(this.baseUrl, ...pathArr);
         return ensureDir(fullPath);
     }
+
+    dispose() {}
 }

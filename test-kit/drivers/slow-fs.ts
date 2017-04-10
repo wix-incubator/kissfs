@@ -44,4 +44,8 @@ export class SlowFs implements FileSystem {
     loadDirectoryTree(): Promise<Directory> {
         return Promise.delay(this.delay).then(() => this.fs.loadDirectoryTree());
     }
+
+    dispose() {
+        setTimeout(() => this.fs.dispose(), this.delay);
+    }
 }

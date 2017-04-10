@@ -84,5 +84,9 @@ export class WampClientFileSystem implements FileSystem {
                 .catch(error => reject(new Error(error)))
         });
     }
+
+    dispose() {
+        this.connection && this.connection.close();
+    }
 }
 
