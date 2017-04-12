@@ -1,6 +1,7 @@
 import * as Promise from 'bluebird';
 import {Connection, Session} from 'autobahn';
 import {FileSystem, fileSystemEventNames, fileSystemMethods} from './api';
+import {wampRealm, wampRealmPrefix} from './constants';
 const Router = require('wamp-server');
 
 export type WampServer = {
@@ -11,9 +12,6 @@ export type WampServer = {
 export type WampRouter = {
     close: () => void
 };
-
-export const wampRealmPrefix = 'com.kissfs.';
-export const wampRealm = `${wampRealmPrefix}driver`;
 
 export function wampServerOverFs(fs: FileSystem, port = 3000): Promise<WampServer> {
     return new Promise<WampServer>(resolve => {
