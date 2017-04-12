@@ -4,8 +4,16 @@ import * as retry from 'bluebird-retry';
 import {expect} from 'chai';
 import {WampServer, WampRouter, wampRealm, wampServerOverFs} from '../src/nodejs';
 import {FileSystem, WampClientFileSystem, MemoryFileSystem} from '../src/universal';
+import {noConnectionError} from '../src/wamp-client-fs';
 import {EventsMatcher} from '../test-kit/drivers/events-matcher';
-import {assertFileSystemContract, ignoredDir, ignoredFile} from './implementation-suite'
+import {
+    assertFileSystemContract,
+    ignoredDir,
+    ignoredFile,
+    fileName,
+    dirName,
+    content
+} from './implementation-suite'
 
 describe(`the wamp client filesystem implementation`, () => {
 
@@ -15,8 +23,12 @@ describe(`the wamp client filesystem implementation`, () => {
         return wampServerOverFs(new MemoryFileSystem(undefined, [ignoredDir, ignoredFile]), 3000);
     }
 
-    function getFS(): Promise<FileSystem> {
-        return new WampClientFileSystem(`ws://127.0.0.1:3000`, wampRealm).init();
+    function getFS(): Promise<WampClientFileSystem> {
+        return Promise.resolve(new WampClientFileSystem(`ws://127.0.0.1:3000`, wampRealm));
+    }
+
+    function getInitedFS(): Promise<WampClientFileSystem> {
+        return getFS().then(fs => fs.init());
     }
 
     const eventMatcherOptions: EventsMatcher.Options = {
@@ -38,5 +50,19 @@ describe(`the wamp client filesystem implementation`, () => {
         });
     });
 
-    assertFileSystemContract(getFS, eventMatcherOptions);
+    assertFileSystemContract(getInitedFS, eventMatcherOptions);
+
+    describe(`when not inited`, () => {
+        it(`fails on each CRUD method`, () => {
+            return Promise.all([
+                expect(getFS().then(fs => fs.saveFile(fileName, content))).to.eventually.be.rejectedWith(noConnectionError),
+                expect(getFS().then(fs => fs.deleteFile(fileName))).to.eventually.be.rejectedWith(noConnectionError),
+                expect(getFS().then(fs => fs.deleteDirectory(dirName))).to.eventually.be.rejectedWith(noConnectionError),
+                expect(getFS().then(fs => fs.ensureDirectory(dirName))).to.eventually.be.rejectedWith(noConnectionError),
+                expect(getFS().then(fs => fs.loadTextFile(fileName))).to.eventually.be.rejectedWith(noConnectionError),
+                expect(getFS().then(fs => fs.loadDirectoryTree())).to.eventually.be.rejectedWith(noConnectionError)
+            ]);
+
+        });
+    });
 });
