@@ -169,10 +169,7 @@ export class MemoryFileSystem implements FileSystem {
         return new Directory(
             node.name,
             node.fullPath,
-            node.children.map(child => {
-                if (isDir(child)) return this.parseTree(child)
-                return new File(child.name, child.fullPath)
-            })
+            node.children.map(child => isDir(child) ? this.parseTree(child) : new File(child.name, child.fullPath))
         )
     }
 
