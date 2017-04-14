@@ -24,7 +24,7 @@ export class LocalFileSystem extends LocalFileSystemCrudOnly implements FileSyst
         this.watcher = watch([this.baseUrl], {
             //  usePolling:true,
             //  interval:100,
-            ignored: path => (this as any).isIgnored(path),
+            ignored: path => this.isIgnored(path),
             //    atomic: false, //todo 50?
             cwd: this.baseUrl
         });
