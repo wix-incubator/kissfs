@@ -13,9 +13,7 @@ function extendMatchersWithGlob(paths:Array<string>): Array<string>{
     return paths.reduce((extended, path) => {
         extended.push(path);
         if (!isGlob(path)) {
-            extended.push(`${path}/**`);
-            extended.push(`**/${path}`);
-            extended.push(`**/${path}/**`);
+            extended.push(`${path}/**`, `**/${path}`, `**/${path}/**`);
         }
         return extended;
     }, [] as Array<string>);
