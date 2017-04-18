@@ -17,8 +17,6 @@ type PathInCache = {
     [prop: string]: boolean
 };
 
-type Node = Directory | File;
-
 interface FileSystemNodesMap {
     [key: string]: FileSystemNode
 }
@@ -229,11 +227,11 @@ export class CacheFileSystem implements FileSystem {
             .then(tree => this.fill(tree));
     }
 
-    private fill(tree: Node): Promise<FileSystem> {
+    private fill(tree: FileSystemNode): Promise<FileSystem> {
         if (isDir(tree)) {
             return this.cache.ensureDirectory(tree.fullPath)
-                .then(() => Promise.all(tree.children.map(child => this.fill(child as Node))))
-                .then(() => Promise.resolve(this.cache));
+                .then(() => Promise.all(tree.children.map(child => this.fill(child))))
+                .then(() => this.cache);
         }
 
         return this.cache.saveFile(tree.fullPath, '')

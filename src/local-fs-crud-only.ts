@@ -33,7 +33,7 @@ const access = Promise.promisify<void, string>(access_);
 export class LocalFileSystemCrudOnly implements FileSystem {
     public readonly events: InternalEventsEmitter = makeEventsEmitter();
     private ignore: Array<string> = [];
-    private isIgnored: (path: string) => boolean = (path: string) => false;
+    protected isIgnored: (path: string) => boolean = (path: string) => false;
 
     constructor(public baseUrl, ignore?: Array<string>) {
         if (ignore) {

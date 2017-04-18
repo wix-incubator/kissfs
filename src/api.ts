@@ -19,11 +19,14 @@ export class Directory implements FileSystemNode {
 
 export class File implements FileSystemNode {
     public type: 'file' = 'file';
+    public content: string;
     constructor(
         public name:string,
         public fullPath:string,
-        public content?: string
-    ) {}
+        content?: string
+    ) {
+        if (content) this.content = content;
+    }
 }
 
 export function isFile(node?: FileSystemNode | null): node is File{

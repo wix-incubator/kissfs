@@ -182,19 +182,15 @@ export class MemoryFileSystem implements FileSystem {
     }
 
     loadDirectoryTreeSync(): Directory {
-        return this.parseTree(this.root) as Directory
+        return this.parseTree(this.root)
     }
 
-    private parseTree(treeRoot: FileSystemNode): FileSystemNode {
-        const res:any = {
-            name: treeRoot.name,
-            type: treeRoot.type,
-            fullPath: treeRoot.fullPath
-        };
-        if (isDir(treeRoot)) {
-            res.children = treeRoot.children.map(this.parseTree, this);
-        }
-        return res;
+    private parseTree(node: Directory): Directory {
+        return new Directory(
+            node.name,
+            node.fullPath,
+            node.children.map(child => isDir(child) ? this.parseTree(child) : new File(child.name, child.fullPath))
+        )
     }
 
     private recursiveEmitDeletion(node: Directory) {

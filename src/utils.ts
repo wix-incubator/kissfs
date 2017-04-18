@@ -10,13 +10,13 @@ export function getPathNodes(path:string):Array<string>{
 }
 
 function extendMatchersWithGlob(paths:Array<string>): Array<string>{
-    return paths.reduce((extended, path) => {
+    return paths.reduce((extended: string[], path) => {
         extended.push(path);
         if (!isGlob(path)) {
             extended.push(`${path}/**`, `**/${path}`, `**/${path}/**`);
         }
         return extended;
-    }, [] as Array<string>);
+    }, []);
 }
 
 export function getIsIgnored(matchers: string[], options: Object = {dot: true}): (path: string) => boolean {
@@ -25,6 +25,6 @@ export function getIsIgnored(matchers: string[], options: Object = {dot: true}):
 }
 
 export type InternalEventsEmitter = EventEmitter & FSEvents;
-export function makeEventsEmitter(): InternalEventsEmitter{
+export function makeEventsEmitter(): InternalEventsEmitter {
     return (new EventEmitter()) as any as InternalEventsEmitter;
 }
