@@ -4,7 +4,8 @@ import {
     Directory,
     File,
     isDir,
-    fileSystemMethods
+    fileSystemMethods,
+    isDisposable
 } from "../../src/api";
 
 import {MemoryFileSystem} from "../../src/memory-fs";
@@ -43,5 +44,9 @@ export class SlowFs implements FileSystem {
 
     loadDirectoryTree(): Promise<Directory> {
         return Promise.delay(this.delay).then(() => this.fs.loadDirectoryTree());
+    }
+
+    dispose() {
+        setTimeout(() => isDisposable(this.fs) && this.fs.dispose(), this.delay);
     }
 }

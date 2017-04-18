@@ -37,7 +37,8 @@ export function isDir(node?: FileSystemNode | null): node is Directory {
 }
 
 export interface UnexpectedErrorEvent {
-    type:'unexpectedError'
+    type:'unexpectedError',
+    stack?: string
 }
 
 export interface FileCreatedEvent {
@@ -65,6 +66,14 @@ export interface DirectoryCreatedEvent {
 export interface DirectoryDeletedEvent {
     type:'directoryDeleted',
     fullPath:string
+}
+
+export interface Disposable {
+    dispose(): void
+}
+
+export function isDisposable(fs:any): fs is Disposable {
+    return !!fs && typeof fs.dispose === 'function';
 }
 
 export type ListenerFn<T> = (event: T) => void;

@@ -1,4 +1,12 @@
-import {FileSystem, Directory,EventEmitter, pathSeparator, FileSystemNode} from "./api";
+import {
+    FileSystem,
+    Directory,
+    EventEmitter,
+    pathSeparator,
+    FileSystemNode,
+    isDisposable
+} from './api';
+
 import * as Promise from 'bluebird';
 
 export class TimeoutFileSystem implements FileSystem{
@@ -34,5 +42,9 @@ export class TimeoutFileSystem implements FileSystem{
 
     ensureDirectory(fullPath:string): Promise<void>{
         return this.fs.ensureDirectory(fullPath).timeout(this.timeout);
+    }
+
+    dispose() {
+        if (isDisposable(this.fs)) this.fs.dispose();
     }
 }
