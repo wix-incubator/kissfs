@@ -68,6 +68,14 @@ export interface DirectoryDeletedEvent {
     fullPath:string
 }
 
+export interface Disposable {
+    dispose(): void
+}
+
+export function isDisposable(fs): fs is Disposable {
+    return Boolean(fs.dispose);
+}
+
 export type ListenerFn<T> = (event: T) => void;
 
 export interface EventAspect<S,O> {
@@ -104,7 +112,6 @@ export interface FileSystem {
     loadTextFile(fullPath:string): Promise<string>;
     loadDirectoryTree(): Promise<Directory>;
     ensureDirectory(fullPath:string): Promise<void>;
-    dispose(): void;
     readonly events:EventEmitter;
     readonly baseUrl: string;
 }

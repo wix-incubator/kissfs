@@ -7,7 +7,8 @@ import {
     isDir,
     isFile,
     fileSystemMethods,
-    UnexpectedErrorEvent
+    UnexpectedErrorEvent,
+    isDisposable
 } from './api';
 import {MemoryFileSystem} from './memory-fs';
 import {InternalEventsEmitter, makeEventsEmitter} from './utils';
@@ -169,7 +170,7 @@ export class CacheFileSystem implements FileSystem {
     }
 
     dispose() {
-        this.fs.dispose();
+        if (isDisposable(this.fs)) this.fs.dispose();
     }
 
     private onFsError = ({stack}: Error | UnexpectedErrorEvent) => {

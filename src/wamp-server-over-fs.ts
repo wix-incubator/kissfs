@@ -1,6 +1,6 @@
 import * as Promise from 'bluebird';
 import {Connection, Session} from 'autobahn';
-import {FileSystem, fileSystemEventNames, fileSystemMethods} from './api';
+import {FileSystem, fileSystemEventNames, fileSystemMethods, isDisposable} from './api';
 const Router = require('wamp-server');
 
 export type WampServer = {
@@ -43,7 +43,7 @@ export function wampServerOverFs(fs: FileSystem, port = 3000): Promise<WampServe
         };
 
         connection.onclose = (reason, details) => {
-            if (!details.will_retry) fs.dispose();
+            if (!details.will_retry && isDisposable(fs)) fs.dispose();
             return details.will_retry;
         }
 
