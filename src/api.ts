@@ -72,8 +72,8 @@ export interface Disposable {
     dispose(): void
 }
 
-export function isDisposable(fs): fs is Disposable {
-    return Boolean(fs.dispose);
+export function isDisposable(fs:any): fs is Disposable {
+    return !!fs && typeof fs.dispose === 'function';
 }
 
 export type ListenerFn<T> = (event: T) => void;
