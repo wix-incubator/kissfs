@@ -6,7 +6,9 @@ import {
     File,
     isDir,
     isFile,
-    fileSystemMethods
+    fileSystemMethods,
+    UnexpectedErrorEvent,
+    isDisposable
 } from './api';
 import {MemoryFileSystem} from './memory-fs';
 import {InternalEventsEmitter, makeEventsEmitter} from './utils';
@@ -62,7 +64,7 @@ export class CacheFileSystem implements FileSystem {
     public readonly events: InternalEventsEmitter = makeEventsEmitter();
 
     public baseUrl: string;
-    private cache: FileSystem;
+    private cache: MemoryFileSystem;
     private isTreeCached: boolean = false;
     private pathsInCache: PathInCache = {};
 
@@ -70,49 +72,69 @@ export class CacheFileSystem implements FileSystem {
         this.baseUrl = fs.baseUrl;
         this.cache = new MemoryFileSystem();
 
-        this.fs.events.on('unexpectedError', event => {
-            this.shouldRescanOnError ?
-                this.rescanOnError() :
-                this.events.emit('unexpectedError', event);
-        });
+        this.fs.events.on('unexpectedError', this.onFsError);
 
         this.fs.events.on('fileCreated', event => {
             const {fullPath, newContent} = event;
-            this.cache.saveFile(fullPath, newContent)
-                .then(() => this.pathsInCache[fullPath] = true)
-                .then(() => this.events.emit('fileCreated', event));
+
+            try {
+                this.cache.saveFileSync(fullPath, newContent);
+                this.pathsInCache[fullPath] = true;
+                this.events.emit('fileCreated', event)
+            } catch(e) {
+                this.onFsError(e)
+            }
         });
 
         this.fs.events.on('fileChanged', event => {
             const {fullPath, newContent} = event;
-            this.cache.saveFile(fullPath, newContent)
-                .then(() => this.pathsInCache[fullPath] = true)
-                .then(() => this.events.emit('fileChanged', event));
+            try {
+                this.cache.saveFileSync(fullPath, newContent);
+                this.pathsInCache[fullPath] = true;
+                this.events.emit('fileChanged', event);
+            } catch(e) {
+                this.onFsError(e)
+            }
         });
 
         this.fs.events.on('fileDeleted', event => {
-            this.cache.deleteFile(event.fullPath)
-                .then(() => this.pathsInCache[event.fullPath] = true)
-                .then(() => this.events.emit('fileDeleted', event));
+            try {
+                this.cache.deleteFileSync(event.fullPath);
+                this.pathsInCache[event.fullPath] = true;
+                this.events.emit('fileDeleted', event);
+            } catch(e) {
+                this.onFsError(e)
+            }
         });
 
         this.fs.events.on('directoryCreated', event => {
-            this.cache.ensureDirectory(event.fullPath)
-                .then(() => this.events.emit('directoryCreated', event));
+            try {
+                this.cache.ensureDirectorySync(event.fullPath);
+                this.events.emit('directoryCreated', event);
+            } catch(e) {
+                this.onFsError(e)
+            }
         });
 
         this.fs.events.on('directoryDeleted', event => {
-            this.cache.deleteDirectory(event.fullPath, true)
-                .then(() => this.events.emit('directoryDeleted', event));
+            try {
+                this.cache.deleteDirectorySync(event.fullPath, true);
+                this.events.emit('directoryDeleted', event);
+            } catch(e) {
+                this.onFsError(e)
+            }
         });
     }
 
-    saveFile(fullPath:string, newContent:string):Promise<void> {
+    saveFile(fullPath:string, newContent:string): Promise<void> {
         return this.fs.saveFile(fullPath, newContent)
-            .then(() => this.cache.saveFile(fullPath, newContent));
+            .then(() => this.cache.saveFile(fullPath, newContent))
+            .then(() => {
+                this.pathsInCache[fullPath] = true
+            });
     }
 
-    deleteFile(fullPath:string):Promise<void> {
+    deleteFile(fullPath:string): Promise<void> {
         return this.fs.deleteFile(fullPath)
             .then(() => this.cache.deleteFile(fullPath));
     }
@@ -127,7 +149,7 @@ export class CacheFileSystem implements FileSystem {
             .then(() => this.cache.ensureDirectory(fullPath));
     }
 
-    loadTextFile(fullPath): Promise<string>{
+    loadTextFile(fullPath): Promise<string> {
         if (this.pathsInCache[fullPath]) return this.cache.loadTextFile(fullPath)
         return this.fs.loadTextFile(fullPath)
             .then(file => {
@@ -145,47 +167,57 @@ export class CacheFileSystem implements FileSystem {
         });
     }
 
-    private rescanOnError() {
-        this.cache.loadDirectoryTree().then(cachedTree => {
-            this.isTreeCached = false;
-            this.loadDirectoryTree().then(realTree => {
-                const {toDelete, toAdd, toChange} = getTreesDiff(
-                    nodesToMap(cachedTree.children),
-                    nodesToMap(realTree.children)
-                );
+    dispose() {
+        if (isDisposable(this.fs)) this.fs.dispose();
+    }
 
-                toDelete.forEach(node => {
+    private onFsError = ({stack}: Error | UnexpectedErrorEvent) => {
+        this.shouldRescanOnError ?
+            this.rescanOnError() :
+            this.emit('unexpectedError', {stack});
+    }
+
+    private rescanOnError() {
+        const cachedTree = this.cache.loadDirectoryTreeSync();
+        this.isTreeCached = false;
+
+        this.loadDirectoryTree().then(realTree => {
+            const {toDelete, toAdd, toChange} = getTreesDiff(
+                nodesToMap(cachedTree.children),
+                nodesToMap(realTree.children)
+            );
+
+            toDelete.forEach(node => {
+                this.emit(
+                    `${isDir(node) ? 'directory' : 'file'}Deleted`,
+                    {fullPath: node.fullPath}
+                );
+            });
+
+            toAdd.forEach(node => {
+                if (isDir(node)) {
                     this.emit(
-                        `${isDir(node) ? 'directory' : 'file'}Deleted`,
+                        'directoryCreated',
                         {fullPath: node.fullPath}
                     );
-                });
-
-                toAdd.forEach(node => {
-                    if (isDir(node)) {
-                        this.emit(
-                            'directoryCreated',
-                            {fullPath: node.fullPath}
-                        );
-                    } else {
-                        this.loadTextFile(node.fullPath).then(newContent => {
-                            this.emit('fileCreated', {
-                                fullPath: node.fullPath,
-                                newContent
-                            });
+                } else {
+                    this.loadTextFile(node.fullPath).then(newContent => {
+                        this.emit('fileCreated', {
+                            fullPath: node.fullPath,
+                            newContent
                         });
-                    }
-                });
+                    });
+                }
+            });
 
-                toChange.forEach(fullPath => this.loadTextFile(fullPath).then(newContent => {
-                    this.emit('fileChanged', {fullPath, newContent});
-                }))
-            })
+            toChange.forEach(fullPath => this.loadTextFile(fullPath).then(newContent => {
+                this.emit('fileChanged', {fullPath, newContent});
+            }))
         })
     }
 
     private emit(type, data) {
-        this.events.emit(type, {type, ...data});
+        this.events.emit(type, {...data, type});
     }
 
     private cacheTree(): Promise<FileSystem> {

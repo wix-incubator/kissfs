@@ -3,6 +3,8 @@ import {Connection, Session} from 'autobahn';
 import {FileSystem, fileSystemEventNames, Directory} from './api';
 import {InternalEventsEmitter, makeEventsEmitter} from "./utils";
 
+export const noConnectionError = `WampClientFileSystem hasn't opened connection yet (forgot to init()?).`
+
 export class WampClientFileSystem implements FileSystem {
     public readonly events: InternalEventsEmitter = makeEventsEmitter();
     private connection: Connection;
@@ -39,6 +41,9 @@ export class WampClientFileSystem implements FileSystem {
 
     saveFile(fullPath:string, newContent:string): Promise<void> {
         return new Promise<void>((resolve, reject) => {
+            if (!this.session || !this.session.isOpen) {
+                return reject(noConnectionError);
+            }
             this.session.call(`${this.realmPrefix}saveFile`, [fullPath, newContent])
                 .then(() => resolve())
                 .catch(error => reject(new Error(error)))
@@ -47,6 +52,10 @@ export class WampClientFileSystem implements FileSystem {
 
     deleteFile(fullPath:string): Promise<void> {
         return new Promise<void>((resolve, reject) => {
+            if (!this.session || !this.session.isOpen) {
+                return reject(noConnectionError);
+            }
+
             this.session.call(`${this.realmPrefix}deleteFile`, [fullPath])
                 .then(() => resolve())
                 .catch(error => reject(new Error(error)))
@@ -55,6 +64,10 @@ export class WampClientFileSystem implements FileSystem {
 
     deleteDirectory(fullPath: string, recursive?: boolean): Promise<void> {
         return new Promise<void>((resolve, reject) => {
+            if (!this.session || !this.session.isOpen) {
+                return reject(noConnectionError);
+            }
+
             this.session.call(`${this.realmPrefix}deleteDirectory`, [fullPath, recursive])
                 .then(() => resolve())
                 .catch(error => reject(new Error(error)))
@@ -63,6 +76,10 @@ export class WampClientFileSystem implements FileSystem {
 
     ensureDirectory(fullPath:string): Promise<void> {
         return new Promise<void>((resolve, reject) => {
+            if (!this.session || !this.session.isOpen) {
+                return reject(noConnectionError);
+            }
+
             this.session.call(`${this.realmPrefix}ensureDirectory`, [fullPath])
                 .then(() => resolve())
                 .catch(error => reject(new Error(error)))
@@ -71,6 +88,10 @@ export class WampClientFileSystem implements FileSystem {
 
     loadTextFile(fullPath): Promise<string> {
         return new Promise<string>((resolve, reject) => {
+            if (!this.session || !this.session.isOpen) {
+                return reject(noConnectionError);
+            }
+
             return this.session.call(`${this.realmPrefix}loadTextFile`, [fullPath])
                 .then((content: string) => resolve(content))
                 .catch(error => reject(new Error(error)))
@@ -79,10 +100,18 @@ export class WampClientFileSystem implements FileSystem {
 
     loadDirectoryTree(): Promise<Directory> {
         return new Promise<Directory>((resolve, reject) => {
+            if (!this.session || !this.session.isOpen) {
+                return reject(noConnectionError);
+            }
+
             return this.session.call(`${this.realmPrefix}loadDirectoryTree`)
                 .then((tree: Directory) => resolve(tree))
                 .catch(error => reject(new Error(error)))
         });
+    }
+
+    dispose() {
+        this.connection && this.connection.close();
     }
 }
 

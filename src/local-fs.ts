@@ -84,7 +84,7 @@ export class LocalFileSystem extends LocalFileSystemCrudOnly implements FileSyst
         });
     }
 
-    dispose(){
+    dispose() {
         this.watcher.close();
     }
 }
