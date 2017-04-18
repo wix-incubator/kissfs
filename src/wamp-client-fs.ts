@@ -29,7 +29,7 @@ export class WampClientFileSystem implements FileSystem {
                         res => this.events.emit(fsEvent, res && res[0])
                     )
                 });
-                return resolve(this)
+                resolve(this);
             };
         }).timeout(
             initTimeout,
@@ -38,51 +38,27 @@ export class WampClientFileSystem implements FileSystem {
     }
 
     saveFile(fullPath:string, newContent:string): Promise<void> {
-        return new Promise<void>((resolve, reject) => {
-            this.session.call(`${this.realmPrefix}saveFile`, [fullPath, newContent])
-                .then(() => resolve())
-                .catch(error => reject(new Error(error)))
-        });
+        return this.session.call(`${this.realmPrefix}saveFile`, [fullPath, newContent]);
     }
 
     deleteFile(fullPath:string): Promise<void> {
-        return new Promise<void>((resolve, reject) => {
-            this.session.call(`${this.realmPrefix}deleteFile`, [fullPath])
-                .then(() => resolve())
-                .catch(error => reject(new Error(error)))
-        });
+        return this.session.call(`${this.realmPrefix}deleteFile`, [fullPath]);
     }
 
     deleteDirectory(fullPath: string, recursive?: boolean): Promise<void> {
-        return new Promise<void>((resolve, reject) => {
-            this.session.call(`${this.realmPrefix}deleteDirectory`, [fullPath, recursive])
-                .then(() => resolve())
-                .catch(error => reject(new Error(error)))
-        });
+        return this.session.call(`${this.realmPrefix}deleteDirectory`, [fullPath, recursive]);
     }
 
     ensureDirectory(fullPath:string): Promise<void> {
-        return new Promise<void>((resolve, reject) => {
-            this.session.call(`${this.realmPrefix}ensureDirectory`, [fullPath])
-                .then(() => resolve())
-                .catch(error => reject(new Error(error)))
-        });
+        return this.session.call(`${this.realmPrefix}ensureDirectory`, [fullPath]);
     }
 
     loadTextFile(fullPath): Promise<string> {
-        return new Promise<string>((resolve, reject) => {
-            return this.session.call(`${this.realmPrefix}loadTextFile`, [fullPath])
-                .then((content: string) => resolve(content))
-                .catch(error => reject(new Error(error)))
-        });
+        return this.session.call(`${this.realmPrefix}loadTextFile`, [fullPath]);
     }
 
     loadDirectoryTree(): Promise<Directory> {
-        return new Promise<Directory>((resolve, reject) => {
-            return this.session.call(`${this.realmPrefix}loadDirectoryTree`)
-                .then((tree: Directory) => resolve(tree))
-                .catch(error => reject(new Error(error)))
-        });
+        return this.session.call(`${this.realmPrefix}loadDirectoryTree`);
     }
 }
 
