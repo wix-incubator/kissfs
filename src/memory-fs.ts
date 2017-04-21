@@ -17,13 +17,15 @@ import {
     getIsIgnored
 } from "./utils";
 
+let id = 0;
+
 export class MemoryFileSystem implements FileSystem {
     public readonly events: InternalEventsEmitter = makeEventsEmitter();
     private readonly root = new Directory('', '');
     private ignore: Array<string> = [];
     private isIgnored: (path: string) => boolean = (path: string) => false;
 
-    constructor(public baseUrl = 'http://memory', ignore?: Array<string>) {
+    constructor(public baseUrl = `memory-${id++}`, ignore?: Array<string>) {
         this.baseUrl += '/';
         if (ignore) {
             this.isIgnored = getIsIgnored(ignore)
