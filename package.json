@@ -85,5 +85,6 @@
   "optionalDependencies": {
     "bufferutil": "1.2.1",
     "utf-8-validate": "1.2.1"
-  }
+  },
+  "types": "dist/src/nodejs.d.ts"
 }
