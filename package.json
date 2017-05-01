@@ -70,7 +70,7 @@
     "webpack-dev-server": "1.16.2"
   },
   "dependencies": {
-    "autobahn": "0.12.0",
+    "autobahn": "17.5.1",
     "bluebird": "3.5.0",
     "bluebird-retry": "0.10.1",
     "chokidar": "1.6.1",
