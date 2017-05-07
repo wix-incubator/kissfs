@@ -94,9 +94,12 @@ export class MemoryFileSystem implements FileSystem {
         if (isDir(existingChild)) {
             throw new Error(`file save error for path '${fullPath}'`);
         }
-        if (isFile(existingChild) && existingChild.content !== newContent) {
-            existingChild.content = newContent
-            type = 'fileChanged';
+
+        if (isFile(existingChild)) {
+            if (existingChild.content !== newContent) {
+                existingChild.content = newContent
+                type = 'fileChanged';
+            }
         } else {
             type = 'fileCreated';
             parent.children.push(new File(name, fullPath, newContent))
