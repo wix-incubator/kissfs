@@ -105,10 +105,16 @@ export function assertFileSystemContract(fsProvider: () => Promise<FileSystem>, 
         });
 
         it(`saving a file with same content`, function() {
+            const expectedStructure = {
+                type:'dir', name:'', fullPath:'', children:[
+                    {name: fileName, fullPath: fileName, type: 'file'}
+                ]};
+
             return fs.saveFile(fileName, content)
                 .then(() => matcher.expect([{type: 'fileCreated', fullPath:fileName, newContent:content}]))
                 .then(() => expect(fs.loadTextFile(fileName)).to.become(content))
                 .then(() => fs.saveFile(fileName, content)) // may or may not trigger an event
+                .then(() => expect(fs.loadDirectoryTree()).to.become(expectedStructure))
                 .then(() => expect(fs.loadTextFile(fileName)).to.become(content));
         });
 
