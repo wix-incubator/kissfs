@@ -1,6 +1,6 @@
 {
   "name": "kissfs",
-  "version": "0.0.192",
+  "version": "0.0.193",
   "description": "Extensible and reactive file-system library that keeps it simple",
   "main": "dist/src/nodejs.js",
   "browser": "dist/src/browser.js",
@@ -59,7 +59,7 @@
     "mocha-env-reporter": "2.0.4",
     "mocha-loader": "1.1.1",
     "ncp": "2.0.0",
-    "npminject": "1.0.344",
+    "npminject": "1.0.345",
     "rimraf": "2.6.1",
     "sinon": "2.3.5",
     "source-map-support": "0.4.15",
