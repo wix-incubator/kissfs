@@ -3,6 +3,7 @@
   "version": "0.0.195",
   "description": "Extensible and reactive file-system library that keeps it simple",
   "main": "dist/src/nodejs.js",
+  "types": "dist/src/nodejs.d.ts",
   "browser": "dist/src/browser.js",
   "scripts": {
     "clean": "rimraf ./dist",
