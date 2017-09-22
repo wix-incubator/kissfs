@@ -124,7 +124,7 @@ export class LocalFileSystemCrudOnly implements FileSystem {
     }
 
     loadDirectoryTree(fullPath: string): Promise<Directory> {
-        if (this.isIgnored(fullPath)) {
+        if (fullPath && this.isIgnored(fullPath)) {
             return Promise.reject(new Error(`Unable to read ignored path: '${fullPath}'`));
         }
         // using an in-memory instance to build the result
