@@ -98,13 +98,13 @@ export class WampClientFileSystem implements FileSystem {
         });
     }
 
-    loadDirectoryTree(): Promise<Directory> {
+    loadDirectoryTree(fullPath:string = ''): Promise<Directory> {
         return new Promise<Directory>((resolve, reject) => {
             if (!this.session || !this.session.isOpen) {
                 return reject(noConnectionError);
             }
 
-            return this.session.call(`${this.realmPrefix}loadDirectoryTree`)
+            return this.session.call(`${this.realmPrefix}loadDirectoryTree`, [fullPath])
                 .then((tree: Directory) => resolve(tree))
                 .catch(error => reject(new Error(error)))
         });

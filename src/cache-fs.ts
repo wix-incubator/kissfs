@@ -159,11 +159,11 @@ export class CacheFileSystem implements FileSystem {
             });
     }
 
-    loadDirectoryTree(): Promise<Directory> {
-        if (this.isTreeCached) return this.cache.loadDirectoryTree();
+    loadDirectoryTree(fullPath?:string): Promise<Directory> {
+        if (this.isTreeCached) return this.cache.loadDirectoryTree(fullPath);
         return this.cacheTree().then(() => {
             this.isTreeCached = true;
-            return this.loadDirectoryTree();
+            return this.loadDirectoryTree(fullPath);
         });
     }
 

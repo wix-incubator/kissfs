@@ -113,7 +113,7 @@ export interface FileSystem {
     deleteFile(fullPath:string):Promise<void>;
     deleteDirectory(fullPath:string, recursive?:boolean):Promise<void>;
     loadTextFile(fullPath:string): Promise<string>;
-    loadDirectoryTree(): Promise<Directory>;
+    loadDirectoryTree(fullPath?:string): Promise<Directory>;
     ensureDirectory(fullPath:string): Promise<void>;
     readonly events:EventEmitter;
     readonly baseUrl: string;

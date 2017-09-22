@@ -37,8 +37,12 @@ export class MemoryFileSystem implements FileSystem {
         while (pathArr.length) {
             const name = pathArr.shift();
             if (name && current.children) {
-                const node = find(current.children, {name})
-                current = isDir(node) ? node : current;
+                const node = find(current.children, {name});
+                if (isDir(node)){
+                    current = node;
+                } else {
+                    return null;
+                }
             } else {
                 return null;
             }
@@ -66,8 +70,8 @@ export class MemoryFileSystem implements FileSystem {
         return Promise.try(() => this.loadTextFileSync(fullPath));
     }
 
-    loadDirectoryTree(): Promise<Directory> {
-        return Promise.resolve(this.loadDirectoryTreeSync());
+    loadDirectoryTree(fullPath?:string): Promise<Directory> {
+        return Promise.try(() => this.loadDirectoryTreeSync(fullPath));
     }
 
     saveFileSync(fullPath:string, newContent:string): void {
@@ -186,8 +190,16 @@ export class MemoryFileSystem implements FileSystem {
         throw new Error(`Cannot find file ${fullPath}`);
     }
 
-    loadDirectoryTreeSync(): Directory {
-        return this.parseTree(this.root)
+    loadDirectoryTreeSync(fullPath:string = ''): Directory {
+        if (this.isIgnored(fullPath)) {
+            throw new Error(`Unable to read ignored path: '${fullPath}'`);
+        }
+        const pathArr = getPathNodes(fullPath);
+        const dir = pathArr.length ? this.getPathTarget(pathArr) : this.root;
+        if (!dir){
+            throw new Error(`Unable to read folder in path: '${fullPath}'`);
+        }
+        return this.parseTree(dir)
     }
 
     private parseTree(node: Directory): Directory {

@@ -38,12 +38,12 @@ export class SlowFs implements FileSystem {
         return Promise.delay(this.delay).then(() => this.fs.ensureDirectory(fullPath));
     }
 
-    loadTextFile(fullPath): Promise<string>{
+    loadTextFile(fullPath:string): Promise<string>{
         return Promise.delay(this.delay).then(() => this.fs.loadTextFile(fullPath));
     }
 
-    loadDirectoryTree(): Promise<Directory> {
-        return Promise.delay(this.delay).then(() => this.fs.loadDirectoryTree());
+    loadDirectoryTree(fullPath?:string): Promise<Directory> {
+        return Promise.delay(this.delay).then(() => this.fs.loadDirectoryTree(fullPath));
     }
 
     dispose() {
