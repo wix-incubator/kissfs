@@ -2,6 +2,7 @@ import {
     access as access_,
     ensureDir as ensureDir_,
     readFile as readFile_,
+    readdir as readdir_,
     remove as remove_,
     rmdir as rmdir_,
     stat as stat_,
@@ -12,12 +13,13 @@ import * as walk from 'klaw';
 import * as Promise from 'bluebird';
 import * as path from 'path';
 import {Stats} from 'fs';
-import {Directory, FileSystem, pathSeparator} from './api';
+import {Directory, FileSystem, pathSeparator, ShallowDirectory, File} from './api';
 import {getIsIgnored, getPathNodes, InternalEventsEmitter, makeEventsEmitter} from './utils';
 import {MemoryFileSystem} from './memory-fs';
 
 const ensureDir = Promise.promisify<void, string>(ensureDir_);
 const readFile = Promise.promisify<string, string, string>(readFile_);
+const readdir = Promise.promisify<Array<string>, string>(readdir_);
 const writeFile = Promise.promisify<void, string, any>(writeFile_);
 const remove = Promise.promisify<void, string>(remove_ as (dir: string, callback: (err: any, _: void) => void) => void);
 const rmdir = Promise.promisify<void, string>(rmdir_ as (dir: string, callback: (err: any, _: void) => void) => void);
@@ -97,6 +99,28 @@ export class LocalFileSystemCrudOnly implements FileSystem {
             return Promise.reject(new Error(`Unable to read ignored path: '${relPath}'`));
         }
         return readFile(path.join(this.baseUrl, relPath), 'utf8');
+    }
+
+    loadDirectoryChildren(fullPath:string): Promise<(File | ShallowDirectory)[]> {
+        if (this.isIgnored(fullPath)) {
+            return Promise.reject(new Error(`Unable to read ignored path: '${fullPath}'`));
+        }
+        let rootPath = path.join(this.baseUrl, fullPath);
+        let pathPrefix = fullPath ? (fullPath + pathSeparator) : fullPath;
+        return Promise.map(readdir(rootPath), (item:string) => {
+            const itemPath = pathPrefix + item;
+            let itemAbsolutePath = path.join(rootPath, item);
+            return stat(itemAbsolutePath).then((s:Stats)=>{
+                if (s.isDirectory()){
+                    return new ShallowDirectory(item, itemPath);
+                } else if (s.isFile()){
+                    return new File(item, itemPath);
+                } else {
+                    console.warn(`unknown node type at ${itemAbsolutePath}`);
+                    return null;
+                }
+            })
+        }).filter<File | ShallowDirectory>((i:File | ShallowDirectory | null)=> i!==null);
     }
 
     loadDirectoryTree(fullPath: string): Promise<Directory> {

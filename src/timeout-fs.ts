@@ -1,10 +1,11 @@
 import {
+    File,
     FileSystem,
     Directory,
     EventEmitter,
     pathSeparator,
     FileSystemNode,
-    isDisposable
+    isDisposable, ShallowDirectory
 } from './api';
 
 import * as Promise from 'bluebird';
@@ -38,6 +39,10 @@ export class TimeoutFileSystem implements FileSystem{
 
     loadDirectoryTree(fullPath?:string): Promise<Directory>{
         return this.fs.loadDirectoryTree(fullPath).timeout(this.timeout);
+    }
+
+    loadDirectoryChildren(fullPath:string): Promise<(File | ShallowDirectory)[]> {
+        return this.fs.loadDirectoryChildren(fullPath).timeout(this.timeout);
     }
 
     ensureDirectory(fullPath:string): Promise<void>{

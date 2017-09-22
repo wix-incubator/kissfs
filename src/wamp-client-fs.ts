@@ -1,6 +1,6 @@
 import * as Promise from 'bluebird';
 import {Connection, Session} from 'autobahn';
-import {FileSystem, fileSystemEventNames, Directory} from './api';
+import { File, FileSystem, fileSystemEventNames, Directory, ShallowDirectory} from './api';
 import {InternalEventsEmitter, makeEventsEmitter} from "./utils";
 
 export const noConnectionError = `WampClientFileSystem hasn't opened connection yet (forgot to init()?).`
@@ -13,8 +13,8 @@ export class WampClientFileSystem implements FileSystem {
     public baseUrl: string;
 
     constructor(url, private realm: string, private initTimeout: number = 5000) {
-        this.baseUrl = url
-        this.realm = realm
+        this.baseUrl = url;
+        this.realm = realm;
         this.connection = new Connection({url, realm});
     }
 
@@ -103,10 +103,19 @@ export class WampClientFileSystem implements FileSystem {
             if (!this.session || !this.session.isOpen) {
                 return reject(noConnectionError);
             }
-
             return this.session.call(`${this.realmPrefix}loadDirectoryTree`, [fullPath])
                 .then((tree: Directory) => resolve(tree))
                 .catch(error => reject(new Error(error)))
+        });
+    }
+
+    loadDirectoryChildren(fullPath:string): Promise<(File | ShallowDirectory)[]> {
+        return Promise.try<(File | ShallowDirectory)[]>(() => {
+            if (!this.session || !this.session.isOpen) {
+                throw new Error(noConnectionError);
+            }
+            return this.session.call(`${this.realmPrefix}loadDirectoryChildren`, [fullPath])
+                .catch(error => {throw new Error(error);});
         });
     }
 

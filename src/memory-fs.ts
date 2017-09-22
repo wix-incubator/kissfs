@@ -7,7 +7,7 @@ import {
     pathSeparator,
     FileSystemNode,
     isDir,
-    isFile
+    isFile, ShallowDirectory
 } from "./api";
 
 import {
@@ -72,6 +72,10 @@ export class MemoryFileSystem implements FileSystem {
 
     loadDirectoryTree(fullPath?:string): Promise<Directory> {
         return Promise.try(() => this.loadDirectoryTreeSync(fullPath));
+    }
+
+    loadDirectoryChildren(fullPath:string): Promise<(File | ShallowDirectory)[]>{
+        return Promise.try(() => this.loadDirectoryChildrenSync(fullPath));
     }
 
     saveFileSync(fullPath:string, newContent:string): void {
@@ -200,6 +204,18 @@ export class MemoryFileSystem implements FileSystem {
             throw new Error(`Unable to read folder in path: '${fullPath}'`);
         }
         return this.parseTree(dir)
+    }
+
+    loadDirectoryChildrenSync(fullPath:string): (File | ShallowDirectory)[] {
+        if (this.isIgnored(fullPath)) {
+            throw new Error(`Unable to read ignored path: '${fullPath}'`);
+        }
+        const pathArr = getPathNodes(fullPath);
+        const dir = pathArr.length ? this.getPathTarget(pathArr) : this.root;
+        if (!dir){
+            throw new Error(`Unable to read folder in path: '${fullPath}'`);
+        }
+        return dir.children.map(child => isDir(child) ? new ShallowDirectory(child.name, child.fullPath) : new File(child.name, child.fullPath));
     }
 
     private parseTree(node: Directory): Directory {
