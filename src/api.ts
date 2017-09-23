@@ -7,13 +7,22 @@ export interface FileSystemNode {
     fullPath:string,
 }
 
-export class Directory implements FileSystemNode {
+export class ShallowDirectory implements FileSystemNode {
     public type:'dir' = 'dir';
 
     constructor(
         public name:string,
         public fullPath:string,
-        public children:Array<FileSystemNode> = []
+    ) {}
+}
+
+export class Directory implements FileSystemNode  {
+    public type:'dir' = 'dir';
+
+    constructor(
+        public name:string,
+        public fullPath:string,
+        public children:Array<File | Directory> = []
     ) {}
 }
 
@@ -96,7 +105,7 @@ export type FileSystemEventName = 'unexpectedError' | 'fileCreated' | 'fileChang
 export const fileSystemEventNames: FileSystemEventName[] = ['unexpectedError', 'fileCreated', 'fileChanged', 'fileDeleted', 'directoryCreated', 'directoryDeleted'];
 export type FileSystemEventHandler = UnexpectedErrorEvent | FileCreatedEvent | FileChangedEvent | FileDeletedEvent | DirectoryCreatedEvent | DirectoryDeletedEvent;
 
-export const fileSystemMethods = ['saveFile', 'deleteFile', 'deleteDirectory', 'loadTextFile', 'loadDirectoryTree', 'ensureDirectory'];
+export const fileSystemMethods = ['saveFile', 'deleteFile', 'deleteDirectory', 'loadTextFile', 'loadDirectoryTree', 'ensureDirectory', 'loadDirectoryChildren'];
 
 export type EventEmitter =
     EventAspect<'unexpectedError', UnexpectedErrorEvent> &
@@ -113,7 +122,8 @@ export interface FileSystem {
     deleteFile(fullPath:string):Promise<void>;
     deleteDirectory(fullPath:string, recursive?:boolean):Promise<void>;
     loadTextFile(fullPath:string): Promise<string>;
-    loadDirectoryTree(): Promise<Directory>;
+    loadDirectoryTree(fullPath?:string): Promise<Directory>;
+    loadDirectoryChildren(fullPath:string): Promise<(File | ShallowDirectory)[]>;
     ensureDirectory(fullPath:string): Promise<void>;
     readonly events:EventEmitter;
     readonly baseUrl: string;

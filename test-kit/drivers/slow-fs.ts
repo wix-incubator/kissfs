@@ -5,7 +5,7 @@ import {
     File,
     isDir,
     fileSystemMethods,
-    isDisposable
+    isDisposable, ShallowDirectory
 } from "../../src/api";
 
 import {MemoryFileSystem} from "../../src/memory-fs";
@@ -38,12 +38,16 @@ export class SlowFs implements FileSystem {
         return Promise.delay(this.delay).then(() => this.fs.ensureDirectory(fullPath));
     }
 
-    loadTextFile(fullPath): Promise<string>{
+    loadTextFile(fullPath:string): Promise<string>{
         return Promise.delay(this.delay).then(() => this.fs.loadTextFile(fullPath));
     }
 
-    loadDirectoryTree(): Promise<Directory> {
-        return Promise.delay(this.delay).then(() => this.fs.loadDirectoryTree());
+    loadDirectoryTree(fullPath?:string): Promise<Directory> {
+        return Promise.delay(this.delay).then(() => this.fs.loadDirectoryTree(fullPath));
+    }
+
+    loadDirectoryChildren(fullPath:string): Promise<(File | ShallowDirectory)[]> {
+        return Promise.delay(this.delay).then(() => this.fs.loadDirectoryChildren(fullPath));
     }
 
     dispose() {

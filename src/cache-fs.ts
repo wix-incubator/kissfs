@@ -8,7 +8,7 @@ import {
     isFile,
     fileSystemMethods,
     UnexpectedErrorEvent,
-    isDisposable
+    isDisposable, ShallowDirectory
 } from './api';
 import {MemoryFileSystem} from './memory-fs';
 import {InternalEventsEmitter, makeEventsEmitter} from './utils';
@@ -159,11 +159,19 @@ export class CacheFileSystem implements FileSystem {
             });
     }
 
-    loadDirectoryTree(): Promise<Directory> {
-        if (this.isTreeCached) return this.cache.loadDirectoryTree();
+    loadDirectoryTree(fullPath?:string): Promise<Directory> {
+        if (this.isTreeCached) return this.cache.loadDirectoryTree(fullPath);
         return this.cacheTree().then(() => {
             this.isTreeCached = true;
-            return this.loadDirectoryTree();
+            return this.loadDirectoryTree(fullPath);
+        });
+    }
+
+    loadDirectoryChildren(fullPath:string): Promise<(File | ShallowDirectory)[]> {
+        if (this.isTreeCached) return this.cache.loadDirectoryChildren(fullPath);
+        return this.cacheTree().then(() => {
+            this.isTreeCached = true;
+            return this.loadDirectoryChildren(fullPath);
         });
     }
 

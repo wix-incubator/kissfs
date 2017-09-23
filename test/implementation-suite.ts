@@ -230,6 +230,40 @@ export function assertFileSystemContract(fsProvider: () => Promise<FileSystem>, 
                 .then(() => expect(fs.loadTextFile(ignoredFile)).to.be.rejectedWith(Error));
         });
 
+        it(`loadDirectoryTree`, function() {
+            const expected = {fullPath:``, name:'', type:'dir', children:[
+                {fullPath:`${dirName}`, name:dirName, type:'dir', children:[
+                    {fullPath:`${dirName}/_${dirName}`, name:`_${dirName}`, type:'dir', children:[
+                        {fullPath:`${dirName}/_${dirName}/${fileName}`, name:fileName, type:'file'}
+                    ]}]}]};
+
+            return fs.saveFile(`${dirName}/_${dirName}/${fileName}`, content)
+                .then(() => expect(fs.loadDirectoryTree()).to.eventually.eql(expected))
+                .then(() => expect(fs.loadDirectoryTree(dirName), `loadDirectoryTree('${dirName}')`).to.eventually.eql(expected.children[0]))
+                .then(() => expect(fs.loadDirectoryTree(`${dirName}/_${dirName}`), `loadDirectoryTree('${dirName}/_${dirName}')`).to.eventually.eql(expected.children[0].children[0]))
+
+        });
+
+        it(`loadDirectoryTree on an illegal sub-path`, function() {
+            return expect(fs.loadDirectoryTree(fileName)).to.be.rejectedWith(Error);
+        });
+
+        it(`loadDirectoryChildren`, function() {
+            return fs.saveFile(`${dirName}/_${dirName}/${fileName}`, content)
+                .then(()=> fs.saveFile(`${fileName}`, content))
+                .then(() => expect(fs.loadDirectoryChildren('')).to.eventually.have.deep.members([
+                    {fullPath:`${dirName}`, name:dirName, type:'dir'},
+                    {fullPath:fileName, name:fileName, type:'file'}
+                    ]))
+                .then(() => expect(fs.loadDirectoryChildren(dirName), `loadDirectoryChildren('${dirName}')`).to.eventually.have.deep.members(
+                    [{fullPath:`${dirName}/_${dirName}`, name:`_${dirName}`, type:'dir'}]))
+                .then(() => expect(fs.loadDirectoryChildren(`${dirName}/_${dirName}`), `loadDirectoryChildren('${dirName}/_${dirName}')`).to.eventually.have.deep.members(
+                    [{fullPath:`${dirName}/_${dirName}/${fileName}`, name:fileName, type:'file'}]));
+        });
+
+        it(`loadDirectoryChildren on an illegal sub-path`, function() {
+            return expect(fs.loadDirectoryChildren(fileName)).to.be.rejectedWith(Error);
+        });
     });
 }
 
