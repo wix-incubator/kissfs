@@ -18,7 +18,7 @@ var loaders = {
 };
 
 var resolve = {
-    extensions: ["", ".webpack.js", ".web.js", ".js", ".ts", ".tsx"],
+    extensions: ['.ts', '.js'],
     alias: {
         'bluebird-retry': 'bluebird-retry/lib/bluebird-retry'
     }
