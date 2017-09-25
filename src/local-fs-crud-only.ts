@@ -6,7 +6,6 @@ import {
     remove as remove_,
     rmdir as rmdir_,
     stat as stat_,
-    WalkEventFile,
     writeFile as writeFile_
 } from 'fs-extra';
 import * as walk from 'klaw';
@@ -136,7 +135,7 @@ export class LocalFileSystemCrudOnly implements FileSystem {
             const rootPath = fullPath ? path.join(baseUrl, fullPath) : baseUrl;
             walk(rootPath)
                 .on('readable', function () {
-                    let item: WalkEventFile;
+                    let item: walk.Item;
                     while ((item = this.read())) {
                         const itemPath = path.relative(baseUrl, item.path).split(path.sep).join(pathSeparator);
                         if (isIgnored(itemPath)) {
