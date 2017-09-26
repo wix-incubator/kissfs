@@ -10,10 +10,8 @@ os:
   - osx
 
 addons:
-  firefox: "latest"
-  apt:
-    packages:
-      - google-chrome-stable
+  firefox: latest
+  chrome: stable
 
 before_script:
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then export DISPLAY=:99.0; fi
