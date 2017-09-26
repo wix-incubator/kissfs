@@ -8,10 +8,6 @@ var loaders = {
             test: /\.ts[x]?$/,
             exclude : NODE_MODULES_PATH,
             loader: 'ts-loader?logLevel=warn' // &transpileOnly=true
-        },
-        {
-            test: /\.json$/,
-            loader: 'json-loader'
         }
     ],
     noParse: /\.min\.js$/
