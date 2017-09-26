@@ -9,7 +9,7 @@
     "clean": "rimraf ./dist",
     "build": "tsc -d",
     "build:watch": "tsc -d -w",
-    "bundle": "webpack --progress",
+    "bundle": "webpack",
     "pretest": "yarn run clean && yarn run build && yarn run bundle",
     "test": "yarn run test:node && yarn run test:browser",
     "test:node": "mocha --reporter mocha-env-reporter dist/test/nodejs",
