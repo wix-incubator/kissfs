@@ -1,11 +1,10 @@
 import * as Promise from 'bluebird';
-import {last, map, find} from 'lodash';
+import {last, find} from 'lodash';
 import {
     FileSystem,
     Directory,
     File,
     pathSeparator,
-    FileSystemNode,
     isDir,
     isFile, ShallowDirectory
 } from "./api";
@@ -22,8 +21,7 @@ let id = 0;
 export class MemoryFileSystem implements FileSystem {
     public readonly events: InternalEventsEmitter = makeEventsEmitter();
     private readonly root = new Directory('', '');
-    private ignore: Array<string> = [];
-    private isIgnored: (path: string) => boolean = (path: string) => false;
+    private isIgnored: (path: string) => boolean = () => false;
 
     constructor(public baseUrl = `memory-${id++}`, ignore?: Array<string>) {
         this.baseUrl += '/';
@@ -66,7 +64,7 @@ export class MemoryFileSystem implements FileSystem {
         return Promise.try(() => this.ensureDirectorySync(fullPath));
     }
 
-    loadTextFile(fullPath): Promise<string> {
+    loadTextFile(fullPath: string): Promise<string> {
         return Promise.try(() => this.loadTextFileSync(fullPath));
     }
 
@@ -97,7 +95,6 @@ export class MemoryFileSystem implements FileSystem {
             throw new Error(`unexpected error: not a legal file name? '${fullPath}'`);
         }
 
-        let type;
         const existingChild = find(parent.children, {name});
         if (isDir(existingChild)) {
             throw new Error(`file save error for path '${fullPath}'`);
@@ -106,14 +103,15 @@ export class MemoryFileSystem implements FileSystem {
         if (isFile(existingChild)) {
             if (existingChild.content !== newContent) {
                 existingChild.content = newContent
-                type = 'fileChanged';
+                const type = 'fileChanged';
+                this.events.emit(type, {type, fullPath, newContent});
             }
         } else {
-            type = 'fileCreated';
+            const type = 'fileCreated';
             parent.children.push(new File(name, fullPath, newContent))
+            this.events.emit(type, {type, fullPath, newContent});
         }
 
-        this.events.emit(type, {type, fullPath, newContent});
     }
 
     deleteFileSync(fullPath:string): void {
@@ -177,7 +175,7 @@ export class MemoryFileSystem implements FileSystem {
         }, this.root)
     }
 
-    loadTextFileSync(fullPath): string {
+    loadTextFileSync(fullPath: string): string {
         if (this.isIgnored(fullPath)) {
             throw new Error(`Unable to read ignored path: '${fullPath}'`);
         }

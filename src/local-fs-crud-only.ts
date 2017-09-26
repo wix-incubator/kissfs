@@ -28,10 +28,9 @@ const access = Promise.promisify<void, string>(access_);
 // TODO extract chokidar watch mechanism to configuration
 export class LocalFileSystemCrudOnly implements FileSystem {
     public readonly events: InternalEventsEmitter = makeEventsEmitter();
-    private ignore: Array<string> = [];
-    protected isIgnored: (path: string) => boolean = (path: string) => false;
+    protected isIgnored: (path: string) => boolean = () => false;
 
-    constructor(public baseUrl, ignore?: Array<string>) {
+    constructor(public baseUrl: string, ignore?: Array<string>) {
         if (ignore) {
             this.isIgnored = getIsIgnored(ignore)
         }
@@ -59,7 +58,7 @@ export class LocalFileSystemCrudOnly implements FileSystem {
         }
         const fullPath = path.join(this.baseUrl, ...getPathNodes(relPath));
         return access(fullPath)
-            .then(() => stat(fullPath), err => null)
+            .then(() => stat(fullPath), () => null)
             .then(stats => {
                 if (stats) {
                     if (stats.isFile()) {
@@ -81,7 +80,7 @@ export class LocalFileSystemCrudOnly implements FileSystem {
         }
         const fullPath = path.join(this.baseUrl, ...pathArr);
         return access(fullPath)
-            .then(() => stat(fullPath), err => null)
+            .then(() => stat(fullPath), () => null)
             .then(stats => {
                 if (stats) {
                     if (stats.isDirectory()) {
@@ -133,26 +132,26 @@ export class LocalFileSystemCrudOnly implements FileSystem {
         return Promise.fromCallback<Directory>((callback) => {
             const {baseUrl, isIgnored} = this;
             const rootPath = fullPath ? path.join(baseUrl, fullPath) : baseUrl;
-            walk(rootPath)
-                .on('readable', function () {
-                    let item: walk.Item;
-                    while ((item = this.read())) {
-                        const itemPath = path.relative(baseUrl, item.path).split(path.sep).join(pathSeparator);
-                        if (isIgnored(itemPath)) {
-                            return;
-                        } else if (item.stats.isDirectory()) {
-                            memFs.ensureDirectorySync(itemPath);
-                        } else if (item.stats.isFile()) {
-                            memFs.saveFileSync(itemPath, '');
-                        } else {
-                            console.warn(`unknown node type at ${itemPath}`, item);
-                        }
+            const walker = walk(rootPath);
+            walker.on('readable', function () {
+                let item: walk.Item;
+                while ((item = walker.read())) {
+                    const itemPath = path.relative(baseUrl, item.path).split(path.sep).join(pathSeparator);
+                    if (isIgnored(itemPath)) {
+                        return;
+                    } else if (item.stats.isDirectory()) {
+                        memFs.ensureDirectorySync(itemPath);
+                    } else if (item.stats.isFile()) {
+                        memFs.saveFileSync(itemPath, '');
+                    } else {
+                        console.warn(`unknown node type at ${itemPath}`, item);
                     }
-                })
-                .on('end', function () {
-                    callback(null, memFs.loadDirectoryTreeSync(fullPath));
-                })
-                .on('error', callback);
+                }
+            })
+            .on('end', function () {
+                callback(null, memFs.loadDirectoryTreeSync(fullPath));
+            })
+            .on('error', callback);
         });
     }
 

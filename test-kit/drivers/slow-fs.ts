@@ -3,13 +3,11 @@ import {
     FileSystem,
     Directory,
     File,
-    isDir,
-    fileSystemMethods,
     isDisposable, ShallowDirectory
 } from "../../src/api";
 
 import {MemoryFileSystem} from "../../src/memory-fs";
-import {InternalEventsEmitter, makeEventsEmitter} from "../../src/utils";
+import {InternalEventsEmitter} from "../../src/utils";
 import {ignoredDir, ignoredFile} from "../../test/implementation-suite";
 
 export class SlowFs implements FileSystem {

@@ -39,7 +39,7 @@ describe('events test driver', ()=>{
         emitter.emit('event', {type:'event', foo:'bar'});
         var rejection = matcher.expect([{type:'event', foo:'baz'}]).catch(e => e);
         return expect(rejection).to.eventually.satisfy(
-            err => expect(err).to.containSubset({actual:[{foo:'bar'}], expected:[{foo:'baz'}]}));
+            (err: object) => expect(err).to.containSubset({actual:[{foo:'bar'}], expected:[{foo:'baz'}]}));
     });
 
     it('failure when mismatched events', () => {

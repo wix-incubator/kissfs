@@ -2,7 +2,6 @@ import * as Promise from 'bluebird';
 import * as retry from 'bluebird-retry';
 import {watch} from 'chokidar';
 import * as path from 'path';
-import {Stats} from 'fs';
 import {FSWatcher} from 'chokidar';
 import {FileSystem, pathSeparator} from "./api";
 import {LocalFileSystemCrudOnly} from './local-fs-crud-only';
@@ -11,7 +10,7 @@ export class LocalFileSystem extends LocalFileSystemCrudOnly implements FileSyst
     private watcher: FSWatcher;
 
     constructor(
-        public baseUrl,
+        public baseUrl: string,
         ignore?: Array<string>,
         private retrySettings: retry.Options = {
             interval: 100,
@@ -24,7 +23,7 @@ export class LocalFileSystem extends LocalFileSystemCrudOnly implements FileSyst
         this.watcher = watch([this.baseUrl], {
             //  usePolling:true,
             //  interval:100,
-            ignored: path => this.isIgnored(path),
+            ignored: (path: string) => this.isIgnored(path),
             //    atomic: false, //todo 50?
             cwd: this.baseUrl
         });
@@ -34,7 +33,7 @@ export class LocalFileSystem extends LocalFileSystemCrudOnly implements FileSyst
         return new Promise<LocalFileSystem>(resolve => {
             this.watcher.once('ready', () => {
 
-                this.watcher.on('addDir', (relPath:string, stats:Stats)=> {
+                this.watcher.on('addDir', (relPath:string)=> {
                         if (relPath) { // ignore event of root folder creation
                             this.events.emit('directoryCreated', {
                                 type: 'directoryCreated',
