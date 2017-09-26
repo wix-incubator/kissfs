@@ -10,8 +10,8 @@
     "build": "tsc -d",
     "build:watch": "tsc -d -w",
     "bundle": "webpack --progress",
-    "pretest": "npm run clean && npm run build && npm run bundle",
-    "test": "npm run test:node && npm run test:browser",
+    "pretest": "yarn run clean && yarn run build && yarn run bundle",
+    "test": "yarn run test:node && yarn run test:browser",
     "test:node": "mocha --reporter mocha-env-reporter dist/test/nodejs",
     "test:browser": "karma start --single-run",
     "start": "webpack-dev-server --progress"
