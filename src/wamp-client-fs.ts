@@ -115,7 +115,7 @@ export class WampClientFileSystem implements FileSystem {
                 throw new Error(noConnectionError);
             }
             return this.session.call(`${this.realmPrefix}loadDirectoryChildren`, [fullPath])
-                .catch(error => {throw new Error(error);});
+                .catch(error => {throw new Error(error);}) as PromiseLike<(File | ShallowDirectory)[]>;
         });
     }
 

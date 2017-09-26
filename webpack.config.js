@@ -8,17 +8,13 @@ var loaders = {
             test: /\.ts[x]?$/,
             exclude : NODE_MODULES_PATH,
             loader: 'ts-loader?logLevel=warn' // &transpileOnly=true
-        },
-        {
-            test: /\.json$/,
-            loader: 'json-loader'
         }
     ],
     noParse: /\.min\.js$/
 };
 
 var resolve = {
-    extensions: ["", ".webpack.js", ".web.js", ".js", ".ts", ".tsx"],
+    extensions: ['.ts', '.js'],
     alias: {
         'bluebird-retry': 'bluebird-retry/lib/bluebird-retry'
     }
