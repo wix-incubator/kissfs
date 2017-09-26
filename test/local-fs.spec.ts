@@ -51,7 +51,8 @@ describe(`the local filesystem implementation`, () => {
         }
     });
     afterEach(() =>{
-        disposableFileSystem.dispose();
+        // if beforeEach fails, disposableFileSystem can stay undefined
+        disposableFileSystem && disposableFileSystem.dispose();
     });
     function getFS() {
         testPath = join(rootPath, 'fs_'+(counter++));
