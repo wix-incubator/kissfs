@@ -37,7 +37,6 @@ describe(`the cache file system implementation`, () => {
     describe(`using slow FileSystem`, () => {
         const timeout = 200;
 
-        let timer;
         let fs: FileSystem;
         let slow: FileSystem;
         let startTimestamp: number;
@@ -59,7 +58,7 @@ describe(`the cache file system implementation`, () => {
         })
 
         it('loads file faster after it has been saved from outside', () => {
-            const onFileCreated = new Promise((resolve, reject) => {
+            const onFileCreated = new Promise(resolve => {
                     fs.events.once('fileCreated', () => {
                         fs.loadTextFile(fileName)
                             .then(() => resolve(Date.now() - startTimestamp))

@@ -1,9 +1,8 @@
-import {EventEmitter} from 'eventemitter3';
 import * as Promise from 'bluebird';
 import * as retry from 'bluebird-retry';
 import {expect} from 'chai';
-import {WampServer, WampRouter, wampRealm, wampServerOverFs} from '../src/nodejs';
-import {FileSystem, WampClientFileSystem, MemoryFileSystem} from '../src/universal';
+import {WampServer, wampRealm, wampServerOverFs} from '../src/nodejs';
+import {WampClientFileSystem, MemoryFileSystem} from '../src/universal';
 import {noConnectionError} from '../src/wamp-client-fs';
 import {EventsMatcher} from '../test-kit/drivers/events-matcher';
 import {

@@ -6,7 +6,6 @@ import {
     File,
     isDir,
     isFile,
-    fileSystemMethods,
     UnexpectedErrorEvent,
     isDisposable, ShallowDirectory
 } from './api';
@@ -27,7 +26,7 @@ interface TreesDiff {
     toChange: string[]
 }
 
-function nodesToMap(tree: FileSystemNode[], accumulator = {}): FileSystemNodesMap {
+function nodesToMap(tree: FileSystemNode[], accumulator: FileSystemNodesMap = {}): FileSystemNodesMap {
     tree.forEach(node => {
         if (isDir(node)) nodesToMap(node.children, accumulator);
         accumulator[node.fullPath] = node;
@@ -149,7 +148,7 @@ export class CacheFileSystem implements FileSystem {
             .then(() => this.cache.ensureDirectory(fullPath));
     }
 
-    loadTextFile(fullPath): Promise<string> {
+    loadTextFile(fullPath: string): Promise<string> {
         if (this.pathsInCache[fullPath]) return this.cache.loadTextFile(fullPath)
         return this.fs.loadTextFile(fullPath)
             .then(file => {
@@ -224,7 +223,7 @@ export class CacheFileSystem implements FileSystem {
         })
     }
 
-    private emit(type, data) {
+    private emit(type: string, data: object) {
         this.events.emit(type, {...data, type});
     }
 

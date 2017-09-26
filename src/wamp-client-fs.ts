@@ -10,12 +10,10 @@ export class WampClientFileSystem implements FileSystem {
     private connection: Connection;
     private session: Session;
     private realmPrefix: string;
-    public baseUrl: string;
 
-    constructor(url, private realm: string, private initTimeout: number = 5000) {
-        this.baseUrl = url;
+    constructor(public baseUrl: string, private realm: string, private initTimeout: number = 5000) {
         this.realm = realm;
-        this.connection = new Connection({url, realm});
+        this.connection = new Connection({url: baseUrl, realm});
     }
 
     init(): Promise<WampClientFileSystem> {
@@ -86,7 +84,7 @@ export class WampClientFileSystem implements FileSystem {
         });
     }
 
-    loadTextFile(fullPath): Promise<string> {
+    loadTextFile(fullPath: string): Promise<string> {
         return new Promise<string>((resolve, reject) => {
             if (!this.session || !this.session.isOpen) {
                 return reject(noConnectionError);

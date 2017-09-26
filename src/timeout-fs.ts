@@ -3,8 +3,6 @@ import {
     FileSystem,
     Directory,
     EventEmitter,
-    pathSeparator,
-    FileSystemNode,
     isDisposable, ShallowDirectory
 } from './api';
 

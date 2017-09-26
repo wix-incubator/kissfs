@@ -1,6 +1,7 @@
 import {EventEmitter} from 'eventemitter3';
-import * as isGlob from 'is-glob';
 import * as micromatch from 'micromatch';
+const isGlob = require('is-glob');
+
 import {pathSeparator, EventEmitter as FSEvents} from './api';
 
 // utility logic for filesystem implementations

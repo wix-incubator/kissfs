@@ -6,14 +6,12 @@ import {
     ignoredFile,
     dirName,
     fileName,
-    content
 } from './implementation-suite'
 import {SlowFs} from '../test-kit/drivers/slow-fs';
 import {MemoryFileSystem, TimeoutFileSystem, FileSystem} from '../src/universal';
 
 describe('the timeout file system imeplementation', () => {
     const timeout = 200;
-    const accuracyFactor = 0.9;
 
     assertFileSystemContract(() =>
         Promise.resolve(new TimeoutFileSystem(timeout , new MemoryFileSystem(undefined, [ignoredDir, ignoredFile]))),
@@ -23,7 +21,6 @@ describe('the timeout file system imeplementation', () => {
     describe(`delayed timeout test`, () => {
         let fs: FileSystem;
         let startTimestamp: number;
-        let endTimestamp: number;
         const delay = timeout * 2;
 
         beforeEach(() => {
