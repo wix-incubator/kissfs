@@ -25,19 +25,15 @@ export class EventsMatcher{
     }
 
     async expect(events: Array<EventObj>):Promise<void>{
-        await this.expectEvents(events)
-        
-        await delayedPromise(this.options.noExtraEventsGrace);
-        expect(this.events, 'no further events after matching').to.eql([]);
-    }
-
-    private async expectEvents(events: Array<EventObj>):Promise<void>{
         const {interval, timeout} = this.options;
         if (events.length) {
             await retryPromise(() => this.checkEvents(events), {retries: 100, interval, timeout});
         } else {
             expect(this.events).to.eql([]);
         }
+        
+        await delayedPromise(this.options.noExtraEventsGrace);
+        expect(this.events, 'no further events after matching').to.eql([]);
     }
 
     private async checkEvents(events: Array<EventObj>): Promise<void> {
