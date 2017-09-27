@@ -11,7 +11,7 @@
     "bundle": "webpack",
     "pretest": "yarn run clean && yarn run build && yarn run bundle",
     "test": "yarn run test:node && yarn run test:browser",
-    "test:node": "mocha --reporter mocha-env-reporter dist/test/nodejs",
+    "test:node": "mocha --reporter mocha-env-reporter --timeout 4000 dist/test/nodejs",
     "test:browser": "karma start --single-run",
     "start": "webpack-dev-server --progress"
   },
