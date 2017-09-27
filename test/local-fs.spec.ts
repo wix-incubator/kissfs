@@ -9,7 +9,6 @@ import {
 
 import {join} from 'path';
 import {expect} from 'chai';
-import * as Promise from 'bluebird';
 import {EventEmitter} from 'eventemitter3';
 
 import {

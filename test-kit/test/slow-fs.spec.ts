@@ -1,4 +1,3 @@
-import * as Promise from 'bluebird';
 import {expect} from 'chai';
 import {FileSystem} from '../../src/api';
 import {

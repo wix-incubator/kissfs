@@ -1,4 +1,3 @@
-import * as Promise from 'bluebird';
 export const pathSeparator = '/';
 
 export interface FileSystemNode {

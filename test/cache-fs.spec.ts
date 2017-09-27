@@ -1,6 +1,5 @@
 import {EventEmitter} from 'eventemitter3';
 import {InternalEventsEmitter} from '../src/utils';
-import * as Promise from 'bluebird';
 import {expect} from 'chai';
 import {EventsMatcher} from '../test-kit/drivers/events-matcher';
 import {SlowFs} from '../test-kit/drivers/slow-fs';

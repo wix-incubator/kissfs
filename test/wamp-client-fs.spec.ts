@@ -1,6 +1,5 @@
-import * as Promise from 'bluebird';
-import * as retry from 'bluebird-retry';
 import {expect} from 'chai';
+import {retryPromise} from '../src/promise-utils';
 import {WampServer, wampRealm, wampServerOverFs} from '../src/nodejs';
 import {WampClientFileSystem, MemoryFileSystem} from '../src/universal';
 import {noConnectionError} from '../src/wamp-client-fs';
@@ -42,9 +41,9 @@ describe(`the wamp client filesystem implementation`, () => {
         return new Promise(resolve => {
             wampServer.router.close();
             const errMsg = `WAMP connection hasn't been closed after the previous test`;
-            return retry(
+            return retryPromise(
                 () => (wampServer.connection as any).isConnected ? Promise.reject(errMsg) : Promise.resolve(),
-                {interval: 100, max_tries: 10}
+                {interval: 100, retries: 10}
             ).then(() => resolve())
         });
     });

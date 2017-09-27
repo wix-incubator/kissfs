@@ -1,7 +1,7 @@
-import * as Promise from 'bluebird';
 import {Connection, Session} from 'autobahn';
 import { File, FileSystem, fileSystemEventNames, Directory, ShallowDirectory} from './api';
 import {InternalEventsEmitter, makeEventsEmitter} from "./utils";
+import {timeoutPromise} from './promise-utils';
 
 export const noConnectionError = `WampClientFileSystem hasn't opened connection yet (forgot to init()?).`
 
@@ -18,7 +18,7 @@ export class WampClientFileSystem implements FileSystem {
 
     init(): Promise<WampClientFileSystem> {
         const {baseUrl, initTimeout, connection} = this
-        return new Promise<WampClientFileSystem>(resolve => {
+        return timeoutPromise(initTimeout, new Promise<WampClientFileSystem>(resolve => {
             connection.open();
             connection.onopen = (session: Session) => {
                 this.session = session;
@@ -31,10 +31,7 @@ export class WampClientFileSystem implements FileSystem {
                 });
                 return resolve(this)
             };
-        }).timeout(
-            initTimeout,
-            `Cant't open connection to the WAMP server at ${baseUrl} for ${initTimeout}ms.`
-        );
+        }), `Cant't open connection to the WAMP server at ${baseUrl} for ${initTimeout}ms.`);
     }
 
     saveFile(fullPath:string, newContent:string): Promise<void> {
@@ -104,17 +101,18 @@ export class WampClientFileSystem implements FileSystem {
             return this.session.call(`${this.realmPrefix}loadDirectoryTree`, [fullPath])
                 .then((tree: Directory) => resolve(tree))
                 .catch(error => reject(new Error(error)))
-        });
-    }
-
-    loadDirectoryChildren(fullPath:string): Promise<(File | ShallowDirectory)[]> {
-        return Promise.try<(File | ShallowDirectory)[]>(() => {
-            if (!this.session || !this.session.isOpen) {
-                throw new Error(noConnectionError);
-            }
-            return this.session.call(`${this.realmPrefix}loadDirectoryChildren`, [fullPath])
-                .catch(error => {throw new Error(error);}) as PromiseLike<(File | ShallowDirectory)[]>;
-        });
+            });
+        }
+        
+    async loadDirectoryChildren(fullPath:string): Promise<(File | ShallowDirectory)[]> {
+        if (!this.session || !this.session.isOpen) {
+            throw new Error(noConnectionError);
+        }
+        try {
+            return await this.session.call<(File | ShallowDirectory)[]>(`${this.realmPrefix}loadDirectoryChildren`, [fullPath]);
+        } catch (error) {
+            throw new Error(error);
+        }
     }
 
     dispose() {

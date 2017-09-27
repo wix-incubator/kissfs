@@ -1,9 +1,8 @@
-import * as Promise from 'bluebird';
-import * as retry from 'bluebird-retry';
-import {watch} from 'chokidar';
 import * as path from 'path';
-import {FSWatcher} from 'chokidar';
-import {FileSystem, pathSeparator} from "./api";
+import {watch, FSWatcher} from 'chokidar';
+import {retryPromise, RetryPromiseOptions} from './promise-utils';
+
+import {FileSystem, pathSeparator} from './api';
 import {LocalFileSystemCrudOnly} from './local-fs-crud-only';
 
 export class LocalFileSystem extends LocalFileSystemCrudOnly implements FileSystem {
@@ -12,9 +11,9 @@ export class LocalFileSystem extends LocalFileSystemCrudOnly implements FileSyst
     constructor(
         public baseUrl: string,
         ignore?: Array<string>,
-        private retrySettings: retry.Options = {
+        private retryOptions: RetryPromiseOptions = {
             interval: 100,
-            max_tries: 3
+            retries: 3
         }) {
         super(baseUrl, ignore)
     }
@@ -43,26 +42,26 @@ export class LocalFileSystem extends LocalFileSystemCrudOnly implements FileSyst
                     });
 
                 this.watcher.on('add', (relPath:string) => {
-                    retry(
+                    retryPromise(
                         () => this.loadTextFile(relPath)
                             .then(content => this.events.emit('fileCreated', {
                                 type: 'fileCreated',
                                 fullPath: relPath.split(path.sep).join(pathSeparator),
                                 newContent: content
                             })),
-                        this.retrySettings
+                        this.retryOptions
                     ).catch(() => this.events.emit('unexpectedError', {type: 'unexpectedError'}));
                 });
 
                 this.watcher.on('change', (relPath:string) => {
-                    retry(
+                    retryPromise(
                         () => this.loadTextFile(relPath)
                             .then((content)=>this.events.emit('fileChanged', {
                                 type: 'fileChanged',
                                 fullPath: relPath.split(path.sep).join(pathSeparator),
                                 newContent: content
                             })),
-                        this.retrySettings
+                        this.retryOptions
                     ).catch(() => this.events.emit('unexpectedError', {type: 'unexpectedError'}));
                 });
 

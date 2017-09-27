@@ -1,4 +1,3 @@
-import * as Promise from 'bluebird';
 import {Connection, Session} from 'autobahn';
 import {FileSystem, fileSystemEventNames, fileSystemMethods, isDisposable} from './api';
 import {wampRealm, wampRealmPrefix} from './constants';

@@ -1,7 +1,6 @@
 import {expect} from "chai";
 import {FileSystem, fileSystemEventNames, pathSeparator} from '../src/universal';
 import {EventsMatcher} from '../test-kit/drivers/events-matcher';
-import * as Promise from 'bluebird';
 import {EventEmitter} from 'eventemitter3';
 
 
