@@ -19,10 +19,16 @@ export async function retryPromise<T>(promiseProvider: () => Promise<T>, {interv
     let aborted = false;
     let lastError: Error;
     return new Promise<T>(async (resolve, reject) => {
-        timeout && setTimeout(() => {aborted = true; reject(lastError);}, timeout);
+        if (timeout) {
+            setTimeout(() => {
+                aborted = true;
+                reject(lastError);
+            }, timeout);
+        }
         do {
             try {
-                return resolve(await promiseProvider())
+                const result = await promiseProvider();
+                return resolve(result);
             } catch (e) {
                 lastError = e;
                 if (retries > 0) {
