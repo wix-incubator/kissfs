@@ -5,8 +5,7 @@ import {
     EventEmitter,
     isDisposable, ShallowDirectory
 } from './api';
-
-import * as Promise from 'bluebird';
+import { timeoutPromise } from './promise-utils';
 
 export class TimeoutFileSystem implements FileSystem{
     constructor(private timeout: number, private fs: FileSystem) {}
@@ -20,31 +19,31 @@ export class TimeoutFileSystem implements FileSystem{
     }
 
     saveFile(fullPath:string, newContent:string): Promise<void>{
-        return this.fs.saveFile(fullPath , newContent).timeout(this.timeout);
+        return timeoutPromise(this.timeout, this.fs.saveFile(fullPath , newContent));
     }
 
     deleteFile(fullPath:string):Promise<void>{
-        return this.fs.deleteFile(fullPath).timeout(this.timeout);
+        return timeoutPromise(this.timeout, this.fs.deleteFile(fullPath));
     }
 
     deleteDirectory(fullPath:string, recursive?:boolean):Promise<void>{
-        return this.fs.deleteDirectory(fullPath , recursive).timeout(this.timeout);
+        return timeoutPromise(this.timeout, this.fs.deleteDirectory(fullPath , recursive));
     }
 
     loadTextFile(fullPath:string): Promise<string>{
-        return this.fs.loadTextFile(fullPath).timeout(this.timeout);
+        return timeoutPromise(this.timeout, this.fs.loadTextFile(fullPath));
     }
 
     loadDirectoryTree(fullPath?:string): Promise<Directory>{
-        return this.fs.loadDirectoryTree(fullPath).timeout(this.timeout);
+        return timeoutPromise(this.timeout, this.fs.loadDirectoryTree(fullPath));
     }
 
     loadDirectoryChildren(fullPath:string): Promise<(File | ShallowDirectory)[]> {
-        return this.fs.loadDirectoryChildren(fullPath).timeout(this.timeout);
+        return timeoutPromise(this.timeout, this.fs.loadDirectoryChildren(fullPath));
     }
 
     ensureDirectory(fullPath:string): Promise<void>{
-        return this.fs.ensureDirectory(fullPath).timeout(this.timeout);
+        return timeoutPromise(this.timeout, this.fs.ensureDirectory(fullPath));
     }
 
     dispose() {

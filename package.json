@@ -11,7 +11,7 @@
     "bundle": "webpack",
     "pretest": "yarn run clean && yarn run build && yarn run bundle",
     "test": "yarn run test:node && yarn run test:browser",
-    "test:node": "mocha --reporter mocha-env-reporter dist/test/nodejs",
+    "test:node": "mocha --reporter mocha-env-reporter --timeout 4000 dist/test/nodejs",
     "test:browser": "karma start --single-run",
     "start": "webpack-dev-server --progress"
   },
@@ -33,8 +33,6 @@
   "homepage": "https://github.com/wix/kissfs#readme",
   "dependencies": {
     "autobahn": "^17.5.2",
-    "bluebird": "^3.5.0",
-    "bluebird-retry": "^0.11.0",
     "chokidar": "^1.7.0",
     "eventemitter3": "^2.0.3",
     "fs-extra": "^4.0.2",
@@ -42,12 +40,11 @@
     "klaw": "^2.1.0",
     "lodash": "^4.17.4",
     "micromatch": "^2.3.11",
+    "tslib": "^1.7.1",
     "wamp-server": "^0.0.6"
   },
   "devDependencies": {
     "@types/autobahn": "^0.9.37",
-    "@types/bluebird": "^3.5.12",
-    "@types/bluebird-retry": "^0.0.33",
     "@types/chai": "^4.0.4",
     "@types/chai-as-promised": "^7.1.0",
     "@types/chai-subset": "^1.3.1",
@@ -73,7 +70,7 @@
     "mocha-env-reporter": "^3.0.0",
     "mocha-loader": "^1.1.1",
     "rimraf": "^2.6.2",
-    "sinon": "^3.3.0",
+    "sinon": "^4.0.0",
     "source-map-support": "^0.4.18",
     "tmp": "^0.0.33",
     "ts-loader": "^2.3.7",

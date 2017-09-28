@@ -1,4 +1,3 @@
-import * as Promise from 'bluebird';
 import {assertFileSystemContract, ignoredDir, ignoredFile} from './implementation-suite'
 import {MemoryFileSystem} from "../src/universal";
 

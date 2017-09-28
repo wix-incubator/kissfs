@@ -1,7 +1,6 @@
-import {expect} from "chai";
-import * as Promise from 'bluebird';
-import * as retry from 'bluebird-retry';
+import {expect} from 'chai';
 import {EventEmitter} from 'eventemitter3';
+import {delayedPromise, retryPromise} from '../../src/promise-utils';
 
 export interface EventObj{
     type:string;
@@ -25,34 +24,20 @@ export class EventsMatcher{
         }))
     }
 
-    private expectEvents(events: Array<EventObj>):Promise<void>{
+    async expect(events: Array<EventObj>):Promise<void>{
+        const {interval, timeout} = this.options;
         if (events.length) {
-            return retry(this.checkEvents.bind(this, events), this.options)
-                .then(() => undefined)
-                .catch(e => {
-                    throw e.failure;
-                });
+            await retryPromise(() => this.checkEvents(events), {retries: 100, interval, timeout});
         } else {
             expect(this.events).to.eql([]);
-            return Promise.resolve();
         }
+        
+        await delayedPromise(this.options.noExtraEventsGrace);
+        expect(this.events, 'no further events after matching').to.eql([]);
     }
 
-    expect(events: Array<EventObj>):Promise<void>{
-        return this.expectEvents(events)
-                .delay(this.options.noExtraEventsGrace)
-                .then(() => {
-                    expect(this.events, 'no further events after matching').to.eql([]);
-                });
-    }
-
-    private checkEvents(events: Array<EventObj>){
-        try {
-            expect(this.events).to.containSubset(events);
-            this.events = [];
-            return Promise.resolve();
-        } catch(e){
-            return Promise.reject(e);
-        }
+    private async checkEvents(events: Array<EventObj>): Promise<void> {
+        expect(this.events).to.containSubset(events);
+        this.events = [];
     }
 }

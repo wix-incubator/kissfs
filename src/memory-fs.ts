@@ -1,4 +1,3 @@
-import * as Promise from 'bluebird';
 import {last, find} from 'lodash';
 import {
     FileSystem,
@@ -48,32 +47,32 @@ export class MemoryFileSystem implements FileSystem {
         return current;
     }
 
-    saveFile(fullPath:string, newContent:string): Promise<void> {
-        return Promise.try(() => this.saveFileSync(fullPath, newContent));
+    async saveFile(fullPath: string, newContent: string): Promise<void> {
+        return this.saveFileSync(fullPath, newContent);
     }
 
-    deleteFile(fullPath:string): Promise<void> {
-        return Promise.try(() => this.deleteFileSync(fullPath));
+    async deleteFile(fullPath: string): Promise<void> {
+        return this.deleteFileSync(fullPath);
     }
 
-    deleteDirectory(fullPath: string, recursive?: boolean): Promise<void> {
-        return Promise.try(() => this.deleteDirectorySync(fullPath, recursive))
+    async deleteDirectory(fullPath: string, recursive?: boolean): Promise<void> {
+        return this.deleteDirectorySync(fullPath, recursive)
     }
 
-    ensureDirectory(fullPath:string):Promise<void> {
-        return Promise.try(() => this.ensureDirectorySync(fullPath));
+    async ensureDirectory(fullPath: string): Promise<void> {
+        return this.ensureDirectorySync(fullPath);
     }
 
-    loadTextFile(fullPath: string): Promise<string> {
-        return Promise.try(() => this.loadTextFileSync(fullPath));
+    async loadTextFile(fullPath: string): Promise<string> {
+        return this.loadTextFileSync(fullPath);
     }
 
-    loadDirectoryTree(fullPath?:string): Promise<Directory> {
-        return Promise.try(() => this.loadDirectoryTreeSync(fullPath));
+    async loadDirectoryTree(fullPath?: string): Promise<Directory> {
+        return this.loadDirectoryTreeSync(fullPath);
     }
 
-    loadDirectoryChildren(fullPath:string): Promise<(File | ShallowDirectory)[]>{
-        return Promise.try(() => this.loadDirectoryChildrenSync(fullPath));
+    async loadDirectoryChildren(fullPath: string): Promise<(File | ShallowDirectory)[]> {
+        return this.loadDirectoryChildrenSync(fullPath);
     }
 
     saveFileSync(fullPath:string, newContent:string): void {

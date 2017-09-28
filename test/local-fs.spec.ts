@@ -9,7 +9,6 @@ import {
 
 import {join} from 'path';
 import {expect} from 'chai';
-import * as Promise from 'bluebird';
 import {EventEmitter} from 'eventemitter3';
 
 import {
@@ -66,7 +65,7 @@ describe(`the local filesystem implementation`, () => {
     const eventMatcherOptions: EventsMatcher.Options = {
         interval: 50,
         noExtraEventsGrace: 150,
-        timeout: 1500
+        timeout: 3000
     };
     assertFileSystemContract(getFS, eventMatcherOptions);
     describe(`external changes`, () => {

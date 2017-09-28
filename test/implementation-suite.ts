@@ -1,7 +1,6 @@
 import {expect} from "chai";
 import {FileSystem, fileSystemEventNames, pathSeparator} from '../src/universal';
 import {EventsMatcher} from '../test-kit/drivers/events-matcher';
-import * as Promise from 'bluebird';
 import {EventEmitter} from 'eventemitter3';
 
 
@@ -47,7 +46,6 @@ export function assertFileSystemContract(fsProvider: () => Promise<FileSystem>, 
         });
 
         it(`ensuring existence of directory`, function() {
-            const dirName = fileName;
             const expectedStructure = {
                 type:'dir', name:'', fullPath:'', children:[
                     {type:'dir', name:dirName, fullPath:dirName, children:[]}

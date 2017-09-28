@@ -1,4 +1,3 @@
-import * as Promise from 'bluebird';
 import {
     FileSystem,
     FileSystemNode,
