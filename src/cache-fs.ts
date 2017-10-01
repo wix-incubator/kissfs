@@ -124,53 +124,55 @@ export class CacheFileSystem implements FileSystem {
         });
     }
 
-    saveFile(fullPath:string, newContent:string): Promise<void> {
-        return this.fs.saveFile(fullPath, newContent)
-            .then(() => this.cache.saveFile(fullPath, newContent))
-            .then(() => {
-                this.pathsInCache[fullPath] = true
-            });
+    async saveFile(fullPath:string, newContent:string): Promise<void> {
+        await this.fs.saveFile(fullPath, newContent);
+        this.cache.saveFileSync(fullPath, newContent);
+        this.pathsInCache[fullPath] = true;
     }
 
-    deleteFile(fullPath:string): Promise<void> {
-        return this.fs.deleteFile(fullPath)
-            .then(() => this.cache.deleteFile(fullPath));
+    async deleteFile(fullPath:string): Promise<void> {
+        await this.fs.deleteFile(fullPath);
+        this.cache.deleteFileSync(fullPath);
     }
 
-    deleteDirectory(fullPath: string, recursive: boolean = false): Promise<void> {
-        return this.fs.deleteDirectory(fullPath, recursive)
-            .then(() => this.cache.deleteDirectory(fullPath, recursive));
+    async deleteDirectory(fullPath: string, recursive: boolean = false): Promise<void> {
+        await this.fs.deleteDirectory(fullPath, recursive);
+        this.cache.deleteDirectorySync(fullPath, recursive);
     }
 
-    ensureDirectory(fullPath:string): Promise<void> {
-        return this.fs.ensureDirectory(fullPath)
-            .then(() => this.cache.ensureDirectory(fullPath));
+    async ensureDirectory(fullPath:string): Promise<void> {
+        await this.fs.ensureDirectory(fullPath);
+        this.cache.ensureDirectorySync(fullPath);
     }
 
-    loadTextFile(fullPath: string): Promise<string> {
-        if (this.pathsInCache[fullPath]) return this.cache.loadTextFile(fullPath)
-        return this.fs.loadTextFile(fullPath)
-            .then(file => {
-                return this.cache.saveFile(fullPath, file)
-                    .then(() => this.pathsInCache[fullPath] = true)
-                    .then(() => this.loadTextFile(fullPath))
-            });
+    async loadTextFile(fullPath: string): Promise<string> {
+        if (this.pathsInCache[fullPath]) {
+            return this.cache.loadTextFileSync(fullPath);
+        }
+
+        const file = await this.fs.loadTextFile(fullPath);
+        this.cache.saveFileSync(fullPath, file);
+        return this.cache.loadTextFileSync(fullPath);
     }
 
-    loadDirectoryTree(fullPath?:string): Promise<Directory> {
-        if (this.isTreeCached) return this.cache.loadDirectoryTree(fullPath);
-        return this.cacheTree().then(() => {
-            this.isTreeCached = true;
-            return this.loadDirectoryTree(fullPath);
-        });
+    async loadDirectoryTree(fullPath?:string): Promise<Directory> {
+        if (this.isTreeCached) {
+            return this.cache.loadDirectoryTreeSync(fullPath);
+        }
+
+        await this.cacheTree();
+        this.isTreeCached = true;
+        return this.cache.loadDirectoryTreeSync(fullPath);
     }
 
-    loadDirectoryChildren(fullPath:string): Promise<(File | ShallowDirectory)[]> {
-        if (this.isTreeCached) return this.cache.loadDirectoryChildren(fullPath);
-        return this.cacheTree().then(() => {
-            this.isTreeCached = true;
-            return this.loadDirectoryChildren(fullPath);
-        });
+    async loadDirectoryChildren(fullPath:string): Promise<(File | ShallowDirectory)[]> {
+        if (this.isTreeCached) {
+            return this.cache.loadDirectoryChildrenSync(fullPath);
+        }
+
+        await this.cacheTree();
+        this.isTreeCached = true;
+        return this.cache.loadDirectoryChildrenSync(fullPath);
     }
 
     dispose() {
@@ -226,21 +228,22 @@ export class CacheFileSystem implements FileSystem {
         this.events.emit(type, {...data, type});
     }
 
-    private cacheTree(): Promise<FileSystem> {
+    private async cacheTree(): Promise<FileSystem> {
         this.cache = new MemoryFileSystem();
         this.pathsInCache = {};
-        return this.fs.loadDirectoryTree()
-            .then(tree => this.fill(tree));
+        const tree = await this.fs.loadDirectoryTree();
+
+        return this.fill(tree);
     }
 
-    private fill(tree: FileSystemNode): Promise<FileSystem> {
+    private async fill(tree: FileSystemNode): Promise<FileSystem> {
         if (isDir(tree)) {
-            return this.cache.ensureDirectory(tree.fullPath)
-                .then(() => Promise.all(tree.children.map(child => this.fill(child))))
-                .then(() => this.cache);
+            this.cache.ensureDirectorySync(tree.fullPath);
+            await Promise.all(tree.children.map(child => this.fill(child)));
+            return this.cache;
         }
 
-        return this.cache.saveFile(tree.fullPath, '')
-            .then(() => Promise.resolve(this.cache));
+        this.cache.saveFileSync(tree.fullPath, '');
+        return this.cache;
     }
 }
