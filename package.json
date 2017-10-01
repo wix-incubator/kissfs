@@ -13,7 +13,8 @@
     "test": "yarn run test:node && yarn run test:browser",
     "test:node": "mocha --reporter mocha-env-reporter --timeout 4000 dist/test/nodejs",
     "test:browser": "karma start --single-run",
-    "start": "webpack-dev-server --progress"
+    "start": "webpack-dev-server --progress",
+    "reset": "yarn run clean && rimraf ./node_modules && yarn && yarn test"
   },
   "repository": {
     "type": "git",

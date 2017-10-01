@@ -90,10 +90,10 @@ export class LocalFileSystemCrudOnly implements FileSystem {
         const processedChildren = await Promise.all(directoryChildren.map(async item => {
             const itemPath = pathPrefix + item;
             let itemAbsolutePath = path.join(rootPath, item);
-            const itemStatus = await stat(itemAbsolutePath);
-            if (itemStatus.isDirectory()) {
+            const itemStats = await stat(itemAbsolutePath);
+            if (itemStats.isDirectory()) {
                 return new ShallowDirectory(item, itemPath);
-            } else if (itemStatus.isFile()) {
+            } else if (itemStats.isFile()) {
                 return new File(item, itemPath);
             } else {
                 console.warn(`Unknown node type at ${itemAbsolutePath}`);
@@ -101,7 +101,7 @@ export class LocalFileSystemCrudOnly implements FileSystem {
             }
         }));
 
-        return processedChildren.filter((i): i is File | Directory => i !== null);
+        return processedChildren.filter((i): i is File | ShallowDirectory => i !== null);
     }
 
     loadDirectoryTree(fullPath: string): Promise<Directory> {
