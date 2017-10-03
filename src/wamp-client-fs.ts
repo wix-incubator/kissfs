@@ -18,7 +18,7 @@ export class WampClientFileSystem implements FileSystem {
 
     init(): Promise<WampClientFileSystem> {
         const {baseUrl, initTimeout, connection} = this
-        return timeoutPromise(initTimeout, new Promise<WampClientFileSystem>(resolve => {
+        return timeoutPromise(new Promise<WampClientFileSystem>(resolve => {
             connection.open();
             connection.onopen = (session: Session) => {
                 this.session = session;
@@ -31,7 +31,7 @@ export class WampClientFileSystem implements FileSystem {
                 });
                 resolve(this)
             };
-        }), `Cant't open connection to the WAMP server at ${baseUrl} for ${initTimeout}ms.`);
+        }), initTimeout, `Cant't open connection to the WAMP server at ${baseUrl} for ${initTimeout}ms.`);
     }
 
     async saveFile(fullPath:string, newContent:string): Promise<void> {
