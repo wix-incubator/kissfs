@@ -91,7 +91,7 @@ describe('Promise utilities', () => {
 
         describe('when provided with a timeout', () => {
             it('resolves if a success run was achieved during timeout', async () => {
-                const retryOptions: RetryPromiseOptions = {retries: 1, interval: 5, timeout: 100};
+                const retryOptions: RetryPromiseOptions = {retries: 1, interval: 5, timeout: 1500};
                 const promiseProvider = sinon.stub()
                     .onFirstCall().rejects(new Error('first failure'))
                     .resolves('success');
@@ -102,15 +102,15 @@ describe('Promise utilities', () => {
             });
 
             it('rejects with error of last failed attempt if timeout expires', async () => {
-                const retryOptions: RetryPromiseOptions = {retries: 3, interval: 150, timeout: 200};
+                const retryOptions: RetryPromiseOptions = {retries: 3, interval: 200, timeout: 50};
                 const promiseProvider = sinon.stub()
                     .onFirstCall().rejects(new Error('first failure'))
                     .onSecondCall().rejects(new Error('second failure'))
                     .rejects(new Error('other failure'));
 
-                await expect(retryPromise(promiseProvider, retryOptions)).to.eventually.be.rejectedWith('second failure');
+                await expect(retryPromise(promiseProvider, retryOptions)).to.eventually.be.rejectedWith('first failure');
                 await delayedPromise(retryOptions.interval * 2);
-                expect(promiseProvider).to.have.callCount(2);
+                expect(promiseProvider).to.have.callCount(1);
             });
 
             it('rejects with default timeout message, if no last failed attempt and timeout expires', async () => {
