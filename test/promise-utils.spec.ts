@@ -102,7 +102,7 @@ describe('Promise utilities', () => {
             });
 
             it('rejects with error of last failed attempt if timeout expires', async () => {
-                const retryOptions: RetryPromiseOptions = {retries: 3, interval: 50, timeout: 90};
+                const retryOptions: RetryPromiseOptions = {retries: 3, interval: 150, timeout: 200};
                 const promiseProvider = sinon.stub()
                     .onFirstCall().rejects(new Error('first failure'))
                     .onSecondCall().rejects(new Error('second failure'))
