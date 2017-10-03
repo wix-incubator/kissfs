@@ -9,7 +9,7 @@ describe('events test driver', ()=>{
 
     beforeEach(() => {
         emitter = new EventEmitter();
-        matcher = new EventsMatcher({interval: 10, timeout: 100, noExtraEventsGrace:20});
+        matcher = new EventsMatcher({retries: 5, interval: 10, noExtraEventsGrace:20});
     });
 
     it('failure when event has no type field', () => {
