@@ -20,9 +20,9 @@ export function retryPromise<T>(
     promiseProvider: () => Promise<T>,
     {interval, retries, timeout, timeoutMessage = `timed out after ${timeout}ms`}: RetryPromiseOptions): Promise<T> {
 
-    const startTime = (new Date).getTime();
+    const startTime = Date.now();
     let lastError: Error;
-    const isTimeout = () => timeout && (new Date).getTime() >= (startTime + timeout);
+    const isTimeout = () => timeout && Date.now() >= (startTime + timeout);
 
     return new Promise(async (resolve, reject) => {
         timeout && setTimeout(() => reject(lastError || new Error(timeoutMessage)), timeout);

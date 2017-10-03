@@ -5,11 +5,11 @@ import {delayedPromise, timeoutPromise, retryPromise, RetryPromiseOptions} from 
 describe('Promise utilities', () => {
     describe('delayedPromise', () => {
         it('resolves after provided the ms', async () => {
-            const startTime = (new Date).getTime(), delay = 50;
+            const startTime = Date.now(), delay = 50;
 
             await delayedPromise(delay);
 
-            expect((new Date).getTime()).to.be.gte(startTime + delay);
+            expect(Date.now()).to.be.gte(startTime + delay);
         })
     });
 
@@ -32,14 +32,18 @@ describe('Promise utilities', () => {
     });
 
     describe('retryPromise', () => {
+        async function verifyCallCount(spy: sinon.SinonSpy, count: number, noExtraEventsGrace: number): Promise<void> {
+            expect(spy).to.have.callCount(count);
+            await delayedPromise(noExtraEventsGrace); // to catch unwanted calls to provider post fullfillment 
+            expect(spy).to.have.callCount(count);
+        }
+
         it('resolves if first run was a success', async () => {
             const retryOptions: RetryPromiseOptions = {retries: 2, interval: 5};
             const promiseProvider = sinon.stub().resolves('value');
 
             await expect(retryPromise(promiseProvider, retryOptions)).to.eventually.become('value');
-            await delayedPromise(20); // to catch unwanted calls to provider post fullfillment 
-            await delayedPromise(retryOptions.interval * 2);
-            expect(promiseProvider).to.have.callCount(1);
+            await verifyCallCount(promiseProvider, 1, retryOptions.interval + 1);
         });
 
         it('rejects if first run failed, and no retries', async () => {
@@ -47,9 +51,7 @@ describe('Promise utilities', () => {
             const promiseProvider = sinon.stub().rejects(new Error('failed'));
 
             await expect(retryPromise(promiseProvider, retryOptions)).to.eventually.rejectedWith('failed');
-
-            await delayedPromise(retryOptions.interval * 2);
-            expect(promiseProvider).to.have.callCount(1);
+            await verifyCallCount(promiseProvider, 1, retryOptions.interval + 1);
         });
 
         it('resolves if a success run was achieved during a retry', async () => {
@@ -59,12 +61,10 @@ describe('Promise utilities', () => {
                 .onSecondCall().rejects(new Error('second failure'))
                 .resolves('success');
 
-            const startTime = (new Date).getTime();
-
+            const startTime = Date.now();
             await expect(retryPromise(promiseProvider, retryOptions)).to.eventually.become('success');
-            expect((new Date).getTime(), 'verify interval').to.be.gte(startTime + (retryOptions.interval * 2));
-            await delayedPromise(retryOptions.interval * 2);
-            expect(promiseProvider).to.have.callCount(3);
+            expect(Date.now(), 'verify interval').to.be.gte(startTime + (retryOptions.interval * 2));
+            await verifyCallCount(promiseProvider, 3, retryOptions.interval + 1);
         });
 
         it('rejects if all tries failed', async () => {
@@ -72,9 +72,7 @@ describe('Promise utilities', () => {
             const promiseProvider = sinon.stub().rejects(new Error('failed'));
 
             await expect(retryPromise(promiseProvider, retryOptions)).to.eventually.rejectedWith('failed');
-
-            await delayedPromise(retryOptions.interval * 2);
-            expect(promiseProvider).to.have.callCount(6);
+            await verifyCallCount(promiseProvider, 6, retryOptions.interval + 1);
         });
 
         it('rejects with error of last failed attempt', async () => {
@@ -85,8 +83,8 @@ describe('Promise utilities', () => {
                 .rejects(new Error('other failures'));
 
             await expect(retryPromise(promiseProvider, retryOptions)).to.eventually.rejectedWith('second failure');
-            await delayedPromise(retryOptions.interval * 2);
-            expect(promiseProvider).to.have.callCount(2);
+            await verifyCallCount(promiseProvider, 2, retryOptions.interval + 1);
+
         });
 
         describe('when provided with a timeout', () => {
@@ -97,8 +95,7 @@ describe('Promise utilities', () => {
                     .resolves('success');
 
                 await expect(retryPromise(promiseProvider, retryOptions)).to.eventually.become('success');
-                await delayedPromise(retryOptions.interval * 2);
-                expect(promiseProvider).to.have.callCount(2);
+                await verifyCallCount(promiseProvider, 2, retryOptions.interval + 1);
             });
 
             it('rejects with error of last failed attempt if timeout expires', async () => {
@@ -109,28 +106,24 @@ describe('Promise utilities', () => {
                     .rejects(new Error('other failure'));
 
                 await expect(retryPromise(promiseProvider, retryOptions)).to.eventually.be.rejectedWith('first failure');
-                await delayedPromise(retryOptions.interval * 2);
-                expect(promiseProvider).to.have.callCount(1);
+                await verifyCallCount(promiseProvider, 1, retryOptions.interval + 1);
+
             });
 
             it('rejects with default timeout message, if no last failed attempt and timeout expires', async () => {
                 const retryOptions: RetryPromiseOptions = {retries: 0, interval: 25, timeout: 50};
                 const promiseProvider = sinon.stub().returns(delayedPromise(1000));
 
-                await expect(retryPromise(promiseProvider, retryOptions)).to.eventually
-                    .be.rejectedWith('timed out after 50ms');
-                await delayedPromise(retryOptions.interval * 2);
-                expect(promiseProvider).to.have.callCount(1);
+                await expect(retryPromise(promiseProvider, retryOptions)).to.eventually.be.rejectedWith('timed out after 50ms');
+                await verifyCallCount(promiseProvider, 1, retryOptions.interval + 1);
             });
 
             it('rejects with provided timeout message, if no last failed attempt and timeout expires', async () => {
                 const retryOptions: RetryPromiseOptions = {retries: 0, interval: 25, timeout: 50, timeoutMessage: 'FAILED'};
                 const promiseProvider = sinon.stub().returns(delayedPromise(1000));
 
-                await expect(retryPromise(promiseProvider, retryOptions)).to.eventually
-                    .be.rejectedWith('FAILED');
-                await delayedPromise(retryOptions.interval * 2);
-                expect(promiseProvider).to.have.callCount(1);
+                await expect(retryPromise(promiseProvider, retryOptions)).to.eventually.be.rejectedWith('FAILED');
+                await verifyCallCount(promiseProvider, 1, retryOptions.interval + 1);
             });
         });
     });
