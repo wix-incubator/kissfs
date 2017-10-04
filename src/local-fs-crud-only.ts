@@ -12,76 +12,83 @@ export class LocalFileSystemCrudOnly implements FileSystem {
 
     constructor(public baseUrl: string, ignore?: Array<string>) {
         if (ignore) {
-            this.isIgnored = getIsIgnored(ignore)
+            this.isIgnored = getIsIgnored(ignore);
         }
-        ;
     }
 
-    saveFile(relPath: string, newContent: string): Promise<void> {
+    async saveFile(relPath: string, newContent: string): Promise<void> {
         if (this.isIgnored(relPath)) {
-            return Promise.reject(new Error(`Unable to save ignored path: '${relPath}'`));
+            throw new Error(`Unable to save ignored path: '${relPath}'`);
         }
 
         const pathArr = getPathNodes(relPath);
         const name = pathArr.pop() || '';
         const fullPath = path.join(this.baseUrl, ...pathArr);
-        return ensureDir(fullPath)
-            .then(() => writeFile(path.join(fullPath, name), newContent));
+        await ensureDir(fullPath);
+        await writeFile(path.join(fullPath, name), newContent);
     }
 
-    deleteFile(relPath: string): Promise<void> {
+    async deleteFile(relPath: string): Promise<void> {
         if (!relPath) {
-            return Promise.reject(new Error(`Can't delete root directory`));
+            throw new Error(`Can't delete root directory`);
         }
+
         if (this.isIgnored(relPath)) {
-            return Promise.resolve();
+            return;
         }
+
         const fullPath = path.join(this.baseUrl, ...getPathNodes(relPath));
-        return access(fullPath)
-            .then(() => stat(fullPath), () => null)
-            .then(stats => {
-                if (stats) {
-                    if (stats.isFile()) {
-                        return remove(fullPath);
-                    } else {
-                        throw new Error(`not a file: ${relPath}`);
-                    }
-                }
-            });
+        let stats;
+        try {
+            await access(fullPath);
+            stats = await stat(fullPath);
+        } catch (e) {}
+
+        if (stats) {
+            if (stats.isFile()) {
+                return remove(fullPath);
+            } else {
+                throw new Error(`not a file: ${relPath}`);
+            }
+        }
     }
 
-    deleteDirectory(relPath: string, recursive?: boolean): Promise<void> {
+    async deleteDirectory(relPath: string, recursive?: boolean): Promise<void> {
         const pathArr = getPathNodes(relPath);
         if (pathArr.length === 0) {
-            return Promise.reject(new Error(`Can't delete root directory`));
+            throw new Error(`Can't delete root directory`);
         }
+
         if (this.isIgnored(relPath)) {
-            return Promise.resolve();
+            return;
         }
+
         const fullPath = path.join(this.baseUrl, ...pathArr);
-        return access(fullPath)
-            .then(() => stat(fullPath), () => null)
-            .then(stats => {
-                if (stats) {
-                    if (stats.isDirectory()) {
-                        return recursive ? remove(fullPath) : rmdir(fullPath);
-                    } else {
-                        throw new Error(`not a directory: ${relPath}`);
-                    }
-                }
-            });
+        let stats;
+        try {
+            await access(fullPath);
+            stats = await stat(fullPath);
+        } catch (e) {}
+
+        if (stats) {
+            if (stats.isDirectory()) {
+                return recursive ? remove(fullPath) : rmdir(fullPath);
+            } else {
+                throw new Error(`not a directory: ${relPath}`);
+            }
+        }
     }
 
-    loadTextFile(relPath: string): Promise<string> {
+    async loadTextFile(relPath: string): Promise<string> {
         if (this.isIgnored(relPath)) {
-            return Promise.reject(new Error(`Unable to read ignored path: '${relPath}'`));
+            throw new Error(`Unable to read ignored path: '${relPath}'`);
         }
         return readFile(path.join(this.baseUrl, relPath), 'utf8');
     }
 
     async loadDirectoryChildren(fullPath: string): Promise<(File | ShallowDirectory)[]> {
         if (this.isIgnored(fullPath)) {
-            return Promise.reject(new Error(`Unable to read ignored path: '${fullPath}'`));
+            throw new Error(`Unable to read ignored path: '${fullPath}'`);
         }
         let rootPath = path.join(this.baseUrl, fullPath);
         let pathPrefix = fullPath ? (fullPath + pathSeparator) : fullPath;
@@ -104,9 +111,9 @@ export class LocalFileSystemCrudOnly implements FileSystem {
         return processedChildren.filter((i): i is File | ShallowDirectory => i !== null);
     }
 
-    loadDirectoryTree(fullPath: string): Promise<Directory> {
+    async loadDirectoryTree(fullPath: string): Promise<Directory> {
         if (fullPath && this.isIgnored(fullPath)) {
-            return Promise.reject(new Error(`Unable to read ignored path: '${fullPath}'`));
+            throw new Error(`Unable to read ignored path: '${fullPath}'`);
         }
         // using an in-memory instance to build the result
         // if fullPath is not empty, memfs will contain a sub-tree of the real FS but the root is the same
@@ -138,9 +145,9 @@ export class LocalFileSystemCrudOnly implements FileSystem {
         });
     }
 
-    ensureDirectory(relPath: string): Promise<void> {
+    async ensureDirectory(relPath: string): Promise<void> {
         if (this.isIgnored(relPath)) {
-            return Promise.reject(new Error(`Unable to read and write ignored path: '${relPath}'`));
+            throw new Error(`Unable to read and write ignored path: '${relPath}'`);
         }
         const pathArr = getPathNodes(relPath);
         const fullPath = path.join(this.baseUrl, ...pathArr);
