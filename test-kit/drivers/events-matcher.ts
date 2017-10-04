@@ -8,10 +8,10 @@ export interface EventObj{
 }
 export namespace EventsMatcher {
     export type Options = {
+        retries: number;
         interval: number;
         noExtraEventsGrace: number;
         timeout?: number;
-        retries?: number;
     };
 }
 export class EventsMatcher{
@@ -28,7 +28,7 @@ export class EventsMatcher{
     async expect(events: Array<EventObj>):Promise<void>{
         const {interval, timeout, retries} = this.options;
         if (events.length) {
-            await retryPromise(() => this.checkEvents(events), {retries: retries || 50, interval, timeout});
+            await retryPromise(() => this.checkEvents(events), {retries, interval, timeout});
         } else {
             expect(this.events).to.eql([]);
         }

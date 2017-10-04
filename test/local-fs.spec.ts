@@ -63,9 +63,10 @@ describe(`the local filesystem implementation`, () => {
         return disposableFileSystem.init();
     }
     const eventMatcherOptions: EventsMatcher.Options = {
+        retries: 60,
         interval: 50,
-        noExtraEventsGrace: 150,
-        timeout: 3000
+        timeout: 3000,
+        noExtraEventsGrace: 150
     };
     assertFileSystemContract(getFS, eventMatcherOptions);
     describe(`external changes`, () => {
