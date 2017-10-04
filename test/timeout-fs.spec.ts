@@ -14,7 +14,7 @@ describe('the timeout file system imeplementation', () => {
 
     assertFileSystemContract(() =>
         Promise.resolve(new TimeoutFileSystem(timeout , new MemoryFileSystem(undefined, [ignoredDir, ignoredFile]))),
-        {retries: 15, interval: 2, timeout: 30, noExtraEventsGrace: 10}
+        {retries: 15, interval: 2, timeout: 40, noExtraEventsGrace: 10}
     );
 
     describe(`delayed timeout test`, () => {

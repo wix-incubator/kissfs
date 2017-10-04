@@ -21,7 +21,7 @@ import {
 } from './implementation-suite';
 
 describe(`the cache file system implementation`, () => {
-    const eventMatcherOptions: EventsMatcher.Options = { retries: 15, interval: 2, timeout: 30, noExtraEventsGrace: 10 };
+    const eventMatcherOptions: EventsMatcher.Options = { retries: 15, interval: 2, timeout: 40, noExtraEventsGrace: 10 };
 
     assertFileSystemContract(
         async () => new CacheFileSystem(new MemoryFileSystem(undefined, [ignoredDir, ignoredFile])),

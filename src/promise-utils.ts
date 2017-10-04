@@ -19,7 +19,7 @@ export interface RetryPromiseOptions {
 export function retryPromise<T>(
     promiseProvider: () => Promise<T>,
     {interval, retries, timeout, timeoutMessage = `timed out after ${timeout}ms`}: RetryPromiseOptions): Promise<T> {
-    if (timeout && timeout < retries * interval) {
+    if (timeout && timeout <= retries * interval) {
         return Promise.reject(`timeout (${timeout}ms) must be greater than retries (${retries}) times interval (${interval}ms)`)
     }
     const startTime = Date.now();

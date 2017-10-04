@@ -30,7 +30,7 @@ describe(`the wamp client filesystem implementation`, () => {
     }
 
     const eventMatcherOptions: EventsMatcher.Options = {
-        retries: 30,
+        retries: 25,
         interval: 50,
         noExtraEventsGrace: 150,
         timeout: 1500
