@@ -39,7 +39,6 @@
     "fs-extra": "^4.0.2",
     "is-glob": "^4.0.0",
     "klaw": "^2.1.0",
-    "lodash": "^4.17.4",
     "micromatch": "^2.3.11",
     "tslib": "^1.7.1",
     "wamp-server": "^0.0.6"
