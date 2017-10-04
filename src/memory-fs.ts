@@ -1,4 +1,3 @@
-import {last, find} from 'lodash';
 import {
     FileSystem,
     Directory,
@@ -32,9 +31,9 @@ export class MemoryFileSystem implements FileSystem {
     private getPathTarget(pathArr: string[]): Directory | null {
         let current: Directory = this.root;
         while (pathArr.length) {
-            const name = pathArr.shift();
-            if (name && current.children) {
-                const node = find(current.children, {name});
+            const targetName = pathArr.shift();
+            if (targetName && current.children) {
+                const node = current.children.find(({name}) => name === targetName);
                 if (isDir(node)){
                     current = node;
                 } else {
@@ -81,8 +80,8 @@ export class MemoryFileSystem implements FileSystem {
         }
 
         const pathArr = getPathNodes(fullPath);
-        const name = pathArr.pop();
-        if (!name) {
+        const fileName = pathArr.pop();
+        if (!fileName) {
             throw new Error(`root is not a legal file name`);
         }
 
@@ -93,8 +92,7 @@ export class MemoryFileSystem implements FileSystem {
             // this should not happen after running ensureDirectory()
             throw new Error(`unexpected error: not a legal file name? '${fullPath}'`);
         }
-
-        const existingChild = find(parent.children, {name});
+        const existingChild = parent.children.find(({name}) => name === fileName);
         if (isDir(existingChild)) {
             throw new Error(`file save error for path '${fullPath}'`);
         }
@@ -107,7 +105,7 @@ export class MemoryFileSystem implements FileSystem {
             }
         } else {
             const type = 'fileCreated';
-            parent.children.push(new File(name, fullPath, newContent))
+            parent.children.push(new File(fileName, fullPath, newContent))
             this.events.emit(type, {type, fullPath, newContent});
         }
 
@@ -117,7 +115,7 @@ export class MemoryFileSystem implements FileSystem {
         const pathArr = getPathNodes(fullPath);
         const parent = pathArr.length ? this.getPathTarget(pathArr.slice(0, pathArr.length - 1)) : null;
         if (isDir(parent) && !this.isIgnored(fullPath)) {
-            const node = find(parent.children, {name: last(pathArr)});
+            const node = parent.children.find(({name}) => name === pathArr[pathArr.length - 1]);
             if (isFile(node)) {
                 parent.children = parent.children.filter(({name}) => name !== node.name);
                 this.events.emit('fileDeleted', {type: 'fileDeleted', fullPath});
@@ -134,7 +132,7 @@ export class MemoryFileSystem implements FileSystem {
         }
         const parent = this.getPathTarget(pathArr.slice(0, pathArr.length - 1));
         if (isDir(parent) && !this.isIgnored(fullPath)) {
-            const node = find(parent.children, {name: last(pathArr)});
+            const node = parent.children.find(({name}) => name === pathArr[pathArr.length - 1]);
             if (isFile(node)) {
                 throw new Error(`File is not a directory '${fullPath}'`);
             } else if(isDir(node)){
@@ -153,8 +151,8 @@ export class MemoryFileSystem implements FileSystem {
             throw new Error(`Unable to read and write ignored path: '${fullPath}'`);
         }
 
-        getPathNodes(fullPath).reduce((current, name) => {
-            const next = find(current.children, {name});
+        getPathNodes(fullPath).reduce((current, nodeName) => {
+            const next = current.children.find(({name}) => name === nodeName);
             if (isDir(next)) {
                 return next;
             }
@@ -162,8 +160,8 @@ export class MemoryFileSystem implements FileSystem {
                 throw new Error(`File is not a directory ${next.fullPath}`);
             }
             const newDir = new Directory(
-                name,
-                current.fullPath ? [current.fullPath, name].join(pathSeparator) : name,
+                nodeName,
+                current.fullPath ? [current.fullPath, nodeName].join(pathSeparator) : nodeName,
             );
             current.children.push(newDir)
             this.events.emit('directoryCreated', {
@@ -181,7 +179,7 @@ export class MemoryFileSystem implements FileSystem {
         const pathArr = getPathNodes(fullPath);
         const parent = pathArr.length ? this.getPathTarget(pathArr.slice(0, pathArr.length - 1)) : null;
         if (isDir(parent)) {
-            const node = find(parent.children, {name: last(pathArr)});
+            const node = parent.children.find(({name}) => name === pathArr[pathArr.length - 1]);
             if (isFile(node)) {
                 return node.content || '';
             } else if (isDir(node)) {

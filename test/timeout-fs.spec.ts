@@ -9,7 +9,7 @@ import {
 import {SlowFs} from '../test-kit/drivers/slow-fs';
 import {MemoryFileSystem, TimeoutFileSystem, FileSystem} from '../src/universal';
 
-describe('the timeout file system imeplementation', () => {
+describe('the timeout file system implementation', () => {
     const timeout = 200;
 
     assertFileSystemContract(() =>
