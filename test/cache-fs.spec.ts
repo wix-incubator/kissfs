@@ -21,15 +21,10 @@ import {
 } from './implementation-suite';
 
 describe(`the cache file system implementation`, () => {
-
-    const eventMatcherOptions: EventsMatcher.Options = {
-        interval: 1,
-        noExtraEventsGrace: 10,
-        timeout: 30
-    };
+    const eventMatcherOptions: EventsMatcher.Options = { retries: 15, interval: 2, timeout: 40, noExtraEventsGrace: 10 };
 
     assertFileSystemContract(
-        () => Promise.resolve(new CacheFileSystem(new MemoryFileSystem(undefined, [ignoredDir, ignoredFile]))),
+        async () => new CacheFileSystem(new MemoryFileSystem(undefined, [ignoredDir, ignoredFile])),
         eventMatcherOptions
     );
 
@@ -85,7 +80,8 @@ describe(`the cache file system implementation`, () => {
             original = new MemoryFileSystem();
             fs = new CacheFileSystem(original);
             matcher = new EventsMatcher({
-                interval: 2,
+                retries: 30,
+                interval: 5,
                 noExtraEventsGrace: 150,
                 timeout: 300
             });
