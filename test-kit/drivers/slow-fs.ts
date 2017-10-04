@@ -1,16 +1,14 @@
-import * as Promise from 'bluebird';
 import {
     FileSystem,
     Directory,
     File,
-    isDir,
-    fileSystemMethods,
-    isDisposable
+    isDisposable, ShallowDirectory
 } from "../../src/api";
 
-import {MemoryFileSystem} from "../../src/memory-fs";
-import {InternalEventsEmitter, makeEventsEmitter} from "../../src/utils";
-import {ignoredDir, ignoredFile} from "../../test/implementation-suite";
+import {MemoryFileSystem} from '../../src/memory-fs';
+import {InternalEventsEmitter} from '../../src/utils';
+import {ignoredDir, ignoredFile} from '../../test/implementation-suite';
+import {delayedPromise} from '../../src/promise-utils';
 
 export class SlowFs implements FileSystem {
     public readonly events: InternalEventsEmitter;
@@ -23,27 +21,31 @@ export class SlowFs implements FileSystem {
     }
 
     saveFile(fullPath:string, newContent:string):Promise<void> {
-        return Promise.delay(this.delay).then(() => this.fs.saveFile(fullPath, newContent));
+        return delayedPromise(this.delay).then(() => this.fs.saveFile(fullPath, newContent));
     }
 
     deleteFile(fullPath:string):Promise<void> {
-        return Promise.delay(this.delay).then(() => this.fs.deleteFile(fullPath));
+        return delayedPromise(this.delay).then(() => this.fs.deleteFile(fullPath));
     }
 
     deleteDirectory(fullPath: string, recursive: boolean = false): Promise<void> {
-        return Promise.delay(this.delay).then(() => this.fs.deleteDirectory(fullPath, recursive));
+        return delayedPromise(this.delay).then(() => this.fs.deleteDirectory(fullPath, recursive));
     }
 
     ensureDirectory(fullPath:string): Promise<void> {
-        return Promise.delay(this.delay).then(() => this.fs.ensureDirectory(fullPath));
+        return delayedPromise(this.delay).then(() => this.fs.ensureDirectory(fullPath));
     }
 
-    loadTextFile(fullPath): Promise<string>{
-        return Promise.delay(this.delay).then(() => this.fs.loadTextFile(fullPath));
+    loadTextFile(fullPath:string): Promise<string>{
+        return delayedPromise(this.delay).then(() => this.fs.loadTextFile(fullPath));
     }
 
-    loadDirectoryTree(): Promise<Directory> {
-        return Promise.delay(this.delay).then(() => this.fs.loadDirectoryTree());
+    loadDirectoryTree(fullPath?:string): Promise<Directory> {
+        return delayedPromise(this.delay).then(() => this.fs.loadDirectoryTree(fullPath));
+    }
+
+    loadDirectoryChildren(fullPath:string): Promise<(File | ShallowDirectory)[]> {
+        return delayedPromise(this.delay).then(() => this.fs.loadDirectoryChildren(fullPath));
     }
 
     dispose() {

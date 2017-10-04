@@ -1,13 +1,11 @@
-import * as Promise from 'bluebird';
-import {last, map, find} from 'lodash';
+import {last, find} from 'lodash';
 import {
     FileSystem,
     Directory,
     File,
     pathSeparator,
-    FileSystemNode,
     isDir,
-    isFile
+    isFile, ShallowDirectory
 } from "./api";
 
 import {
@@ -22,8 +20,7 @@ let id = 0;
 export class MemoryFileSystem implements FileSystem {
     public readonly events: InternalEventsEmitter = makeEventsEmitter();
     private readonly root = new Directory('', '');
-    private ignore: Array<string> = [];
-    private isIgnored: (path: string) => boolean = (path: string) => false;
+    private isIgnored: (path: string) => boolean = () => false;
 
     constructor(public baseUrl = `memory-${id++}`, ignore?: Array<string>) {
         this.baseUrl += '/';
@@ -37,8 +34,12 @@ export class MemoryFileSystem implements FileSystem {
         while (pathArr.length) {
             const name = pathArr.shift();
             if (name && current.children) {
-                const node = find(current.children, {name})
-                current = isDir(node) ? node : current;
+                const node = find(current.children, {name});
+                if (isDir(node)){
+                    current = node;
+                } else {
+                    return null;
+                }
             } else {
                 return null;
             }
@@ -46,28 +47,32 @@ export class MemoryFileSystem implements FileSystem {
         return current;
     }
 
-    saveFile(fullPath:string, newContent:string): Promise<void> {
-        return Promise.try(() => this.saveFileSync(fullPath, newContent));
+    async saveFile(fullPath: string, newContent: string): Promise<void> {
+        return this.saveFileSync(fullPath, newContent);
     }
 
-    deleteFile(fullPath:string): Promise<void> {
-        return Promise.try(() => this.deleteFileSync(fullPath));
+    async deleteFile(fullPath: string): Promise<void> {
+        return this.deleteFileSync(fullPath);
     }
 
-    deleteDirectory(fullPath: string, recursive?: boolean): Promise<void> {
-        return Promise.try(() => this.deleteDirectorySync(fullPath, recursive))
+    async deleteDirectory(fullPath: string, recursive?: boolean): Promise<void> {
+        return this.deleteDirectorySync(fullPath, recursive)
     }
 
-    ensureDirectory(fullPath:string):Promise<void> {
-        return Promise.try(() => this.ensureDirectorySync(fullPath));
+    async ensureDirectory(fullPath: string): Promise<void> {
+        return this.ensureDirectorySync(fullPath);
     }
 
-    loadTextFile(fullPath): Promise<string> {
-        return Promise.try(() => this.loadTextFileSync(fullPath));
+    async loadTextFile(fullPath: string): Promise<string> {
+        return this.loadTextFileSync(fullPath);
     }
 
-    loadDirectoryTree(): Promise<Directory> {
-        return Promise.resolve(this.loadDirectoryTreeSync());
+    async loadDirectoryTree(fullPath?: string): Promise<Directory> {
+        return this.loadDirectoryTreeSync(fullPath);
+    }
+
+    async loadDirectoryChildren(fullPath: string): Promise<(File | ShallowDirectory)[]> {
+        return this.loadDirectoryChildrenSync(fullPath);
     }
 
     saveFileSync(fullPath:string, newContent:string): void {
@@ -89,7 +94,6 @@ export class MemoryFileSystem implements FileSystem {
             throw new Error(`unexpected error: not a legal file name? '${fullPath}'`);
         }
 
-        let type;
         const existingChild = find(parent.children, {name});
         if (isDir(existingChild)) {
             throw new Error(`file save error for path '${fullPath}'`);
@@ -98,14 +102,15 @@ export class MemoryFileSystem implements FileSystem {
         if (isFile(existingChild)) {
             if (existingChild.content !== newContent) {
                 existingChild.content = newContent
-                type = 'fileChanged';
+                const type = 'fileChanged';
+                this.events.emit(type, {type, fullPath, newContent});
             }
         } else {
-            type = 'fileCreated';
+            const type = 'fileCreated';
             parent.children.push(new File(name, fullPath, newContent))
+            this.events.emit(type, {type, fullPath, newContent});
         }
 
-        this.events.emit(type, {type, fullPath, newContent});
     }
 
     deleteFileSync(fullPath:string): void {
@@ -169,7 +174,7 @@ export class MemoryFileSystem implements FileSystem {
         }, this.root)
     }
 
-    loadTextFileSync(fullPath): string {
+    loadTextFileSync(fullPath: string): string {
         if (this.isIgnored(fullPath)) {
             throw new Error(`Unable to read ignored path: '${fullPath}'`);
         }
@@ -186,8 +191,28 @@ export class MemoryFileSystem implements FileSystem {
         throw new Error(`Cannot find file ${fullPath}`);
     }
 
-    loadDirectoryTreeSync(): Directory {
-        return this.parseTree(this.root)
+    loadDirectoryTreeSync(fullPath:string = ''): Directory {
+        if (this.isIgnored(fullPath)) {
+            throw new Error(`Unable to read ignored path: '${fullPath}'`);
+        }
+        const pathArr = getPathNodes(fullPath);
+        const dir = pathArr.length ? this.getPathTarget(pathArr) : this.root;
+        if (!dir){
+            throw new Error(`Unable to read folder in path: '${fullPath}'`);
+        }
+        return this.parseTree(dir)
+    }
+
+    loadDirectoryChildrenSync(fullPath:string): (File | ShallowDirectory)[] {
+        if (this.isIgnored(fullPath)) {
+            throw new Error(`Unable to read ignored path: '${fullPath}'`);
+        }
+        const pathArr = getPathNodes(fullPath);
+        const dir = pathArr.length ? this.getPathTarget(pathArr) : this.root;
+        if (!dir){
+            throw new Error(`Unable to read folder in path: '${fullPath}'`);
+        }
+        return dir.children.map(child => isDir(child) ? new ShallowDirectory(child.name, child.fullPath) : new File(child.name, child.fullPath));
     }
 
     private parseTree(node: Directory): Directory {

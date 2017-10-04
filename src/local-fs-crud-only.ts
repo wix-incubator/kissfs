@@ -1,141 +1,153 @@
-import {
-    WalkEventFile,
-    ensureDir as ensureDir_,
-    readFile as readFile_,
-    writeFile as writeFile_,
-    remove as remove_,
-    rmdir as rmdir_,
-    access as access_,
-    stat as stat_
-} from 'fs-extra';
+import {access, ensureDir, readFile, readdir, remove, rmdir, stat, writeFile} from 'fs-extra';
 import * as walk from 'klaw';
-import * as Promise from 'bluebird';
 import * as path from 'path';
-import {Stats} from 'fs';
-import {FileSystem, Directory, pathSeparator} from "./api";
-import {
-    InternalEventsEmitter,
-    getPathNodes,
-    makeEventsEmitter,
-    getIsIgnored
-} from "./utils";
+import {Directory, FileSystem, pathSeparator, ShallowDirectory, File} from './api';
+import {getIsIgnored, getPathNodes, InternalEventsEmitter, makeEventsEmitter} from './utils';
 import {MemoryFileSystem} from './memory-fs';
-
-const ensureDir = Promise.promisify<void, string>(ensureDir_);
-const readFile = Promise.promisify<string, string, string>(readFile_);
-const writeFile = Promise.promisify<void, string, any>(writeFile_);
-const remove = Promise.promisify<void, string>(remove_ as (dir: string, callback: (err: any, _: void) => void) => void);
-const rmdir = Promise.promisify<void, string>(rmdir_ as (dir: string, callback: (err: any, _: void) => void) => void);
-const stat = Promise.promisify<Stats, string>(stat_);
-const access = Promise.promisify<void, string>(access_);
 
 // TODO extract chokidar watch mechanism to configuration
 export class LocalFileSystemCrudOnly implements FileSystem {
     public readonly events: InternalEventsEmitter = makeEventsEmitter();
-    private ignore: Array<string> = [];
-    protected isIgnored: (path: string) => boolean = (path: string) => false;
+    protected isIgnored: (path: string) => boolean = () => false;
 
-    constructor(public baseUrl, ignore?: Array<string>) {
+    constructor(public baseUrl: string, ignore?: Array<string>) {
         if (ignore) {
-            this.isIgnored = getIsIgnored(ignore)
-        };
+            this.isIgnored = getIsIgnored(ignore);
+        }
     }
 
-    saveFile(relPath: string, newContent: string): Promise<void> {
+    async saveFile(relPath: string, newContent: string): Promise<void> {
         if (this.isIgnored(relPath)) {
-            return Promise.reject(new Error(`Unable to save ignored path: '${relPath}'`));
+            throw new Error(`Unable to save ignored path: '${relPath}'`);
         }
 
         const pathArr = getPathNodes(relPath);
         const name = pathArr.pop() || '';
         const fullPath = path.join(this.baseUrl, ...pathArr);
-        return ensureDir(fullPath)
-            .then(()=> writeFile(path.join(fullPath, name), newContent));
+        await ensureDir(fullPath);
+        await writeFile(path.join(fullPath, name), newContent);
     }
 
-    deleteFile(relPath: string): Promise<void> {
-        if (!relPath){
-            return Promise.reject(new Error(`Can't delete root directory`));
+    async deleteFile(relPath: string): Promise<void> {
+        if (!relPath) {
+            throw new Error(`Can't delete root directory`);
         }
+
         if (this.isIgnored(relPath)) {
-            return Promise.resolve();
+            return;
         }
+
         const fullPath = path.join(this.baseUrl, ...getPathNodes(relPath));
-        return access(fullPath)
-            .then(() => stat(fullPath), err => null)
-            .then(stats => {
-                if (stats) {
-                    if (stats.isFile()) {
-                        return remove(fullPath);
-                    } else {
-                        throw new Error(`not a file: ${relPath}`);
-                    }
-                }
-            });
+        let stats;
+        try {
+            await access(fullPath);
+            stats = await stat(fullPath);
+        } catch (e) {}
+
+        if (stats) {
+            if (stats.isFile()) {
+                return remove(fullPath);
+            } else {
+                throw new Error(`not a file: ${relPath}`);
+            }
+        }
     }
 
-    deleteDirectory(relPath: string, recursive?: boolean): Promise<void> {
+    async deleteDirectory(relPath: string, recursive?: boolean): Promise<void> {
         const pathArr = getPathNodes(relPath);
-        if (pathArr.length === 0){
-            return Promise.reject(new Error(`Can't delete root directory`));
+        if (pathArr.length === 0) {
+            throw new Error(`Can't delete root directory`);
         }
+
         if (this.isIgnored(relPath)) {
-            return Promise.resolve();
+            return;
         }
+
         const fullPath = path.join(this.baseUrl, ...pathArr);
-        return access(fullPath)
-            .then(() => stat(fullPath), err => null)
-            .then(stats => {
-                if (stats) {
-                    if (stats.isDirectory()) {
-                        return recursive ? remove(fullPath) : rmdir(fullPath);
-                    } else {
-                        throw new Error(`not a directory: ${relPath}`);
-                    }
-                }
-            });
+        let stats;
+        try {
+            await access(fullPath);
+            stats = await stat(fullPath);
+        } catch (e) {}
+
+        if (stats) {
+            if (stats.isDirectory()) {
+                return recursive ? remove(fullPath) : rmdir(fullPath);
+            } else {
+                throw new Error(`not a directory: ${relPath}`);
+            }
+        }
     }
 
-    loadTextFile(relPath: string): Promise<string> {
+    async loadTextFile(relPath: string): Promise<string> {
         if (this.isIgnored(relPath)) {
-            return Promise.reject(new Error(`Unable to read ignored path: '${relPath}'`));
+            throw new Error(`Unable to read ignored path: '${relPath}'`);
         }
         return readFile(path.join(this.baseUrl, relPath), 'utf8');
     }
 
-    loadDirectoryTree(): Promise<Directory> {
+    async loadDirectoryChildren(fullPath: string): Promise<(File | ShallowDirectory)[]> {
+        if (this.isIgnored(fullPath)) {
+            throw new Error(`Unable to read ignored path: '${fullPath}'`);
+        }
+        let rootPath = path.join(this.baseUrl, fullPath);
+        let pathPrefix = fullPath ? (fullPath + pathSeparator) : fullPath;
+        const directoryChildren = await readdir(rootPath);
+
+        const processedChildren = await Promise.all(directoryChildren.map(async item => {
+            const itemPath = pathPrefix + item;
+            let itemAbsolutePath = path.join(rootPath, item);
+            const itemStats = await stat(itemAbsolutePath);
+            if (itemStats.isDirectory()) {
+                return new ShallowDirectory(item, itemPath);
+            } else if (itemStats.isFile()) {
+                return new File(item, itemPath);
+            } else {
+                console.warn(`Unknown node type at ${itemAbsolutePath}`);
+                return null;
+            }
+        }));
+
+        return processedChildren.filter((i): i is File | ShallowDirectory => i !== null);
+    }
+
+    async loadDirectoryTree(fullPath: string): Promise<Directory> {
+        if (fullPath && this.isIgnored(fullPath)) {
+            throw new Error(`Unable to read ignored path: '${fullPath}'`);
+        }
         // using an in-memory instance to build the result
-        const promises:Array<Promise<void>> = [];
+        // if fullPath is not empty, memfs will contain a sub-tree of the real FS but the root is the same
         const memFs = new MemoryFileSystem();
-        return Promise.fromCallback<Directory>((callback) => {
+
+        return new Promise<Directory>((resolve, reject) => {
             const {baseUrl, isIgnored} = this;
-            walk(baseUrl)
-                .on('readable', function() {
-                    let item:WalkEventFile;
-                    while ((item = this.read())) {
-                        const itemPath = path.relative(baseUrl, item.path).split(path.sep).join(pathSeparator);
-                        if (isIgnored(itemPath)) {
-                            return;
-                        } else if (item.stats.isDirectory()) {
-                            promises.push(memFs.ensureDirectory(itemPath));
-                        } else if (item.stats.isFile()) {
-                            promises.push(memFs.saveFile(itemPath, ''));
-                        } else {
-                            console.warn(`unknown node type at ${itemPath}`, item);
-                        }
+            const rootPath = fullPath ? path.join(baseUrl, fullPath) : baseUrl;
+            const walker = walk(rootPath);
+            walker.on('readable', function () {
+                let item: walk.Item;
+                while ((item = walker.read())) {
+                    const itemPath = path.relative(baseUrl, item.path).split(path.sep).join(pathSeparator);
+                    if (isIgnored(itemPath)) {
+                        return;
+                    } else if (item.stats.isDirectory()) {
+                        memFs.ensureDirectorySync(itemPath);
+                    } else if (item.stats.isFile()) {
+                        memFs.saveFileSync(itemPath, '');
+                    } else {
+                        console.warn(`unknown node type at ${itemPath}`, item);
                     }
+                }
+            })
+                .on('end', function () {
+                    resolve(memFs.loadDirectoryTreeSync(fullPath));
                 })
-                .on('end', function() {
-                    Promise.all(promises)
-                        .then(() => memFs.loadDirectoryTree())
-                        .then(callback.bind(null, null));
-                });
+                .on('error', reject);
         });
     }
 
-    ensureDirectory(relPath: string): Promise<void> {
+    async ensureDirectory(relPath: string): Promise<void> {
         if (this.isIgnored(relPath)) {
-            return Promise.reject(new Error(`Unable to read and write ignored path: '${relPath}'`));
+            throw new Error(`Unable to read and write ignored path: '${relPath}'`);
         }
         const pathArr = getPathNodes(relPath);
         const fullPath = path.join(this.baseUrl, ...pathArr);

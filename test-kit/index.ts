@@ -1,10 +1,8 @@
-/// <reference path="../node_modules/@types/mocha/index.d.ts" />
-import * as cap from 'chai-as-promised';
-import * as chaiSubset from 'chai-subset';
 import * as chai from 'chai';
-import * as Promise from 'bluebird';
-
-Promise.longStackTraces();
+import * as chaiAsPromised from 'chai-as-promised';
+import * as sinonChai from 'sinon-chai';
+import chaiSubset = require('chai-subset');
 
 chai.use(chaiSubset);
-chai.use(cap);
+chai.use(sinonChai);
+chai.use(chaiAsPromised);

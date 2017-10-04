@@ -1,4 +1,3 @@
-import * as Promise from 'bluebird';
 import {expect} from 'chai';
 import {
     assertFileSystemContract,
@@ -6,24 +5,21 @@ import {
     ignoredFile,
     dirName,
     fileName,
-    content
 } from './implementation-suite'
 import {SlowFs} from '../test-kit/drivers/slow-fs';
 import {MemoryFileSystem, TimeoutFileSystem, FileSystem} from '../src/universal';
 
 describe('the timeout file system imeplementation', () => {
     const timeout = 200;
-    const accuracyFactor = 0.9;
 
     assertFileSystemContract(() =>
         Promise.resolve(new TimeoutFileSystem(timeout , new MemoryFileSystem(undefined, [ignoredDir, ignoredFile]))),
-        {interval:1, noExtraEventsGrace:10, timeout:30}
+        {retries: 15, interval: 2, timeout: 40, noExtraEventsGrace: 10}
     );
 
     describe(`delayed timeout test`, () => {
         let fs: FileSystem;
         let startTimestamp: number;
-        let endTimestamp: number;
         const delay = timeout * 2;
 
         beforeEach(() => {

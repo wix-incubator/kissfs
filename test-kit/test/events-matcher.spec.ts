@@ -9,7 +9,7 @@ describe('events test driver', ()=>{
 
     beforeEach(() => {
         emitter = new EventEmitter();
-        matcher = new EventsMatcher({interval: 10, timeout: 100, noExtraEventsGrace:20});
+        matcher = new EventsMatcher({retries: 5, interval: 10, noExtraEventsGrace:20});
     });
 
     it('failure when event has no type field', () => {
@@ -39,7 +39,7 @@ describe('events test driver', ()=>{
         emitter.emit('event', {type:'event', foo:'bar'});
         var rejection = matcher.expect([{type:'event', foo:'baz'}]).catch(e => e);
         return expect(rejection).to.eventually.satisfy(
-            err => expect(err).to.containSubset({actual:[{foo:'bar'}], expected:[{foo:'baz'}]}));
+            (err: object) => expect(err).to.containSubset({actual:[{foo:'bar'}], expected:[{foo:'baz'}]}));
     });
 
     it('failure when mismatched events', () => {

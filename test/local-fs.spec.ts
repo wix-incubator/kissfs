@@ -9,7 +9,6 @@ import {
 
 import {join} from 'path';
 import {expect} from 'chai';
-import * as Promise from 'bluebird';
 import {EventEmitter} from 'eventemitter3';
 
 import {
@@ -25,19 +24,18 @@ import {EventsMatcher} from '../test-kit/drivers/events-matcher';
 
 import {
     FileSystem,
-    pathSeparator,
     fileSystemEventNames
 } from '../src/universal';
 
 import {LocalFileSystem} from '../src/nodejs';
 
 describe(`the local filesystem implementation`, () => {
-    let dirCleanup, rootPath, testPath;
+    let dirCleanup: () => void, rootPath: string, testPath : string;
     let counter = 0;
-    let disposableFileSystem;
+    let disposableFileSystem: LocalFileSystem;
 
     before(done => {
-        dir({unsafeCleanup:true}, (err, path, cleanupCallback) => {
+        dir({unsafeCleanup:true}, (_err, path, cleanupCallback) => {
             dirCleanup = cleanupCallback;
             rootPath = path;
             done();
@@ -52,9 +50,8 @@ describe(`the local filesystem implementation`, () => {
         }
     });
     afterEach(() =>{
-        if (disposableFileSystem) {
-            disposableFileSystem.dispose();
-        }
+        // if beforeEach fails, disposableFileSystem can stay undefined
+        disposableFileSystem && disposableFileSystem.dispose();
     });
     function getFS() {
         testPath = join(rootPath, 'fs_'+(counter++));
@@ -66,9 +63,10 @@ describe(`the local filesystem implementation`, () => {
         return disposableFileSystem.init();
     }
     const eventMatcherOptions: EventsMatcher.Options = {
+        retries: 40,
         interval: 50,
-        noExtraEventsGrace: 150,
-        timeout: 1500
+        timeout: 2500,
+        noExtraEventsGrace: 150
     };
     assertFileSystemContract(getFS, eventMatcherOptions);
     describe(`external changes`, () => {
@@ -179,16 +177,15 @@ describe(`the local filesystem implementation`, () => {
         });
 
         it(`emits 'unexpectedError' if 'loadTextFile' rejected in watcher 'add' callback`, () => {
-            fs.loadTextFile = path => Promise.reject('go away!');
+            fs.loadTextFile = () => Promise.reject('go away!');
             const path = join(testPath, fileName);
             writeFileSync(path, content);
             return matcher.expect([{type: 'unexpectedError'}]);
         });
 
         it(`emits 'unexpectedError' if 'loadTextFile' rejected in watcher 'change' callback`, () => {
-            const path = join(testPath, fileName);
             return fs.saveFile(fileName, content)
-                .then(() => fs.loadTextFile = path => Promise.reject('go away!'))
+                .then(() => fs.loadTextFile = () => Promise.reject('go away!'))
                 .then(() => fs.saveFile(fileName, `_${content}`))
                 .then(() => matcher.expect([{type: 'unexpectedError'}]))
         });

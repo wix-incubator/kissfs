@@ -1,6 +1,5 @@
 import {EventEmitter} from 'eventemitter3';
 import {InternalEventsEmitter} from '../src/utils';
-import * as Promise from 'bluebird';
 import {expect} from 'chai';
 import {EventsMatcher} from '../test-kit/drivers/events-matcher';
 import {SlowFs} from '../test-kit/drivers/slow-fs';
@@ -22,22 +21,16 @@ import {
 } from './implementation-suite';
 
 describe(`the cache file system implementation`, () => {
-
-    const eventMatcherOptions: EventsMatcher.Options = {
-        interval: 1,
-        noExtraEventsGrace: 10,
-        timeout: 30
-    };
+    const eventMatcherOptions: EventsMatcher.Options = { retries: 15, interval: 2, timeout: 40, noExtraEventsGrace: 10 };
 
     assertFileSystemContract(
-        () => Promise.resolve(new CacheFileSystem(new MemoryFileSystem(undefined, [ignoredDir, ignoredFile]))),
+        async () => new CacheFileSystem(new MemoryFileSystem(undefined, [ignoredDir, ignoredFile])),
         eventMatcherOptions
     );
 
     describe(`using slow FileSystem`, () => {
         const timeout = 200;
 
-        let timer;
         let fs: FileSystem;
         let slow: FileSystem;
         let startTimestamp: number;
@@ -59,7 +52,7 @@ describe(`the cache file system implementation`, () => {
         })
 
         it('loads file faster after it has been saved from outside', () => {
-            const onFileCreated = new Promise((resolve, reject) => {
+            const onFileCreated = new Promise(resolve => {
                     fs.events.once('fileCreated', () => {
                         fs.loadTextFile(fileName)
                             .then(() => resolve(Date.now() - startTimestamp))
@@ -87,7 +80,8 @@ describe(`the cache file system implementation`, () => {
             original = new MemoryFileSystem();
             fs = new CacheFileSystem(original);
             matcher = new EventsMatcher({
-                interval: 2,
+                retries: 30,
+                interval: 5,
                 noExtraEventsGrace: 150,
                 timeout: 300
             });

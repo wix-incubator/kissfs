@@ -1,4 +1,3 @@
-import * as Promise from 'bluebird';
 import {expect} from 'chai';
 import {FileSystem} from '../../src/api';
 import {
@@ -12,7 +11,7 @@ import {SlowFs} from '../drivers/slow-fs';
 describe('the slow (delayed) file system imeplementation', ()=>{
     const delay = 200;
     const accuracyFactor = 0.9;
-    assertFileSystemContract(() => Promise.resolve(new SlowFs(delay)), {interval:1, noExtraEventsGrace:10, timeout:30});
+    assertFileSystemContract(async () => new SlowFs(delay), {retries: 15, interval: 2, timeout: 40, noExtraEventsGrace: 10});
 
     describe(`delayed methods`, () => {
         let fs: FileSystem;

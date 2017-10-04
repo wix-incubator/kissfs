@@ -1,9 +1,7 @@
-import {EventEmitter} from 'eventemitter3';
-import * as Promise from 'bluebird';
-import * as retry from 'bluebird-retry';
 import {expect} from 'chai';
-import {WampServer, WampRouter, wampRealm, wampServerOverFs} from '../src/nodejs';
-import {FileSystem, WampClientFileSystem, MemoryFileSystem} from '../src/universal';
+import {retryPromise} from '../src/promise-utils';
+import {WampServer, wampRealm, wampServerOverFs} from '../src/nodejs';
+import {WampClientFileSystem, MemoryFileSystem} from '../src/universal';
 import {noConnectionError} from '../src/wamp-client-fs';
 import {EventsMatcher} from '../test-kit/drivers/events-matcher';
 import {
@@ -32,6 +30,7 @@ describe(`the wamp client filesystem implementation`, () => {
     }
 
     const eventMatcherOptions: EventsMatcher.Options = {
+        retries: 25,
         interval: 50,
         noExtraEventsGrace: 150,
         timeout: 1500
@@ -40,14 +39,12 @@ describe(`the wamp client filesystem implementation`, () => {
     beforeEach(() => server().then(clientAndServer => wampServer = clientAndServer));
 
     afterEach(() => {
-        return new Promise(resolve => {
-            wampServer.router.close();
-            const errMsg = `WAMP connection hasn't been closed after the previous test`;
-            return retry(
-                () => (wampServer.connection as any).isConnected ? Promise.reject(errMsg) : Promise.resolve(),
-                {interval: 100, max_tries: 10}
-            ).then(() => resolve())
-        });
+        wampServer.router.close();
+        const errMsg = `WAMP connection hasn't been closed after the previous test`;
+        return retryPromise(
+            () => (wampServer.connection as any).isConnected ? Promise.reject(errMsg) : Promise.resolve(),
+            {interval: 100, retries: 10}
+        );
     });
 
     assertFileSystemContract(getInitedFS, eventMatcherOptions);

@@ -1,13 +1,11 @@
 import {
+    File,
     FileSystem,
     Directory,
     EventEmitter,
-    pathSeparator,
-    FileSystemNode,
-    isDisposable
+    isDisposable, ShallowDirectory
 } from './api';
-
-import * as Promise from 'bluebird';
+import { timeoutPromise } from './promise-utils';
 
 export class TimeoutFileSystem implements FileSystem{
     constructor(private timeout: number, private fs: FileSystem) {}
@@ -21,27 +19,31 @@ export class TimeoutFileSystem implements FileSystem{
     }
 
     saveFile(fullPath:string, newContent:string): Promise<void>{
-        return this.fs.saveFile(fullPath , newContent).timeout(this.timeout);
+        return timeoutPromise(this.fs.saveFile(fullPath , newContent), this.timeout);
     }
 
     deleteFile(fullPath:string):Promise<void>{
-        return this.fs.deleteFile(fullPath).timeout(this.timeout);
+        return timeoutPromise(this.fs.deleteFile(fullPath), this.timeout);
     }
 
     deleteDirectory(fullPath:string, recursive?:boolean):Promise<void>{
-        return this.fs.deleteDirectory(fullPath , recursive).timeout(this.timeout);
+        return timeoutPromise(this.fs.deleteDirectory(fullPath , recursive), this.timeout);
     }
 
     loadTextFile(fullPath:string): Promise<string>{
-        return this.fs.loadTextFile(fullPath).timeout(this.timeout);
+        return timeoutPromise(this.fs.loadTextFile(fullPath), this.timeout);
     }
 
-    loadDirectoryTree(): Promise<Directory>{
-        return this.fs.loadDirectoryTree().timeout(this.timeout);
+    loadDirectoryTree(fullPath?:string): Promise<Directory>{
+        return timeoutPromise(this.fs.loadDirectoryTree(fullPath), this.timeout);
+    }
+
+    loadDirectoryChildren(fullPath:string): Promise<(File | ShallowDirectory)[]> {
+        return timeoutPromise(this.fs.loadDirectoryChildren(fullPath), this.timeout);
     }
 
     ensureDirectory(fullPath:string): Promise<void>{
-        return this.fs.ensureDirectory(fullPath).timeout(this.timeout);
+        return timeoutPromise(this.fs.ensureDirectory(fullPath), this.timeout);
     }
 
     dispose() {

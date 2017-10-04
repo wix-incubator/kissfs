@@ -1,4 +1,3 @@
-import * as Promise from 'bluebird';
 import {Connection, Session} from 'autobahn';
 import {FileSystem, fileSystemEventNames, fileSystemMethods, isDisposable} from './api';
 import {wampRealm, wampRealmPrefix} from './constants';
@@ -31,7 +30,7 @@ export function wampServerOverFs(fs: FileSystem, port = 3000): Promise<WampServe
             });
 
             fileSystemMethods.forEach(ev => {
-                session.register(`${wampRealmPrefix}${ev}`, (data: string[]) => fs[ev](...data).then(res => res));
+                session.register(`${wampRealmPrefix}${ev}`, (data: string[]) => (fs as any)[ev](...data));
             });
 
             resolve({
@@ -40,7 +39,7 @@ export function wampServerOverFs(fs: FileSystem, port = 3000): Promise<WampServe
             });
         };
 
-        connection.onclose = (reason, details) => {
+        connection.onclose = (_reason, details) => {
             if (!details.will_retry && isDisposable(fs)) {
                 fs.dispose();
             }
