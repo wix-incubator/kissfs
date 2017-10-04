@@ -2,6 +2,7 @@ import {expect} from 'chai';
 import * as sinon from 'sinon';
 import {delayedPromise, timeoutPromise, retryPromise, RetryPromiseOptions} from '../src/promise-utils';
 
+const accuracyFactor = 0.9;
 describe('Promise utilities', () => {
     describe('delayedPromise', () => {
         it('resolves after provided the ms', async () => {
@@ -9,7 +10,7 @@ describe('Promise utilities', () => {
 
             await delayedPromise(delay);
 
-            expect(Date.now()).to.be.gte(startTime + delay);
+            expect(Date.now(), 'verify delay').to.be.gte(startTime + (delay * accuracyFactor));
         })
     });
 
@@ -63,7 +64,7 @@ describe('Promise utilities', () => {
 
             const startTime = Date.now();
             await expect(retryPromise(promiseProvider, retryOptions)).to.eventually.become('success');
-            expect(Date.now(), 'verify interval').to.be.gte(startTime + (retryOptions.interval * 2));
+            expect(Date.now(), 'verify interval').to.be.gte(startTime + (retryOptions.interval * 2 * accuracyFactor));
             await verifyCallCount(promiseProvider, 3, retryOptions.interval + 1);
         });
 
