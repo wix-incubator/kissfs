@@ -28,4 +28,3 @@ how to debug (browser):
 ## similar solutions
  - [vinyl](https://github.com/gulpjs/vinyl) - a standard API for file descriptors, designed for gulp. More complex than :kiss:fs.
  - [vfs](https://github.com/c9/vfs) - a file-system API with HTTP transport layer. More complex than :kiss:fs.
-
