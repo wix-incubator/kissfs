@@ -115,7 +115,7 @@ export class MemoryFileSystem implements FileSystem {
         const pathArr = getPathNodes(fullPath);
         const parent = pathArr.length ? this.getPathTarget(pathArr.slice(0, pathArr.length - 1)) : null;
         if (isDir(parent) && !this.isIgnored(fullPath)) {
-            const node = parent.children.find(({name}) => name === pathArr[pathArr.length]);
+            const node = parent.children.find(({name}) => name === pathArr[pathArr.length - 1]);
             if (isFile(node)) {
                 parent.children = parent.children.filter(({name}) => name !== node.name);
                 this.events.emit('fileDeleted', {type: 'fileDeleted', fullPath});
@@ -132,7 +132,7 @@ export class MemoryFileSystem implements FileSystem {
         }
         const parent = this.getPathTarget(pathArr.slice(0, pathArr.length - 1));
         if (isDir(parent) && !this.isIgnored(fullPath)) {
-            const node = parent.children.find(({name}) => name === pathArr[pathArr.length]);
+            const node = parent.children.find(({name}) => name === pathArr[pathArr.length - 1]);
             if (isFile(node)) {
                 throw new Error(`File is not a directory '${fullPath}'`);
             } else if(isDir(node)){
@@ -179,7 +179,7 @@ export class MemoryFileSystem implements FileSystem {
         const pathArr = getPathNodes(fullPath);
         const parent = pathArr.length ? this.getPathTarget(pathArr.slice(0, pathArr.length - 1)) : null;
         if (isDir(parent)) {
-            const node = parent.children.find(({name}) => name === pathArr[pathArr.length]);
+            const node = parent.children.find(({name}) => name === pathArr[pathArr.length - 1]);
             if (isFile(node)) {
                 return node.content || '';
             } else if (isDir(node)) {
