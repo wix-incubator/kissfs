@@ -1,7 +1,7 @@
 const path = require('path');
 
 const NODE_MODULES_PATH = path.resolve(__dirname, 'node_modules');
-const polyfills = ['core-js/es6/symbol', 'core-js/es6/number', 'core-js/es6/promise'];
+const polyfills = ['core-js/es6/array', 'core-js/es6/number', 'core-js/es6/promise', 'core-js/es6/symbol'];
 
 module.exports = {
     context: __dirname,
