@@ -16,30 +16,37 @@ export interface RetryPromiseOptions {
     timeoutMessage?: string;
 }
 
+const uniqueObj = {}; // used to identify timeout in retryPromise
+
 export function retryPromise<T>(
     promiseProvider: () => Promise<T>,
     {interval, retries, timeout, timeoutMessage = `timed out after ${timeout}ms`}: RetryPromiseOptions): Promise<T> {
-    if (timeout && timeout <= retries * interval) {
+
+        if (timeout && timeout <= retries * interval) {
         return Promise.reject(`timeout (${timeout}ms) must be greater than retries (${retries}) times interval (${interval}ms)`)
     }
-    const startTime = Date.now();
     let lastError: Error;
-    const isTimeout = () => timeout && Date.now() >= (startTime + timeout);
+    const timeoutReject = timeout && delayedPromise(timeout).then(() => Promise.reject(uniqueObj));
 
-    return new Promise(async (resolve, reject) => {
-        timeout && setTimeout(() => reject(lastError || new Error(timeoutMessage)), timeout);
-        do {
-            try {
-                return resolve(await promiseProvider());
-            } catch (e) {
+    async function tryRun(retriesLeft: number, shouldDelay: boolean): Promise<T> {
+        try {
+            if (timeoutReject) {
+                shouldDelay && await Promise.race([delayedPromise(interval), timeoutReject]);
+                return await Promise.race([promiseProvider(), timeoutReject])
+            } else {
+                shouldDelay && await delayedPromise(interval);
+                return await promiseProvider();
+            }
+        } catch (e) {
+            if (e !== uniqueObj) { // only retry if not a timeout
                 lastError = e;
-                if ((retries-- > 0) && !isTimeout()) {
-                    await delayedPromise(interval);
-                } else {
-                    reject(lastError);
-                    break;
+                if (retriesLeft) {
+                    return tryRun(retriesLeft - 1, true);
                 }
             }
-        } while (!isTimeout()); // we can be in a timeout again after being delayed by interval
-    });
+            throw lastError || new Error(timeoutMessage);
+        }
+    }
+
+    return tryRun(retries, false); // first run is not delayed
 }
