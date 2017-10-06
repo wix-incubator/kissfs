@@ -18,16 +18,16 @@ export interface RetryPromiseOptions {
 
 const uniqueObj = {}; // used to identify timeout in retryPromise
 
-export function retryPromise<T>(
+export async function retryPromise<T>(
     promiseProvider: () => Promise<T>,
     {interval, retries, timeout, timeoutMessage = `timed out after ${timeout}ms`}: RetryPromiseOptions): Promise<T> {
     if (timeout && timeout <= retries * interval) {
         return Promise.reject(`timeout (${timeout}ms) must be greater than retries (${retries}) times interval (${interval}ms)`)
     }
-    let lastError: Error;
+    let lastError: Error = new Error(timeoutMessage);
+    let retriesLeft = retries;
     const timeoutReject = timeout && delayedPromise(timeout).then(() => Promise.reject(uniqueObj));
-
-    async function tryRun(retriesLeft: number): Promise<T> {
+    do {
         const shouldDelay = interval && retriesLeft !== retries; // first run is not delayed
         try {
             if (timeoutReject) {
@@ -38,15 +38,12 @@ export function retryPromise<T>(
                 return await promiseProvider();
             }
         } catch (e) {
-            if (e !== uniqueObj) { // only retry if not a timeout
+            if (e === uniqueObj) { // only retry if not a timeout
+                retriesLeft = 0;
+            } else {
                 lastError = e;
-                if (retriesLeft) {
-                    return tryRun(retriesLeft - 1);
-                }
             }
-            throw lastError || new Error(timeoutMessage);
         }
-    }
-
-    return tryRun(retries);
+    } while (retriesLeft-- > 0);
+    throw lastError;
 }
