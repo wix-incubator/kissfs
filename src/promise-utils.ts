@@ -22,7 +22,7 @@ export async function retryPromise<T>(
     promiseProvider: () => Promise<T>,
     {interval, retries, timeout, timeoutMessage = `timed out after ${timeout}ms`}: RetryPromiseOptions): Promise<T> {
     if (timeout && timeout <= retries * interval) {
-        return Promise.reject(`timeout (${timeout}ms) must be greater than retries (${retries}) times interval (${interval}ms)`)
+        throw new Error(`timeout (${timeout}ms) must be greater than retries (${retries}) times interval (${interval}ms)`);
     }
     let lastError: Error = new Error(timeoutMessage);
     let retriesLeft = retries;
