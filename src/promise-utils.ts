@@ -24,7 +24,7 @@ export async function retryPromise<T>(
     if (timeout && timeout <= retries * interval) {
         throw new Error(`timeout (${timeout}ms) must be greater than retries (${retries}) times interval (${interval}ms)`);
     }
-    let lastError: Error = new Error(timeoutMessage);
+    let lastError: Error | undefined;
     let retriesLeft = retries;
     const timeoutReject = timeout && delayedPromise(timeout).then(() => Promise.reject(uniqueObj));
     do {
@@ -40,6 +40,7 @@ export async function retryPromise<T>(
         } catch (e) {
             if (e === uniqueObj) { // only retry if not a timeout
                 retriesLeft = 0;
+                lastError = lastError || new Error(timeoutMessage);
             } else {
                 lastError = e;
             }
