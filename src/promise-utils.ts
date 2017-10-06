@@ -28,7 +28,8 @@ export function retryPromise<T>(
     let lastError: Error;
     const timeoutReject = timeout && delayedPromise(timeout).then(() => Promise.reject(uniqueObj));
 
-    async function tryRun(retriesLeft: number, shouldDelay: boolean): Promise<T> {
+    async function tryRun(retriesLeft: number): Promise<T> {
+        const shouldDelay = interval && retriesLeft !== retries; // first run is not delayed
         try {
             if (timeoutReject) {
                 shouldDelay && await Promise.race([delayedPromise(interval), timeoutReject]);
@@ -41,12 +42,12 @@ export function retryPromise<T>(
             if (e !== uniqueObj) { // only retry if not a timeout
                 lastError = e;
                 if (retriesLeft) {
-                    return tryRun(retriesLeft - 1, true);
+                    return tryRun(retriesLeft - 1);
                 }
             }
             throw lastError || new Error(timeoutMessage);
         }
     }
 
-    return tryRun(retries, false); // first run is not delayed
+    return tryRun(retries);
 }
