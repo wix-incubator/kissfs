@@ -27,7 +27,7 @@ export class Directory implements FileSystemNode  {
 
 export class File implements FileSystemNode {
     public type: 'file' = 'file';
-    public content: string;
+    public content?: string;
     constructor(
         public name:string,
         public fullPath:string,
