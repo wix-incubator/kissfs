@@ -16,41 +16,33 @@ export interface RetryPromiseOptions {
     timeoutMessage?: string;
 }
 
+const never: Promise<any> = new Promise(() => void 0);
+
 export async function retryPromise<T>(promiseProvider: () => Promise<T>,
                                       {interval, retries, timeout, timeoutMessage = `timed out after ${timeout}ms`}: RetryPromiseOptions): Promise<T> {
-    if (timeout) {
-        if (timeout <= retries * interval) {
-            return Promise.reject(`timeout (${timeout}ms) must be greater than retries (${retries}) times interval (${interval}ms)`)
-        }
-        const timeoutPromise = delayedPromise(timeout).then(() => Promise.reject(new Error(timeoutMessage)));
-
-        let lastError: Error | null = null;
-
-        while (true) {
-            try {
-                return await Promise.race([promiseProvider(), timeoutPromise]);
-            } catch (e) {
-                if (e.message === timeoutMessage) {
-                    throw lastError || e;
-                }
-                lastError = e;
-                await new Promise(resolve => setTimeout(resolve, interval));
-            }
-        }
-    } else if (retries > 0){
-        let iterations = retries + 1;
-        let lastError: Error | null = null;
-        while (iterations-- > 0) {
-            try {
-                return await promiseProvider();
-            } catch (e) {
-                lastError = e;
-            }
-            await new Promise(resolve => setTimeout(resolve, interval));
-        }
-        throw lastError || new Error(timeoutMessage);
-
-    } else {
+    if (!timeout && !retries) {
         return await promiseProvider();
     }
+    if (timeout && timeout <= retries * interval) {
+        return Promise.reject(`timeout (${timeout}ms) must be greater than retries (${retries}) times interval (${interval}ms)`)
+    }
+    const raceWithTimeout = [never, never];
+    if (timeout) {
+        raceWithTimeout[1] = delayedPromise(timeout).then(() => Promise.reject(new Error(timeoutMessage)));
+    }
+    let iterations = retries ? retries + 1 : Number.MAX_SAFE_INTEGER;
+    let lastError: Error | null = null;
+    while (iterations-- > 0) {
+        try {
+            raceWithTimeout[0] = promiseProvider();
+            return await Promise.race(raceWithTimeout);
+        } catch (e) {
+            if (e.message === timeoutMessage) {
+                throw lastError || e;
+            }
+            lastError = e;
+        }
+        await new Promise(resolve => setTimeout(resolve, interval));
+    }
+    throw lastError || new Error(timeoutMessage);
 }

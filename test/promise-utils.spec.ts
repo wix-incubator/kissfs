@@ -111,8 +111,8 @@ describe('Promise utilities', () => {
             it('rejects with error of last failed attempt if timeout expires', async () => {
                 const retryOptions: RetryPromiseOptions = {retries: 1, interval: 10, timeout: 400};
                 const promiseProvider = sinon.stub()
-                    .onFirstCall().returns(Promise.reject(new Error('first failure')))
-                    .onSecondCall().returns(delayedPromise(2000))
+                    .onFirstCall().rejects(new Error('first failure'))
+                    .onSecondCall().returns(delayedPromise(2000));
 
                 await expect(retryPromise(promiseProvider, retryOptions)).to.eventually.be.rejectedWith('first failure');
                 await verifyCallCount(promiseProvider, 2, retryOptions.interval + 1);
