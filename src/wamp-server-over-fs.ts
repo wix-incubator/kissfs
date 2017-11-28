@@ -30,7 +30,7 @@ export function wampServerOverFs(fs: FileSystem, port = 3000): Promise<WampServe
             });
 
             fileSystemMethods.forEach(ev => {
-                session.register(`${wampRealmPrefix}${ev}`, (data: string[]) => (fs as any)[ev](...data));
+                session.register(`${wampRealmPrefix}${ev}`, (data: any[] = []) => (fs as any)[ev](...data));
             });
 
             resolve({
