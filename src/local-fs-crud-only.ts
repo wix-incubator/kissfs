@@ -1,7 +1,7 @@
-import {access, ensureDir, readFile, readdir, remove, rmdir, stat, writeFile} from 'fs-extra';
+import {access, ensureDir, readdir, readFile, remove, rmdir, stat, writeFile} from 'fs-extra';
 import * as walk from 'klaw';
 import * as path from 'path';
-import {Directory, FileSystem, pathSeparator, ShallowDirectory, File} from './api';
+import {Directory, File, FileSystem, pathSeparator, ShallowDirectory} from './api';
 import {getIsIgnored, getPathNodes, InternalEventsEmitter, makeEventsEmitter} from './utils';
 import {MemoryFileSystem} from './memory-fs';
 
@@ -42,7 +42,8 @@ export class LocalFileSystemCrudOnly implements FileSystem {
         try {
             await access(fullPath);
             stats = await stat(fullPath);
-        } catch (e) {}
+        } catch (e) {
+        }
 
         if (stats) {
             if (stats.isFile()) {
@@ -68,7 +69,8 @@ export class LocalFileSystemCrudOnly implements FileSystem {
         try {
             await access(fullPath);
             stats = await stat(fullPath);
-        } catch (e) {}
+        } catch (e) {
+        }
 
         if (stats) {
             if (stats.isDirectory()) {

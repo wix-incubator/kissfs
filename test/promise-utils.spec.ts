@@ -1,6 +1,6 @@
 import {expect} from 'chai';
 import * as sinon from 'sinon';
-import {delayedPromise, timeoutPromise, retryPromise, RetryPromiseOptions} from '../src/promise-utils';
+import {delayedPromise, retryPromise, RetryPromiseOptions, timeoutPromise} from '../src/promise-utils';
 
 const accuracyFactor = 0.9;
 describe('Promise utilities', () => {
@@ -128,7 +128,12 @@ describe('Promise utilities', () => {
             });
 
             it('rejects with provided timeout message, if no last failed attempt and timeout expires', async () => {
-                const retryOptions: RetryPromiseOptions = {retries: 0, interval: 20, timeout: 50, timeoutMessage: 'FAILED'};
+                const retryOptions: RetryPromiseOptions = {
+                    retries: 0,
+                    interval: 20,
+                    timeout: 50,
+                    timeoutMessage: 'FAILED'
+                };
                 const promiseProvider = sinon.stub().returns(delayedPromise(1000));
 
                 await expect(retryPromise(promiseProvider, retryOptions)).to.eventually.be.rejectedWith('FAILED');

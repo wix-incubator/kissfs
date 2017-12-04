@@ -1,6 +1,7 @@
 import {Connection, Session} from 'autobahn';
-import {FileSystem, fileSystemEventNames, fileSystemMethods, isDisposable} from './api';
+import {FileSystem, fileSystemEventNames, fileSystemAsyncMethods, isDisposable} from './api';
 import {wampRealm, wampRealmPrefix} from './constants';
+
 const Router = require('wamp-server');
 
 export type WampServer = {
@@ -29,7 +30,7 @@ export function wampServerOverFs(fs: FileSystem, port = 3000): Promise<WampServe
                 fs.events.on(fsEvent, data => session.isOpen && session.publish(`${wampRealmPrefix}${fsEvent}`, [data]));
             });
 
-            fileSystemMethods.forEach(ev => {
+            fileSystemAsyncMethods.forEach(ev => {
                 session.register(`${wampRealmPrefix}${ev}`, (data: any[] = []) => (fs as any)[ev](...data));
             });
 

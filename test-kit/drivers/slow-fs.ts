@@ -1,9 +1,4 @@
-import {
-    FileSystem,
-    Directory,
-    File,
-    isDisposable, ShallowDirectory
-} from "../../src/api";
+import {Directory, File, FileSystem, isDisposable, ShallowDirectory} from "../../src/api";
 
 import {MemoryFileSystem} from '../../src/memory-fs';
 import {InternalEventsEmitter} from '../../src/utils';
@@ -12,19 +7,19 @@ import {delayedPromise} from '../../src/promise-utils';
 
 export class SlowFs implements FileSystem {
     public readonly events: InternalEventsEmitter;
-    private fs: FileSystem;
     public baseUrl: string;
+    private fs: FileSystem;
 
     constructor(private delay: number) {
         this.fs = new MemoryFileSystem(undefined, [ignoredDir, ignoredFile]);
         this.events = this.fs.events as InternalEventsEmitter;
     }
 
-    saveFile(fullPath:string, newContent:string):Promise<void> {
+    saveFile(fullPath: string, newContent: string): Promise<void> {
         return delayedPromise(this.delay).then(() => this.fs.saveFile(fullPath, newContent));
     }
 
-    deleteFile(fullPath:string):Promise<void> {
+    deleteFile(fullPath: string): Promise<void> {
         return delayedPromise(this.delay).then(() => this.fs.deleteFile(fullPath));
     }
 
@@ -32,19 +27,19 @@ export class SlowFs implements FileSystem {
         return delayedPromise(this.delay).then(() => this.fs.deleteDirectory(fullPath, recursive));
     }
 
-    ensureDirectory(fullPath:string): Promise<void> {
+    ensureDirectory(fullPath: string): Promise<void> {
         return delayedPromise(this.delay).then(() => this.fs.ensureDirectory(fullPath));
     }
 
-    loadTextFile(fullPath:string): Promise<string>{
+    loadTextFile(fullPath: string): Promise<string> {
         return delayedPromise(this.delay).then(() => this.fs.loadTextFile(fullPath));
     }
 
-    loadDirectoryTree(fullPath?:string): Promise<Directory> {
+    loadDirectoryTree(fullPath?: string): Promise<Directory> {
         return delayedPromise(this.delay).then(() => this.fs.loadDirectoryTree(fullPath));
     }
 
-    loadDirectoryChildren(fullPath:string): Promise<(File | ShallowDirectory)[]> {
+    loadDirectoryChildren(fullPath: string): Promise<(File | ShallowDirectory)[]> {
         return delayedPromise(this.delay).then(() => this.fs.loadDirectoryChildren(fullPath));
     }
 

@@ -1,17 +1,10 @@
 import {expect} from 'chai';
 import {retryPromise} from '../src/promise-utils';
-import {WampServer, wampRealm, wampServerOverFs} from '../src/nodejs';
-import {WampClientFileSystem, MemoryFileSystem} from '../src/universal';
+import {wampRealm, WampServer, wampServerOverFs} from '../src/nodejs';
+import {MemoryFileSystem, WampClientFileSystem} from '../src/universal';
 import {noConnectionError} from '../src/wamp-client-fs';
 import {EventsMatcher} from '../test-kit/drivers/events-matcher';
-import {
-    assertFileSystemContract,
-    ignoredDir,
-    ignoredFile,
-    fileName,
-    dirName,
-    content
-} from './implementation-suite'
+import {assertFileSystemContract, content, dirName, fileName, ignoredDir, ignoredFile} from './implementation-suite'
 
 describe(`the wamp client filesystem implementation`, () => {
 

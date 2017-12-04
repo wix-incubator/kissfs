@@ -2,10 +2,12 @@ import {expect} from 'chai';
 import {EventEmitter} from 'eventemitter3';
 import {delayedPromise, retryPromise} from '../../src/promise-utils';
 
-export interface EventObj{
-    type:string;
-    [k:string]:any;
+export interface EventObj {
+    type: string;
+
+    [k: string]: any;
 }
+
 export namespace EventsMatcher {
     export type Options = {
         retries: number;
@@ -14,9 +16,12 @@ export namespace EventsMatcher {
         timeout?: number;
     };
 }
-export class EventsMatcher{
+
+export class EventsMatcher {
     private events: Array<EventObj> = [];
-    constructor(private options:EventsMatcher.Options){}
+
+    constructor(private options: EventsMatcher.Options) {
+    }
 
     track(emitter: EventEmitter, ...eventNames: Array<string>) {
         eventNames.forEach(eventName => emitter.on(eventName, (event: EventObj) => {
@@ -25,14 +30,14 @@ export class EventsMatcher{
         }))
     }
 
-    async expect(events: Array<EventObj>):Promise<void>{
+    async expect(events: Array<EventObj>): Promise<void> {
         const {interval, timeout, retries} = this.options;
         if (events.length) {
             await retryPromise(() => this.checkEvents(events), {retries, interval, timeout});
         } else {
             expect(this.events).to.eql([]);
         }
-        
+
         await delayedPromise(this.options.noExtraEventsGrace);
         expect(this.events, 'no further events after matching').to.eql([]);
     }
