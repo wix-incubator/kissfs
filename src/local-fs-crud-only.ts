@@ -1,12 +1,12 @@
-import {access, ensureDir, readFile, readdir, remove, rmdir, stat, writeFile} from 'fs-extra';
+import {access, ensureDir, ensureDirSync, readFile, readdir, remove, rmdir, stat, writeFile, writeFileSync, readFileSync} from 'fs-extra';
 import * as walk from 'klaw';
 import * as path from 'path';
-import {Directory, FileSystem, pathSeparator, ShallowDirectory, File} from './api';
+import {Directory, pathSeparator, ShallowDirectory, File, FileSystemSync} from './api';
 import {getIsIgnored, getPathNodes, InternalEventsEmitter, makeEventsEmitter} from './utils';
 import {MemoryFileSystem} from './memory-fs';
 
 // TODO extract chokidar watch mechanism to configuration
-export class LocalFileSystemCrudOnly implements FileSystem {
+export class LocalFileSystemCrudOnly implements FileSystemSync {
     public readonly events: InternalEventsEmitter = makeEventsEmitter();
     protected isIgnored: (path: string) => boolean = () => false;
 
@@ -15,17 +15,30 @@ export class LocalFileSystemCrudOnly implements FileSystem {
             this.isIgnored = getIsIgnored(ignore);
         }
     }
-
+    private getPathAndName(relPath: string):{fullPath:string,name:string}{
+        const pathArr = getPathNodes(relPath);
+        const name = pathArr.pop() || '';
+        const fullPath = path.join(this.baseUrl, ...pathArr);
+        return {fullPath,name}
+    }
     async saveFile(relPath: string, newContent: string): Promise<void> {
         if (this.isIgnored(relPath)) {
             throw new Error(`Unable to save ignored path: '${relPath}'`);
         }
 
-        const pathArr = getPathNodes(relPath);
-        const name = pathArr.pop() || '';
-        const fullPath = path.join(this.baseUrl, ...pathArr);
+        const {fullPath, name} = this.getPathAndName(relPath);
         await ensureDir(fullPath);
         await writeFile(path.join(fullPath, name), newContent);
+    }
+
+    saveFileSync(relPath: string, newContent: string): void {
+        if (this.isIgnored(relPath)) {
+            throw new Error(`Unable to save ignored path: '${relPath}'`);
+        }
+
+        const {fullPath, name} = this.getPathAndName(relPath);
+        ensureDirSync(fullPath);
+        writeFileSync(path.join(fullPath, name), newContent);
     }
 
     async deleteFile(relPath: string): Promise<void> {
@@ -84,6 +97,13 @@ export class LocalFileSystemCrudOnly implements FileSystem {
             throw new Error(`Unable to read ignored path: '${relPath}'`);
         }
         return readFile(path.join(this.baseUrl, relPath), 'utf8');
+    }
+
+    loadTextFileSync(relPath: string): string {
+        if (this.isIgnored(relPath)) {
+            throw new Error(`Unable to read ignored path: '${relPath}'`);
+        }
+        return readFileSync(path.join(this.baseUrl, relPath), 'utf8');
     }
 
     async loadDirectoryChildren(fullPath: string): Promise<(File | ShallowDirectory)[]> {
@@ -152,5 +172,13 @@ export class LocalFileSystemCrudOnly implements FileSystem {
         const pathArr = getPathNodes(relPath);
         const fullPath = path.join(this.baseUrl, ...pathArr);
         return ensureDir(fullPath);
+    }
+    ensureDirectorySync(relPath: string): void {
+        if (this.isIgnored(relPath)) {
+            throw new Error(`Unable to read and write ignored path: '${relPath}'`);
+        }
+        const pathArr = getPathNodes(relPath);
+        const fullPath = path.join(this.baseUrl, ...pathArr);
+        return ensureDirSync(fullPath);
     }
 }

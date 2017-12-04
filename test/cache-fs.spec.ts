@@ -13,6 +13,7 @@ import {
 
 import {
     assertFileSystemContract,
+    assertFileSystemSyncContract,
     ignoredDir,
     ignoredFile,
     fileName,
@@ -27,6 +28,11 @@ describe(`the cache file system implementation`, () => {
         async () => new CacheFileSystem(new MemoryFileSystem(undefined, [ignoredDir, ignoredFile])),
         eventMatcherOptions
     );
+
+    assertFileSystemSyncContract(
+        async () => new CacheFileSystem(new MemoryFileSystem(undefined, [ignoredDir, ignoredFile])),
+        eventMatcherOptions
+    )
 
     describe(`using slow FileSystem`, () => {
         const timeout = 200;

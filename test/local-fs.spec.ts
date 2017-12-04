@@ -13,6 +13,7 @@ import {EventEmitter} from 'eventemitter3';
 
 import {
     assertFileSystemContract,
+    assertFileSystemSyncContract,
     dirName,
     fileName,
     content,
@@ -69,6 +70,7 @@ describe(`the local filesystem implementation`, () => {
         noExtraEventsGrace: 150
     };
     assertFileSystemContract(getFS, eventMatcherOptions);
+    assertFileSystemSyncContract(getFS, eventMatcherOptions);
     describe(`external changes`, () => {
         let fs: FileSystem;
         let matcher: EventsMatcher;

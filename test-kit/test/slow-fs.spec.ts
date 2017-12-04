@@ -11,7 +11,7 @@ import {SlowFs} from '../drivers/slow-fs';
 describe('the slow (delayed) file system implementation', ()=>{
     const delay = 200;
     const accuracyFactor = 0.9;
-    assertFileSystemContract(async () => new SlowFs(delay), {retries: 15, interval: 2, timeout: 40, noExtraEventsGrace: 10});
+    assertFileSystemContract(async ()=> new SlowFs(delay), {retries: 15, interval: 2, timeout: 40, noExtraEventsGrace: 10});
 
     describe(`delayed methods`, () => {
         let fs: FileSystem;

@@ -10,6 +10,7 @@ import {
 } from './api';
 import {MemoryFileSystem} from './memory-fs';
 import {InternalEventsEmitter, makeEventsEmitter} from './utils';
+import { FileSystemSync } from './browser';
 
 type PathInCache = {
     [prop: string]: boolean
@@ -58,7 +59,7 @@ function getTreesDiff(cached: FileSystemNodesMap, real: FileSystemNodesMap): Tre
     return diff;
 }
 
-export class CacheFileSystem implements FileSystem {
+export class CacheFileSystem implements FileSystemSync {
     public readonly events: InternalEventsEmitter = makeEventsEmitter();
 
     public baseUrl: string;
@@ -66,7 +67,7 @@ export class CacheFileSystem implements FileSystem {
     private isTreeCached: boolean = false;
     private pathsInCache: PathInCache = {};
 
-    constructor(private fs: FileSystem, private shouldRescanOnError: boolean = true) {
+    constructor(private fs: FileSystem | FileSystemSync, private shouldRescanOnError: boolean = true) {
         this.baseUrl = fs.baseUrl;
         this.cache = new MemoryFileSystem();
 
@@ -129,6 +130,15 @@ export class CacheFileSystem implements FileSystem {
         this.cache.saveFileSync(fullPath, newContent);
         this.pathsInCache[fullPath] = true;
     }
+    saveFileSync(fullPath:string, newContent:string): void {
+        console.log('saving file')
+        this.cache.saveFileSync(fullPath, newContent);
+        console.log('saved file')
+        this.fs.saveFile(fullPath, newContent).then(()=>{},()=>{
+            //TODO : revert changes if rejected 
+        });
+        this.pathsInCache[fullPath] = true;
+    }
 
     async deleteFile(fullPath:string): Promise<void> {
         await this.fs.deleteFile(fullPath);
@@ -144,6 +154,12 @@ export class CacheFileSystem implements FileSystem {
         await this.fs.ensureDirectory(fullPath);
         this.cache.ensureDirectorySync(fullPath);
     }
+    ensureDirectorySync(fullPath:string): void {
+        this.fs.ensureDirectory(fullPath).then(()=>{},()=>{
+            //TODO: revert changes if rejected
+        });
+        this.cache.ensureDirectorySync(fullPath);
+    }
 
     async loadTextFile(fullPath: string): Promise<string> {
         if (this.pathsInCache[fullPath]) {
@@ -152,6 +168,10 @@ export class CacheFileSystem implements FileSystem {
 
         const file = await this.fs.loadTextFile(fullPath);
         this.cache.saveFileSync(fullPath, file);
+        return this.cache.loadTextFileSync(fullPath);
+    }
+
+    loadTextFileSync(fullPath: string): string {
         return this.cache.loadTextFileSync(fullPath);
     }
 

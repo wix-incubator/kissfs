@@ -1,10 +1,9 @@
 import {
-    FileSystem,
     Directory,
     File,
     pathSeparator,
     isDir,
-    isFile, ShallowDirectory
+    isFile, ShallowDirectory, FileSystemSync
 } from "./api";
 
 import {
@@ -16,7 +15,7 @@ import {
 
 let id = 0;
 
-export class MemoryFileSystem implements FileSystem {
+export class MemoryFileSystem implements FileSystemSync {
     public readonly events: InternalEventsEmitter = makeEventsEmitter();
     private readonly root = new Directory('', '');
     private isIgnored: (path: string) => boolean = () => false;

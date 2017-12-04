@@ -126,4 +126,12 @@ export interface FileSystem {
     ensureDirectory(fullPath:string): Promise<void>;
     readonly events:EventEmitter;
     readonly baseUrl: string;
+    
+}
+
+
+export interface FileSystemSync extends FileSystem {
+    loadTextFileSync(fullPath:string):string;
+    saveFileSync(fullPath:string, newContent:string): void;
+    ensureDirectorySync(fullPath:string): void;
 }
