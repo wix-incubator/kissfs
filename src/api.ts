@@ -86,51 +86,6 @@ export function isDisposable(fs: any): fs is Disposable {
 
 export type ListenerFn<T> = (event: T) => any;
 
-//
-// export interface EventAspect<S, O> {
-//     listeners(event: S, exists: boolean): Array<ListenerFn<O>> | boolean;
-//
-//     listeners(event: S): Array<ListenerFn<O>>;
-//
-//     on(event: S, fn: ListenerFn<O>, context?: any): this;
-//
-//     addListener(event: S, fn: ListenerFn<O>, context?: any): this;
-//
-//     once(event: S, fn: ListenerFn<O>, context?: any): this;
-//
-//     removeListener(event: S, fn?: ListenerFn<O>, context?: any, once?: boolean): this;
-//
-//     removeAllListeners(event: S): this;
-//
-//     off(event: S, fn?: ListenerFn<O>, context?: any, once?: boolean): this;
-// }
-//
-// export type FileSystemEventName =
-//     'unexpectedError'
-//     | 'fileCreated'
-//     | 'fileChanged'
-//     | 'fileDeleted'
-//     | 'directoryCreated'
-//     | 'directoryDeleted';
-// export type FileSystemEventHandler =
-//     UnexpectedErrorEvent
-//     | FileCreatedEvent
-//     | FileChangedEvent
-//     | FileDeletedEvent
-//     | DirectoryCreatedEvent
-//     | DirectoryDeletedEvent;
-//
-//
-// export type EventEmitter =
-//     EventAspect<'unexpectedError', UnexpectedErrorEvent> &
-//     EventAspect<'fileCreated', FileCreatedEvent> &
-//     EventAspect<'fileChanged', FileChangedEvent> &
-//     EventAspect<'fileDeleted', FileDeletedEvent> &
-//     EventAspect<'directoryCreated', DirectoryCreatedEvent> &
-//     EventAspect<'directoryDeleted', DirectoryDeletedEvent> &
-//     EventAspect<FileSystemEventName, FileSystemEventHandler> &
-//     { eventNames(): Array<FileSystemEventName> };
-
 export type Events = {
     unexpectedError : UnexpectedErrorEvent;
     fileCreated : FileCreatedEvent;
