@@ -127,3 +127,10 @@ export interface FileSystem {
     readonly events:EventEmitter;
     readonly baseUrl: string;
 }
+
+
+export interface FileSystemReadSync extends FileSystem {
+    loadTextFileSync(fullPath:string):string;
+    loadDirectoryTreeSync(fullPath?:string): Directory;
+    loadDirectoryChildrenSync(fullPath:string): Array<File | ShallowDirectory>;
+}

@@ -10,6 +10,7 @@ import {
 } from './api';
 import {MemoryFileSystem} from './memory-fs';
 import {InternalEventsEmitter, makeEventsEmitter} from './utils';
+import { FileSystemReadSync } from './browser';
 
 type PathInCache = {
     [prop: string]: boolean
@@ -58,7 +59,7 @@ function getTreesDiff(cached: FileSystemNodesMap, real: FileSystemNodesMap): Tre
     return diff;
 }
 
-export class CacheFileSystem implements FileSystem {
+export class CacheFileSystem implements FileSystemReadSync, FileSystem {
     public readonly events: InternalEventsEmitter = makeEventsEmitter();
 
     public baseUrl: string;
@@ -66,7 +67,7 @@ export class CacheFileSystem implements FileSystem {
     private isTreeCached: boolean = false;
     private pathsInCache: PathInCache = {};
 
-    constructor(private fs: FileSystem, private shouldRescanOnError: boolean = true) {
+    constructor(private fs: FileSystem , private shouldRescanOnError: boolean = true) {
         this.baseUrl = fs.baseUrl;
         this.cache = new MemoryFileSystem();
 
@@ -155,6 +156,11 @@ export class CacheFileSystem implements FileSystem {
         return this.cache.loadTextFileSync(fullPath);
     }
 
+    loadTextFileSync(fullPath: string): string {
+        return this.cache.loadTextFileSync(fullPath);
+    }
+
+
     async loadDirectoryTree(fullPath?:string): Promise<Directory> {
         if (this.isTreeCached) {
             return this.cache.loadDirectoryTreeSync(fullPath);
@@ -165,6 +171,11 @@ export class CacheFileSystem implements FileSystem {
         return this.cache.loadDirectoryTreeSync(fullPath);
     }
 
+    loadDirectoryTreeSync(fullPath:string): Directory {
+        return this.cache.loadDirectoryTreeSync(fullPath);
+    }
+
+
     async loadDirectoryChildren(fullPath:string): Promise<(File | ShallowDirectory)[]> {
         if (this.isTreeCached) {
             return this.cache.loadDirectoryChildrenSync(fullPath);
@@ -174,6 +185,11 @@ export class CacheFileSystem implements FileSystem {
         this.isTreeCached = true;
         return this.cache.loadDirectoryChildrenSync(fullPath);
     }
+
+    loadDirectoryChildrenSync(fullPath:string):Array<File | ShallowDirectory>{
+        return this.cache.loadDirectoryChildrenSync(fullPath);
+    }
+
 
     dispose() {
         if (isDisposable(this.fs)) this.fs.dispose();
