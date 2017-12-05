@@ -6,7 +6,15 @@ import {SlowFs} from '../test-kit/drivers/slow-fs';
 
 import {CacheFileSystem, FileSystem, fileSystemEventNames, MemoryFileSystem} from '../src/universal';
 
-import {assertFileSystemContract, content, dirName, fileName, ignoredDir, ignoredFile} from './implementation-suite';
+import {
+    assertFileSystemContract,
+    assertFileSystemSyncContract,
+    ignoredDir,
+    ignoredFile,
+    fileName,
+    dirName,
+    content
+} from './implementation-suite';
 
 describe(`the cache file system implementation`, () => {
     const eventMatcherOptions: EventsMatcher.Options = {retries: 15, interval: 2, timeout: 40, noExtraEventsGrace: 10};
@@ -15,6 +23,11 @@ describe(`the cache file system implementation`, () => {
         async () => new CacheFileSystem(new MemoryFileSystem(undefined, [ignoredDir, ignoredFile])),
         eventMatcherOptions
     );
+
+    assertFileSystemSyncContract(
+        async () => new CacheFileSystem(new MemoryFileSystem(undefined, [ignoredDir, ignoredFile])),
+        eventMatcherOptions
+    )
 
     describe(`using slow FileSystem`, () => {
         const timeout = 200;

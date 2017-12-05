@@ -136,3 +136,10 @@ export interface FileSystem {
 
     ensureDirectory(fullPath: string): Promise<void>;
 }
+
+
+export interface FileSystemReadSync extends FileSystem {
+    loadTextFileSync(fullPath:string):string;
+    loadDirectoryTreeSync(fullPath?:string): Directory;
+    loadDirectoryChildrenSync(fullPath:string): Array<File | ShallowDirectory>;
+}
