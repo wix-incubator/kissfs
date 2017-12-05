@@ -126,11 +126,10 @@ export interface FileSystem {
     ensureDirectory(fullPath:string): Promise<void>;
     readonly events:EventEmitter;
     readonly baseUrl: string;
-    
 }
 
 
-export interface FileSystemSync extends FileSystem {
+export interface FileSystemReadSync extends FileSystem {
     loadTextFileSync(fullPath:string):string;
     loadDirectoryTreeSync(fullPath?:string): Directory;
     loadDirectoryChildrenSync(fullPath:string): Array<File | ShallowDirectory>;

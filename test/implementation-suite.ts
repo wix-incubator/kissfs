@@ -4,7 +4,7 @@ import {expect} from "chai";
 import {FileSystem, fileSystemEventNames, pathSeparator} from '../src/universal';
 import {EventsMatcher} from '../test-kit/drivers/events-matcher';
 import {EventEmitter} from 'eventemitter3';
-import { FileSystemSync } from '../src/api';
+import { FileSystemReadSync } from '../src/api';
 
 
 export const dirName = 'foo';
@@ -268,8 +268,8 @@ export function assertFileSystemContract(fsProvider: () => Promise<FileSystem>, 
     });
 }
 
-export function assertFileSystemSyncContract(fsProvider: () => Promise<FileSystemSync>, options:EventsMatcher.Options) {
-    let fs: FileSystemSync;
+export function assertFileSystemSyncContract(fsProvider: () => Promise<FileSystemReadSync>, options:EventsMatcher.Options) {
+    let fs: FileSystemReadSync;
     let matcher: EventsMatcher;
     beforeEach(() => {
         matcher = new EventsMatcher(options);
@@ -281,7 +281,7 @@ export function assertFileSystemSyncContract(fsProvider: () => Promise<FileSyste
     });
 
     describe(`filesystem sync contract`, () => {
-        let fs: FileSystemSync;
+        let fs: FileSystemReadSync;
         let matcher: EventsMatcher;
         beforeEach(() => {
             matcher = new EventsMatcher(options);
@@ -351,4 +351,3 @@ export function assertFileSystemSyncContract(fsProvider: () => Promise<FileSyste
         });
     });
 }
-    

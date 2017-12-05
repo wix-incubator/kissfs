@@ -10,7 +10,7 @@ import {
 } from './api';
 import {MemoryFileSystem} from './memory-fs';
 import {InternalEventsEmitter, makeEventsEmitter} from './utils';
-import { FileSystemSync } from './browser';
+import { FileSystemReadSync } from './browser';
 
 type PathInCache = {
     [prop: string]: boolean
@@ -59,7 +59,7 @@ function getTreesDiff(cached: FileSystemNodesMap, real: FileSystemNodesMap): Tre
     return diff;
 }
 
-export class CacheFileSystem implements FileSystemSync {
+export class CacheFileSystem implements FileSystemReadSync, FileSystem {
     public readonly events: InternalEventsEmitter = makeEventsEmitter();
 
     public baseUrl: string;
@@ -67,7 +67,7 @@ export class CacheFileSystem implements FileSystemSync {
     private isTreeCached: boolean = false;
     private pathsInCache: PathInCache = {};
 
-    constructor(private fs: FileSystem | FileSystemSync, private shouldRescanOnError: boolean = true) {
+    constructor(private fs: FileSystem , private shouldRescanOnError: boolean = true) {
         this.baseUrl = fs.baseUrl;
         this.cache = new MemoryFileSystem();
 
