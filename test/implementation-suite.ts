@@ -1,8 +1,7 @@
 import {expect} from "chai";
 import { fileSystemEventNames, pathSeparator} from '../src/universal';
 import {EventsMatcher} from '../test-kit/drivers/events-matcher';
-import {EventEmitter} from 'eventemitter3';
-import { FileSystemSync, Directory, ShallowDirectory, File } from '../src/api';
+import { FileSystemSync, Directory, ShallowDirectory, File, EventEmitter } from '../src/api';
 import {  Thenable } from 'when';
 import { Error } from 'autobahn';
 
@@ -80,17 +79,17 @@ export class SyncAdaptor implements SuiteTestedApi<'sync'>{
 
 function expectRes(actual:any, expected:any,isAsync:IsAsync){
     if(isAsync==='sync'){
-        expect(actual).to.equal(expected);
+        return expect(actual).to.equal(expected);
     }else{
-        expect(actual).to.become(expected);
+        return expect(actual).to.become(expected);
     }
 }
 
-function expectReject(call:Function,rejectedWith:typeof Error,isAsync:IsAsync){
+function expectReject<isAsync extends IsAsync>(call:Function,isAsync:isAsync):SyncAsyncValueRes<any>[isAsync]{
     if(isAsync==='sync'){
-        expect(call).to.throw(rejectedWith);
+        return expect(call).to.throw();
     }else{
-        expect(call).to.be.rejectedWith(rejectedWith);
+        return expect(call()).to.be.rejected;
     }
 }
 
@@ -124,7 +123,7 @@ export function assertFileSystemContract<isAsync extends IsAsync>(fsProvider: ()
                 .then(newFs => {
                     fs = newFs;
                     isAsync = getIsAsync(fs) as isAsync;
-                    matcher.track(fs.events as any as EventEmitter, ...fileSystemEventNames);
+                    matcher.track(fs.events as any, ...fileSystemEventNames);
                 });
         });
 
@@ -133,7 +132,7 @@ export function assertFileSystemContract<isAsync extends IsAsync>(fsProvider: ()
         });
 
         it(`loading a non-existing file - fails`, function() {
-            return expectReject(()=>fs.loadTextFile(fileName),Error,isAsync)
+            return expectReject(()=>fs.loadTextFile(fileName),isAsync)
         });
 
         it(`loading a directory as a file - fails`, function() {
@@ -141,13 +140,13 @@ export function assertFileSystemContract<isAsync extends IsAsync>(fsProvider: ()
             .then(() => {
                 return matcher.expect([{type: 'directoryCreated', fullPath:dirName}])
             })
-            .then(() => expect(fs.loadTextFile(dirName)).to.be.rejectedWith(Error))
+            .then(() => expectReject(()=>fs.loadTextFile(dirName),isAsync))
             .then(() => matcher.expect([]));
         });
 
         it(`saving an illegal file name - fails`, function() {
             return PromiseLike<isAsync,void>(()=>{
-                expectReject(()=>fs.saveFile('', content),Error,isAsync)
+                return expectReject(()=>fs.saveFile('', content),isAsync)
             },isAsync)
             .then(() => matcher.expect([]));
         });
@@ -224,7 +223,7 @@ export function assertFileSystemContract<isAsync extends IsAsync>(fsProvider: ()
         });
 
         it(`deleting root directory - fails`, function() {
-            return PromiseLike<isAsync, void>(()=>expectReject(()=>fs.deleteDirectory(''),Error,isAsync),isAsync)
+            return PromiseLike<isAsync, void>(()=>expectReject(()=>fs.deleteDirectory(''),isAsync),isAsync)
                 .then(() => matcher.expect([]));
         });
 
@@ -323,16 +322,16 @@ export function assertFileSystemContract<isAsync extends IsAsync>(fsProvider: ()
         });
 
         it(`saving ignored file - fails`, function() {
-            return expectReject(()=>fs.saveFile(ignoredFile, 'foo'),Error,isAsync);
+            return expectReject(()=>fs.saveFile(ignoredFile, 'foo'),isAsync);
         });
 
         it(`saving ignored dir - fails`, function() {
-            return expectReject(()=>fs.ensureDirectory(ignoredDir),Error,isAsync);
+            return expectReject(()=>fs.ensureDirectory(ignoredDir),isAsync);
         });
 
         it(`loading existed ignored file - fails`, function() {
             return PromiseLike<isAsync, void>(()=>fs.ensureDirectory(dirName),isAsync)
-                .then(() => expectReject(()=>fs.loadTextFile(ignoredFile),Error,isAsync));
+                .then(() => expectReject(()=>fs.loadTextFile(ignoredFile),isAsync));
         });
 
         it(`loadDirectoryTree`, function() {
@@ -350,7 +349,7 @@ export function assertFileSystemContract<isAsync extends IsAsync>(fsProvider: ()
         });
 
         it(`loadDirectoryTree on an illegal sub-path`, function() {
-            return expectReject(()=>fs.loadDirectoryTree(fileName),Error,isAsync);
+            return expectReject(()=>fs.loadDirectoryTree(fileName),isAsync);
         });
 
         it(`loadDirectoryChildren`, function() {
@@ -367,7 +366,7 @@ export function assertFileSystemContract<isAsync extends IsAsync>(fsProvider: ()
         });
 
         it(`loadDirectoryChildren on an illegal sub-path`, function() {
-            return expectReject(()=>fs.loadDirectoryChildren(fileName),Error,isAsync);
+            return expectReject(()=>fs.loadDirectoryChildren(fileName),isAsync);
         });
     });
 

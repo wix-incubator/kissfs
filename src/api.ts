@@ -132,6 +132,6 @@ export interface FileSystem {
 
 export interface FileSystemSync extends FileSystem {
     loadTextFileSync(fullPath:string):string;
-    saveFileSync(fullPath:string, newContent:string): void;
-    ensureDirectorySync(fullPath:string): void;
+    loadDirectoryTreeSync(fullPath?:string): Directory;
+    loadDirectoryChildrenSync(fullPath:string): Array<File | ShallowDirectory[]>;
 }
