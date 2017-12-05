@@ -9,11 +9,11 @@ import {CacheFileSystem, FileSystem, fileSystemEventNames, MemoryFileSystem} fro
 import {
     assertFileSystemContract,
     assertFileSystemSyncContract,
-    ignoredDir,
-    ignoredFile,
-    fileName,
+    content,
     dirName,
-    content
+    fileName,
+    ignoredDir,
+    ignoredFile
 } from './implementation-suite';
 
 describe(`the cache file system implementation`, () => {

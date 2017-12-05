@@ -1,5 +1,5 @@
 import {Connection, Session} from 'autobahn';
-import {FileSystem, fileSystemEventNames, fileSystemAsyncMethods, isDisposable} from './api';
+import {FileSystem, fileSystemAsyncMethods, fileSystemEventNames, isDisposable} from './api';
 import {wampRealm, wampRealmPrefix} from './constants';
 
 const Router = require('wamp-server');

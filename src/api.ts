@@ -87,12 +87,12 @@ export function isDisposable(fs: any): fs is Disposable {
 export type ListenerFn<T> = (event: T) => any;
 
 export type Events = {
-    unexpectedError : UnexpectedErrorEvent;
-    fileCreated : FileCreatedEvent;
-    fileChanged : FileChangedEvent;
-    fileDeleted : FileDeletedEvent;
-    directoryCreated : DirectoryCreatedEvent;
-    directoryDeleted : DirectoryDeletedEvent;
+    unexpectedError: UnexpectedErrorEvent;
+    fileCreated: FileCreatedEvent;
+    fileChanged: FileChangedEvent;
+    fileDeleted: FileDeletedEvent;
+    directoryCreated: DirectoryCreatedEvent;
+    directoryDeleted: DirectoryDeletedEvent;
 
 }
 export const fileSystemEventNames: Array<keyof Events> = ['unexpectedError', 'fileCreated', 'fileChanged', 'fileDeleted', 'directoryCreated', 'directoryDeleted'];
@@ -114,6 +114,7 @@ export interface EventEmitter {
     removeAllListeners<S extends keyof Events>(event: S): this;
 
     off<S extends keyof Events>(event: S, fn?: ListenerFn<Events[S]>, context?: any, once?: boolean): this;
+
     eventNames(): Array<keyof Events>
 }
 
@@ -139,7 +140,9 @@ export interface FileSystem {
 
 
 export interface FileSystemReadSync extends FileSystem {
-    loadTextFileSync(fullPath:string):string;
-    loadDirectoryTreeSync(fullPath?:string): Directory;
-    loadDirectoryChildrenSync(fullPath:string): Array<File | ShallowDirectory>;
+    loadTextFileSync(fullPath: string): string;
+
+    loadDirectoryTreeSync(fullPath?: string): Directory;
+
+    loadDirectoryChildrenSync(fullPath: string): Array<File | ShallowDirectory>;
 }

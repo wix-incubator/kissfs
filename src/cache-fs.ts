@@ -11,7 +11,7 @@ import {
 } from './api';
 import {MemoryFileSystem} from './memory-fs';
 import {InternalEventsEmitter, makeEventsEmitter} from './utils';
-import { FileSystemReadSync } from './browser';
+import {FileSystemReadSync} from './browser';
 
 type PathInCache = {
     [prop: string]: boolean
@@ -71,9 +71,9 @@ export class CacheFileSystem implements FileSystemReadSync, FileSystem {
         this.shouldRescanOnError ?
             this.rescanOnError() :
             this.emit('unexpectedError', {stack});
-    }
+    };
 
-    constructor(private fs: FileSystem , private shouldRescanOnError: boolean = true) {
+    constructor(private fs: FileSystem, private shouldRescanOnError: boolean = true) {
         this.baseUrl = fs.baseUrl;
         this.cache = new MemoryFileSystem();
 
@@ -177,7 +177,7 @@ export class CacheFileSystem implements FileSystemReadSync, FileSystem {
         return this.cache.loadDirectoryTreeSync(fullPath);
     }
 
-    loadDirectoryTreeSync(fullPath:string): Directory {
+    loadDirectoryTreeSync(fullPath: string): Directory {
         return this.cache.loadDirectoryTreeSync(fullPath);
     }
 
@@ -192,7 +192,7 @@ export class CacheFileSystem implements FileSystemReadSync, FileSystem {
         return this.cache.loadDirectoryChildrenSync(fullPath);
     }
 
-    loadDirectoryChildrenSync(fullPath:string):Array<File | ShallowDirectory>{
+    loadDirectoryChildrenSync(fullPath: string): Array<File | ShallowDirectory> {
         return this.cache.loadDirectoryChildrenSync(fullPath);
     }
 

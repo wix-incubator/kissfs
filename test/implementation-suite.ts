@@ -1,10 +1,8 @@
-
-
 import {expect} from "chai";
-import {FileSystem, fileSystemEventNames, pathSeparator} from '../src/universal';
+import {FileSystem, fileSystemEventNames, pathSeparator} from '../src/api';
 import {EventsMatcher} from '../test-kit/drivers/events-matcher';
 import {EventEmitter} from 'eventemitter3';
-import { FileSystemReadSync } from '../src/api';
+import {FileSystemReadSync} from '../src/api';
 
 
 export const dirName = 'foo';
@@ -293,7 +291,7 @@ export function assertFileSystemContract(fsProvider: () => Promise<FileSystem>, 
     });
 }
 
-export function assertFileSystemSyncContract(fsProvider: () => Promise<FileSystemReadSync>, options:EventsMatcher.Options) {
+export function assertFileSystemSyncContract(fsProvider: () => Promise<FileSystemReadSync>, options: EventsMatcher.Options) {
     let fs: FileSystemReadSync;
     let matcher: EventsMatcher;
     beforeEach(() => {
@@ -317,62 +315,68 @@ export function assertFileSystemSyncContract(fsProvider: () => Promise<FileSyste
                 });
         });
 
-    
-        it(`loading a non-existing file - fails`, function() {
-            return expect(()=>fs.loadTextFileSync(fileName)).to.throw(Error);
+
+        it(`loading a non-existing file - fails`, function () {
+            return expect(() => fs.loadTextFileSync(fileName)).to.throw(Error);
         });
 
-        it(`loading a directory as a file - fails`, function() {
+        it(`loading a directory as a file - fails`, function () {
             return fs.ensureDirectory(dirName)
                 .then(() => {
-                    return matcher.expect([{type: 'directoryCreated', fullPath:dirName}])
+                    return matcher.expect([{type: 'directoryCreated', fullPath: dirName}])
                 })
-                .then(() => expect(()=>fs.loadTextFileSync(dirName)).to.throw(Error))
+                .then(() => expect(() => fs.loadTextFileSync(dirName)).to.throw(Error))
                 .then(() => matcher.expect([]));
         });
 
-        it(`loading existed ignored file - fails`, function() {
+        it(`loading existed ignored file - fails`, function () {
             return fs.ensureDirectory(dirName)
-                .then(() => expect(()=>fs.loadTextFileSync(ignoredFile)).to.throw(Error));
+                .then(() => expect(() => fs.loadTextFileSync(ignoredFile)).to.throw(Error));
         });
 
-        it(`loadDirectoryTreeSync`, function() {
-            const expected = {fullPath:``, name:'', type:'dir', children:[
-                {fullPath:`${dirName}`, name:dirName, type:'dir', children:[
-                    {fullPath:`${dirName}/_${dirName}`, name:`_${dirName}`, type:'dir', children:[
-                        {fullPath:`${dirName}/_${dirName}/${fileName}`, name:fileName, type:'file'}
-                    ]}]}]};
+        it(`loadDirectoryTreeSync`, function () {
+            const expected = {
+                fullPath: ``, name: '', type: 'dir', children: [
+                    {
+                        fullPath: `${dirName}`, name: dirName, type: 'dir', children: [
+                        {
+                            fullPath: `${dirName}/_${dirName}`, name: `_${dirName}`, type: 'dir', children: [
+                            {fullPath: `${dirName}/_${dirName}/${fileName}`, name: fileName, type: 'file'}
+                        ]
+                        }]
+                    }]
+            };
 
             return fs.saveFile(`${dirName}/_${dirName}/${fileName}`, content)
-            .then(() => {
-                expect(fs.loadDirectoryTreeSync()).to.eql(expected);
-                expect(fs.loadDirectoryTreeSync(dirName), `loadDirectoryTreeSync('${dirName}')`).to.eql(expected.children[0])
-                expect(fs.loadDirectoryTreeSync(`${dirName}/_${dirName}`), `loadDirectoryTreeSync('${dirName}/_${dirName}')`).to.eql(expected.children[0].children[0])
-            })
+                .then(() => {
+                    expect(fs.loadDirectoryTreeSync()).to.eql(expected);
+                    expect(fs.loadDirectoryTreeSync(dirName), `loadDirectoryTreeSync('${dirName}')`).to.eql(expected.children[0])
+                    expect(fs.loadDirectoryTreeSync(`${dirName}/_${dirName}`), `loadDirectoryTreeSync('${dirName}/_${dirName}')`).to.eql(expected.children[0].children[0])
+                })
 
         });
 
-        it(`loadDirectoryTreeSync on an illegal sub-path`, function() {
-            return expect(()=>fs.loadDirectoryTreeSync(fileName)).to.throw(Error);
+        it(`loadDirectoryTreeSync on an illegal sub-path`, function () {
+            return expect(() => fs.loadDirectoryTreeSync(fileName)).to.throw(Error);
         });
 
-        it(`loadDirectoryChildrenSync`, function() {
+        it(`loadDirectoryChildrenSync`, function () {
             return fs.saveFile(`${dirName}/_${dirName}/${fileName}`, content)
-                .then(()=> fs.saveFile(`${fileName}`, content))
+                .then(() => fs.saveFile(`${fileName}`, content))
                 .then(() => {
                     expect(fs.loadDirectoryChildrenSync('')).to.have.deep.members([
-                        {fullPath:`${dirName}`, name:dirName, type:'dir'},
-                        {fullPath:fileName, name:fileName, type:'file'}
+                        {fullPath: `${dirName}`, name: dirName, type: 'dir'},
+                        {fullPath: fileName, name: fileName, type: 'file'}
                     ]);
                     expect(fs.loadDirectoryChildrenSync(dirName), `loadDirectoryChildrenSync('${dirName}')`).to.have.deep.members(
-                        [{fullPath:`${dirName}/_${dirName}`, name:`_${dirName}`, type:'dir'}]);
+                        [{fullPath: `${dirName}/_${dirName}`, name: `_${dirName}`, type: 'dir'}]);
                     expect(fs.loadDirectoryChildrenSync(`${dirName}/_${dirName}`), `loadDirectoryChildrenSync('${dirName}/_${dirName}')`).to.have.deep.members(
-                            [{fullPath:`${dirName}/_${dirName}/${fileName}`, name:fileName, type:'file'}])
+                        [{fullPath: `${dirName}/_${dirName}/${fileName}`, name: fileName, type: 'file'}])
                 })
         });
 
-        it(`loadDirectoryChildrenSync on an illegal sub-path`, function() {
-            return expect(()=>fs.loadDirectoryChildrenSync(fileName)).to.throw(Error);
+        it(`loadDirectoryChildrenSync on an illegal sub-path`, function () {
+            return expect(() => fs.loadDirectoryChildrenSync(fileName)).to.throw(Error);
         });
     });
 }

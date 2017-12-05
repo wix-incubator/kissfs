@@ -1,4 +1,4 @@
-import {assertFileSystemContract,assertFileSystemSyncContract, ignoredDir, ignoredFile} from './implementation-suite'
+import {assertFileSystemContract, assertFileSystemSyncContract, ignoredDir, ignoredFile} from './implementation-suite'
 import {MemoryFileSystem} from "../src/universal";
 
 describe('the in memory implementation', function () {
