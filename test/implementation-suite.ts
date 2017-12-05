@@ -1,9 +1,10 @@
+
+
 import {expect} from "chai";
-import { fileSystemEventNames, pathSeparator} from '../src/universal';
+import {FileSystem, fileSystemEventNames, pathSeparator} from '../src/universal';
 import {EventsMatcher} from '../test-kit/drivers/events-matcher';
-import { FileSystemSync, Directory, ShallowDirectory, File, EventEmitter } from '../src/api';
-import {  Thenable } from 'when';
-import { Error } from 'autobahn';
+import {EventEmitter} from 'eventemitter3';
+import { FileSystemSync } from '../src/api';
 
 
 export const dirName = 'foo';
@@ -12,143 +13,39 @@ export const content = 'content';
 export const ignoredDir = 'ignored';
 export const ignoredFile = `${dirName}${pathSeparator}ignored.txt`;
 
-
-
-
-
-export type IsAsync = 'sync' | 'async';
-
-export type SyncAsyncValueRes<T> = {
-    'sync':T;
-    'async':Promise<T>;
-}
-export interface SuiteTestedApi<isAsync extends IsAsync>{
-    saveFile(fullPath:string, newContent:string): SyncAsyncValueRes<void>[isAsync];
-    deleteFile(fullPath:string):SyncAsyncValueRes<void>[isAsync];
-    deleteDirectory(fullPath:string, recursive?:boolean):SyncAsyncValueRes<void>[isAsync];
-    loadTextFile(fullPath:string): SyncAsyncValueRes<string>[isAsync];
-    loadDirectoryTree(fullPath?:string): SyncAsyncValueRes<Directory>[isAsync];
-    loadDirectoryChildren(fullPath:string): SyncAsyncValueRes<(File | ShallowDirectory)[]>[isAsync];
-    ensureDirectory(fullPath:string): SyncAsyncValueRes<void>[isAsync];
-    readonly events:EventEmitter;
-    readonly baseUrl: string;
-    readonly isSync ?: 'sync'
-}
-
-function getIsAsync(api:SuiteTestedApi<IsAsync>):IsAsync{
-    return api.isSync ? 'sync' : 'async'
-}
-
-export class SyncAdaptor implements SuiteTestedApi<'sync'>{
-    constructor(private fs:FileSystemSync){}
-    saveFile(fullPath:string, newContent:string){
-        return this.fs.saveFileSync(fullPath,newContent);
-    }
-    deleteFile(fullPath:string){
-        //TODO: change to deleteFileSync
-        this.fs.deleteFile(fullPath)
-    }
-    deleteDirectory(fullPath:string, recursive?:boolean){
-        //TODO: change to deleteDirectorySync
-        this.fs.deleteDirectory(fullPath, recursive);
-    }
-    loadTextFile(fullPath:string){
-        return this.fs.loadTextFileSync(fullPath);
-    }
-    loadDirectoryTree(fullPath?:string){
-        //TODO: change to loadDirectoryTreeSync
-        return new Directory('dummy',fullPath || '')
-        // return this.fs.loadDirectoryTreeSync(fullPath);
-    }
-    loadDirectoryChildren(fullPath:string){
-        //TODO: change to loadDirectoryTreeSync
-        fullPath;
-        return []
-        // return this.fs.loadDirectoryChildren(fullPath);
-    }
-    ensureDirectory(fullPath:string){
-        return this.fs.ensureDirectorySync(fullPath);
-    }
-    get events():EventEmitter{
-        return this.fs.events as any as EventEmitter;
-    };
-    get baseUrl(): string{
-        return this.fs.baseUrl;
-    }
-}
-
-function expectRes(actual:any, expected:any,isAsync:IsAsync){
-    if(isAsync==='sync'){
-        return expect(actual).to.equal(expected);
-    }else{
-        return expect(actual).to.become(expected);
-    }
-}
-
-function expectReject<isAsync extends IsAsync>(call:Function,isAsync:isAsync):SyncAsyncValueRes<any>[isAsync]{
-    if(isAsync==='sync'){
-        return expect(call).to.throw();
-    }else{
-        return expect(call()).to.be.rejected;
-    }
-}
-
-function PromiseLike<isPromise extends IsAsync,Res>(call:()=>SyncAsyncValueRes<Res>[isPromise],isAsync:isPromise):Thenable<Res>{
-    if(isAsync==='sync'){
-        let res:Res
-        return {
-            then:( resolve:(res:Res)=>any, reject:(rejectedWith:any)=>any)=>{
-                try{
-                   res = call() as Res; 
-                }catch(error){
-                   reject(error);
-                }
-                return PromiseLike(()=>resolve(res),isAsync);
-            }
-            
-        }
-    }else{
-        return call() as Promise<Res>;
-    }
-}
-
-export function assertFileSystemContract<isAsync extends IsAsync>(fsProvider: () => Promise<SuiteTestedApi<isAsync>>, options:EventsMatcher.Options) {
+export function assertFileSystemContract(fsProvider: () => Promise<FileSystem>, options:EventsMatcher.Options) {
     describe(`filesystem contract`, () => {
-        let fs: SuiteTestedApi<isAsync>;
+        let fs: FileSystem;
         let matcher: EventsMatcher;
-        let isAsync:isAsync;
         beforeEach(() => {
             matcher = new EventsMatcher(options);
             return fsProvider()
                 .then(newFs => {
                     fs = newFs;
-                    isAsync = getIsAsync(fs) as isAsync;
-                    matcher.track(fs.events as any, ...fileSystemEventNames);
+                    matcher.track(fs.events as any as EventEmitter, ...fileSystemEventNames);
                 });
         });
 
         it(`initially empty`, function() {
-            return expectRes(fs.loadDirectoryTree(),{type:'dir', name:'', fullPath:'', children:[]},isAsync);
+            return expect(fs.loadDirectoryTree()).to.become({type:'dir', name:'', fullPath:'', children:[]});
         });
 
         it(`loading a non-existing file - fails`, function() {
-            return expectReject(()=>fs.loadTextFile(fileName),isAsync)
+            return expect(fs.loadTextFile(fileName)).to.be.rejectedWith(Error);
         });
 
         it(`loading a directory as a file - fails`, function() {
-            return PromiseLike<isAsync, void>(()=>fs.ensureDirectory(dirName),isAsync)
-            .then(() => {
-                return matcher.expect([{type: 'directoryCreated', fullPath:dirName}])
-            })
-            .then(() => expectReject(()=>fs.loadTextFile(dirName),isAsync))
-            .then(() => matcher.expect([]));
+            return fs.ensureDirectory(dirName)
+                .then(() => {
+                    return matcher.expect([{type: 'directoryCreated', fullPath:dirName}])
+                })
+                .then(() => expect(fs.loadTextFile(dirName)).to.be.rejectedWith(Error))
+                .then(() => matcher.expect([]));
         });
 
         it(`saving an illegal file name - fails`, function() {
-            return PromiseLike<isAsync,void>(()=>{
-                return expectReject(()=>fs.saveFile('', content),isAsync)
-            },isAsync)
-            .then(() => matcher.expect([]));
+            return expect(fs.saveFile('', content)).to.be.rejectedWith(Error)
+                .then(() => matcher.expect([]));
         });
 
         it(`ensuring existence of directory`, function() {
@@ -156,7 +53,7 @@ export function assertFileSystemContract<isAsync extends IsAsync>(fsProvider: ()
                 type:'dir', name:'', fullPath:'', children:[
                     {type:'dir', name:dirName, fullPath:dirName, children:[]}
                 ]};
-            return PromiseLike<isAsync, void>(()=>fs.ensureDirectory(dirName),isAsync)
+            return fs.ensureDirectory(dirName)
                 .then(() => matcher.expect([{type: 'directoryCreated', fullPath:dirName}]))
                 .then(() => expect(fs.loadDirectoryTree()).to.become(expectedStructure))
                 .then(() => fs.ensureDirectory(dirName)) //2nd time does nothing
@@ -165,7 +62,7 @@ export function assertFileSystemContract<isAsync extends IsAsync>(fsProvider: ()
         });
 
         it(`saving a file over a directory - fails`, function() {
-            return PromiseLike<isAsync, void>(()=>fs.ensureDirectory(dirName),isAsync)
+            return fs.ensureDirectory(dirName)
                 .then(() => matcher.expect([{type: 'directoryCreated', fullPath:dirName}]))
                 .then(() => expect(fs.saveFile(dirName, content)).to.be.rejectedWith(Error))
                 .then(() => expect(fs.loadDirectoryTree()).to.become({
@@ -177,7 +74,7 @@ export function assertFileSystemContract<isAsync extends IsAsync>(fsProvider: ()
 
         it(`saving a file over a file in its path - fails`, function() {
             const fileNameAsDir = dirName;
-            return PromiseLike<isAsync, void>(()=>fs.saveFile(fileNameAsDir, content),isAsync)
+            return fs.saveFile(fileNameAsDir, content)
                 .then(() => matcher.expect([{type: 'fileCreated', fullPath:fileNameAsDir, newContent:content}]))
                 .then(() => expect(fs.saveFile(`${fileNameAsDir}/${fileName}`, '_${content}')).to.be.rejectedWith(Error))
                 .then(() => expect(fs.loadDirectoryTree()).to.become({
@@ -188,7 +85,7 @@ export function assertFileSystemContract<isAsync extends IsAsync>(fsProvider: ()
         });
 
         it(`saving a new file (and a new directory to hold it)`, function() {
-            return PromiseLike<isAsync, void>(()=>fs.saveFile(`${dirName}/${fileName}`, content),isAsync)
+            return fs.saveFile(`${dirName}/${fileName}`, content)
                 .then(() => matcher.expect([{type: 'directoryCreated', fullPath:dirName}, {type: 'fileCreated', fullPath:`${dirName}/${fileName}`, newContent:content}]))
                 .then(() => expect(fs.loadDirectoryTree()).to.become({
                     type:'dir', name:'', fullPath:'', children:[
@@ -199,7 +96,7 @@ export function assertFileSystemContract<isAsync extends IsAsync>(fsProvider: ()
 
         it(`saving a file with different content`, function() {
             const newContent = `_${content}`;
-            return PromiseLike<isAsync, void>(()=>fs.saveFile(fileName, content),isAsync)
+            return fs.saveFile(fileName, content)
                 .then(() => matcher.expect([{type: 'fileCreated', fullPath:fileName, newContent:content}]))
                 .then(() => expect(fs.loadTextFile(fileName)).to.become(content))
                 .then(() => fs.saveFile(fileName, newContent))
@@ -214,7 +111,7 @@ export function assertFileSystemContract<isAsync extends IsAsync>(fsProvider: ()
                     {name: fileName, fullPath: fileName, type: 'file'}
                 ]};
 
-            return PromiseLike<isAsync, void>(()=>fs.saveFile(fileName, content),isAsync)
+            return fs.saveFile(fileName, content)
                 .then(() => matcher.expect([{type: 'fileCreated', fullPath:fileName, newContent:content}]))
                 .then(() => expect(fs.loadTextFile(fileName)).to.become(content))
                 .then(() => fs.saveFile(fileName, content)) // may or may not trigger an event
@@ -223,12 +120,12 @@ export function assertFileSystemContract<isAsync extends IsAsync>(fsProvider: ()
         });
 
         it(`deleting root directory - fails`, function() {
-            return PromiseLike<isAsync, void>(()=>expectReject(()=>fs.deleteDirectory(''),isAsync),isAsync)
+            return expect(fs.deleteDirectory('')).to.be.rejectedWith(Error)
                 .then(() => matcher.expect([]));
         });
 
         it(`deleting a directory`, function() {
-            return PromiseLike<isAsync, void>(()=>fs.ensureDirectory(`${dirName}/_${dirName}`),isAsync)
+            return fs.ensureDirectory(`${dirName}/_${dirName}`)
                 .then(() => matcher.expect([
                     {type: 'directoryCreated', fullPath:dirName},
                     {type: 'directoryCreated', fullPath:`${dirName}/_${dirName}`}]))
@@ -240,20 +137,20 @@ export function assertFileSystemContract<isAsync extends IsAsync>(fsProvider: ()
         });
 
         it(`deleting non existing directory succeeds`, function() {
-            return PromiseLike<isAsync, void>(()=>fs.deleteDirectory(`${dirName}/_${dirName}`),isAsync)
+            return fs.deleteDirectory(`${dirName}/_${dirName}`)
                 .then(() => expect(fs.loadDirectoryTree()).to.eventually.have.property('children').eql([]))
                 .then(() => matcher.expect([]));
         });
 
         it(`deleting directory which is actually a file - fails`, function() {
-            return PromiseLike<isAsync, void>(()=>fs.saveFile(fileName, content),isAsync)
+            return fs.saveFile(fileName, content)
                 .then(() => matcher.expect([{type: 'fileCreated', fullPath:fileName, newContent:content}]))
                 .then(() => expect(fs.deleteDirectory(fileName)).to.be.rejectedWith(Error))
                 .then(() => matcher.expect([]));
         });
 
         it(`deleting non-empty directory without recursive flag - fails`, function() {
-            return PromiseLike<isAsync, void>(()=>fs.saveFile(`${dirName}/_${dirName}/${fileName}`, content),isAsync)
+            return fs.saveFile(`${dirName}/_${dirName}/${fileName}`, content)
                 .then(() => matcher.expect([
                     {type: 'directoryCreated', fullPath:dirName},
                     {type: 'directoryCreated', fullPath:`${dirName}/_${dirName}`},
@@ -264,7 +161,7 @@ export function assertFileSystemContract<isAsync extends IsAsync>(fsProvider: ()
 
         it(`deleting non-empty directory with recursive flag`, function() {
             const filePath = `${dirName}/_${dirName}/${fileName}`;
-            return PromiseLike<isAsync, void>(()=>fs.saveFile(filePath, content),isAsync)
+            return fs.saveFile(filePath, content)
                 .then(() => matcher.expect([
                     {type: 'directoryCreated', fullPath:dirName},
                     {type: 'directoryCreated', fullPath:`${dirName}/_${dirName}`},
@@ -280,14 +177,14 @@ export function assertFileSystemContract<isAsync extends IsAsync>(fsProvider: ()
 
         it(`deleting file which is actually a directory - fails`, function() {
             const dirNameAsFileName = fileName;
-            return PromiseLike<isAsync, void>(()=>fs.ensureDirectory(dirNameAsFileName),isAsync)
+            return fs.ensureDirectory(dirNameAsFileName)
                 .then(() => matcher.expect([{type: 'directoryCreated', fullPath:dirNameAsFileName}]))
                 .then(() => expect(fs.deleteFile(dirNameAsFileName)).to.be.rejectedWith(Error))
                 .then(() => matcher.expect([]));
         });
 
         it(`deleting only one file`, function() {
-            return PromiseLike<isAsync, void>(()=>fs.saveFile(fileName, content),isAsync)
+            return fs.saveFile(fileName, content)
                 .then(() => matcher.expect([{type: 'fileCreated', fullPath:fileName, newContent:content}]))
                 .then(() => fs.saveFile(`_${fileName}`, `_${content}`))
                 .then(() => matcher.expect([{type: 'fileCreated', fullPath:`_${fileName}`, newContent:`_${content}`}]))
@@ -298,40 +195,40 @@ export function assertFileSystemContract<isAsync extends IsAsync>(fsProvider: ()
         });
 
         it(`deleting non existing file succeeds`, function() {
-            return PromiseLike<isAsync, void>(()=>fs.deleteFile(fileName),isAsync)
+            return fs.deleteFile(fileName)
                 .then(() => expect(fs.loadDirectoryTree()).to.eventually.have.property('children').eql([]))
                 .then(() => matcher.expect([]));
         });
 
         it(`deleting non existing file (deep path) succeeds`, function() {
-            return PromiseLike<isAsync, void>(()=>fs.deleteFile(`${dirName}/${fileName}`),isAsync)
+            return fs.deleteFile(`${dirName}/${fileName}`)
                 .then(() => expect(fs.loadDirectoryTree()).to.eventually.have.property('children').eql([]))
                 .then(() => matcher.expect([]));
         });
 
         it(`deleting ignored file succeeds`, function() {
-            return PromiseLike<isAsync, void>(()=>fs.deleteFile(ignoredFile),isAsync)
+            return fs.deleteFile(ignoredFile)
                 .then(() => matcher.expect([]))
                 .then(() => expect(fs.loadDirectoryTree()).to.eventually.have.property('children').eql([]));
         });
 
         it(`deleting ignored directory succeeds`, function() {
-            return PromiseLike<isAsync, void>(()=>fs.deleteDirectory(ignoredDir),isAsync)
+            return fs.deleteDirectory(ignoredDir)
                 .then(() => matcher.expect([]))
                 .then(() => expect(fs.loadDirectoryTree()).to.eventually.have.property('children').eql([]));
         });
 
         it(`saving ignored file - fails`, function() {
-            return expectReject(()=>fs.saveFile(ignoredFile, 'foo'),isAsync);
+            return expect(fs.saveFile(ignoredFile, 'foo')).to.be.rejectedWith(Error);
         });
 
         it(`saving ignored dir - fails`, function() {
-            return expectReject(()=>fs.ensureDirectory(ignoredDir),isAsync);
+            return expect(fs.ensureDirectory(ignoredDir)).to.be.rejectedWith(Error);
         });
 
         it(`loading existed ignored file - fails`, function() {
-            return PromiseLike<isAsync, void>(()=>fs.ensureDirectory(dirName),isAsync)
-                .then(() => expectReject(()=>fs.loadTextFile(ignoredFile),isAsync));
+            return fs.ensureDirectory(dirName)
+                .then(() => expect(fs.loadTextFile(ignoredFile)).to.be.rejectedWith(Error));
         });
 
         it(`loadDirectoryTree`, function() {
@@ -341,7 +238,7 @@ export function assertFileSystemContract<isAsync extends IsAsync>(fsProvider: ()
                         {fullPath:`${dirName}/_${dirName}/${fileName}`, name:fileName, type:'file'}
                     ]}]}]};
 
-            return  PromiseLike<isAsync, void>(()=>fs.saveFile(`${dirName}/_${dirName}/${fileName}`, content),isAsync)
+            return fs.saveFile(`${dirName}/_${dirName}/${fileName}`, content)
                 .then(() => expect(fs.loadDirectoryTree()).to.eventually.eql(expected))
                 .then(() => expect(fs.loadDirectoryTree(dirName), `loadDirectoryTree('${dirName}')`).to.eventually.eql(expected.children[0]))
                 .then(() => expect(fs.loadDirectoryTree(`${dirName}/_${dirName}`), `loadDirectoryTree('${dirName}/_${dirName}')`).to.eventually.eql(expected.children[0].children[0]))
@@ -349,11 +246,11 @@ export function assertFileSystemContract<isAsync extends IsAsync>(fsProvider: ()
         });
 
         it(`loadDirectoryTree on an illegal sub-path`, function() {
-            return expectReject(()=>fs.loadDirectoryTree(fileName),isAsync);
+            return expect(fs.loadDirectoryTree(fileName)).to.be.rejectedWith(Error);
         });
 
         it(`loadDirectoryChildren`, function() {
-            return PromiseLike<isAsync, void>(()=>fs.saveFile(`${dirName}/_${dirName}/${fileName}`, content),isAsync)
+            return fs.saveFile(`${dirName}/_${dirName}/${fileName}`, content)
                 .then(()=> fs.saveFile(`${fileName}`, content))
                 .then(() => expect(fs.loadDirectoryChildren('')).to.eventually.have.deep.members([
                     {fullPath:`${dirName}`, name:dirName, type:'dir'},
@@ -366,111 +263,92 @@ export function assertFileSystemContract<isAsync extends IsAsync>(fsProvider: ()
         });
 
         it(`loadDirectoryChildren on an illegal sub-path`, function() {
-            return expectReject(()=>fs.loadDirectoryChildren(fileName),isAsync);
+            return expect(fs.loadDirectoryChildren(fileName)).to.be.rejectedWith(Error);
         });
     });
+}
 
+export function assertFileSystemSyncContract(fsProvider: () => Promise<FileSystemSync>, options:EventsMatcher.Options) {
+    let fs: FileSystemSync;
+    let matcher: EventsMatcher;
+    beforeEach(() => {
+        matcher = new EventsMatcher(options);
+        return fsProvider()
+            .then(newFs => {
+                fs = newFs;
+                matcher.track(fs.events as any as EventEmitter, ...fileSystemEventNames);
+            });
+    });
+
+    describe(`filesystem sync contract`, () => {
+        let fs: FileSystemSync;
+        let matcher: EventsMatcher;
+        beforeEach(() => {
+            matcher = new EventsMatcher(options);
+            return fsProvider()
+                .then(newFs => {
+                    fs = newFs;
+                    matcher.track(fs.events as any as EventEmitter, ...fileSystemEventNames);
+                });
+        });
 
     
+        it(`loading a non-existing file - fails`, function() {
+            return expect(()=>fs.loadTextFileSync(fileName)).to.throw(Error);
+        });
+
+        it(`loading a directory as a file - fails`, function() {
+            return fs.ensureDirectory(dirName)
+                .then(() => {
+                    return matcher.expect([{type: 'directoryCreated', fullPath:dirName}])
+                })
+                .then(() => expect(()=>fs.loadTextFileSync(dirName)).to.throw(Error))
+                .then(() => matcher.expect([]));
+        });
+
+        it(`loading existed ignored file - fails`, function() {
+            return fs.ensureDirectory(dirName)
+                .then(() => expect(()=>fs.loadTextFileSync(ignoredFile)).to.throw(Error));
+        });
+
+        it(`loadDirectoryTreeSync`, function() {
+            const expected = {fullPath:``, name:'', type:'dir', children:[
+                {fullPath:`${dirName}`, name:dirName, type:'dir', children:[
+                    {fullPath:`${dirName}/_${dirName}`, name:`_${dirName}`, type:'dir', children:[
+                        {fullPath:`${dirName}/_${dirName}/${fileName}`, name:fileName, type:'file'}
+                    ]}]}]};
+
+            return fs.saveFile(`${dirName}/_${dirName}/${fileName}`, content)
+            .then(() => {
+                expect(fs.loadDirectoryTreeSync()).to.eql(expected);
+                expect(fs.loadDirectoryTreeSync(dirName), `loadDirectoryTreeSync('${dirName}')`).to.eql(expected.children[0])
+                expect(fs.loadDirectoryTreeSync(`${dirName}/_${dirName}`), `loadDirectoryTreeSync('${dirName}/_${dirName}')`).to.eql(expected.children[0].children[0])
+            })
+
+        });
+
+        it(`loadDirectoryTreeSync on an illegal sub-path`, function() {
+            return expect(()=>fs.loadDirectoryTreeSync(fileName)).to.throw(Error);
+        });
+
+        it(`loadDirectoryChildrenSync`, function() {
+            return fs.saveFile(`${dirName}/_${dirName}/${fileName}`, content)
+                .then(()=> fs.saveFile(`${fileName}`, content))
+                .then(() => {
+                    expect(fs.loadDirectoryChildrenSync('')).to.have.deep.members([
+                        {fullPath:`${dirName}`, name:dirName, type:'dir'},
+                        {fullPath:fileName, name:fileName, type:'file'}
+                    ]);
+                    expect(fs.loadDirectoryChildrenSync(dirName), `loadDirectoryChildrenSync('${dirName}')`).to.have.deep.members(
+                        [{fullPath:`${dirName}/_${dirName}`, name:`_${dirName}`, type:'dir'}]);
+                    expect(fs.loadDirectoryChildrenSync(`${dirName}/_${dirName}`), `loadDirectoryChildrenSync('${dirName}/_${dirName}')`).to.have.deep.members(
+                            [{fullPath:`${dirName}/_${dirName}/${fileName}`, name:fileName, type:'file'}])
+                })
+        });
+
+        it(`loadDirectoryChildrenSync on an illegal sub-path`, function() {
+            return expect(()=>fs.loadDirectoryChildrenSync(fileName)).to.throw(Error);
+        });
+    });
 }
-export function assertFileSystemSyncContract(fsProvider: () => Promise<FileSystemSync>, options:EventsMatcher.Options){
-    fsProvider
-    options
-    // describe.only("FileSystem sync operations",()=>{
-    //     let fs: FileSystemSync;
-    //     let matcher: EventsMatcher;
-    //     beforeEach(() => {
-    //         matcher = new EventsMatcher(options);
-    //         return fsProvider()
-    //         .then(newFs => {
-    //                 fs = newFs;
-    //                 matcher.track(fs.events as any as EventEmitter, ...fileSystemEventNames);
-    //         });
-    //     });
-            
-    //     it(`loading a non-existing file - throws an error`, function() {
-    //         return expect(()=>fs.loadTextFileSync(fileName)).to.be.throw(Error);
-    //     });
-
-    //     it(`loading a directory as a file - fails`, function() {
-    //         return fs.ensureDirectory(dirName)
-    //             .then(() => {
-    //                 return matcher.expect([{type: 'directoryCreated', fullPath:dirName}])
-    //             })
-    //             .then(() => expect(()=>fs.loadTextFileSync(dirName)).to.throw(Error))
-    //             .then(() => matcher.expect([]));
-    //     });
-
-    //     it(`saving an illegal file name - fails`, function() {
-    //         expect(()=>fs.saveFileSync('', content)).to.throw(Error)
-    //         matcher.expect([]);
-    //     });
-
-    //     it(`ensuring existence of directory`, function() {
-    //         const expectedStructure = {
-    //             type:'dir', name:'', fullPath:'', children:[
-    //                 {type:'dir', name:dirName, fullPath:dirName, children:[]}
-    //             ]};
-    //         fs.ensureDirectorySync(dirName)
-
-    //         matcher.expect([{type: 'directoryCreated', fullPath:dirName}])
-    //         .then(() => expect(fs.loadDirectoryTree()).to.become(expectedStructure))
-    //         .then(() => {
-    //             fs.ensureDirectorySync(dirName)
-    //             return expect(fs.loadDirectoryTree()).to.become(expectedStructure)
-    //         }) //2nd time does nothing
-    //         .then(() => matcher.expect([]))
-    //     });
-
-    //     it(`saving a file over a directory - fails`, function() {
-    //         fs.ensureDirectorySync(dirName)
-           
-    //         expect(()=> fs.saveFileSync(dirName, content)).to.throw(Error)
-    //         return expect(fs.loadDirectoryTree()).to.become({
-    //             type:'dir', name:'', fullPath:'', children:[
-    //             {type:'dir', name:dirName, fullPath:dirName, children:[]}
-    //         ]})
-    //     });
-
-
-    //     it(`saving a file over a file in its path - fails`, function() {
-    //         const fileNameAsDir = dirName;
-    //         fs.saveFileSync(fileNameAsDir, content)
-    //         matcher.expect([{type: 'fileCreated', fullPath:fileNameAsDir, newContent:content}]);
-
-    //         expect(()=>fs.saveFileSync(`${fileNameAsDir}/${fileName}`, '_${content}')).to.throw(Error);
-
-    //         return expect(fs.loadDirectoryTree()).to.become({
-    //                 type:'dir', name:'', fullPath:'', children:[
-    //                     {type:'file', name:fileNameAsDir, fullPath:fileNameAsDir}
-    //                 ]})
-    //             .then(() => matcher.expect([]));
-    //     });
-
-    //     it(`saving a new file (and a new directory to hold it)`, function() {
-    //         fs.saveFileSync(`${dirName}/${fileName}`, content)
-
-    //         matcher.expect([{type: 'directoryCreated', fullPath:dirName}, {type: 'fileCreated', fullPath:`${dirName}/${fileName}`, newContent:content}]);
-
-    //         return expect(fs.loadDirectoryTree()).to.become({
-    //                 type:'dir', name:'', fullPath:'', children:[
-    //                     {type:'dir', name:dirName, fullPath:dirName, children:[
-    //                         {type:'file', name:fileName, fullPath:`${dirName}/${fileName}`}]}]})
-    //             .then(() => matcher.expect([]));
-    //     });
-
-    //     it(`saving a file with different content`, function() {
-    //         const newContent = `_${content}`;
-    //         fs.saveFileSync(fileName, content)
-
-    //         matcher.expect([{type: 'fileCreated', fullPath:fileName, newContent:content}]);
-    //         expect(fs.loadTextFileSync(fileName)).to.equal(content)
-    //         fs.saveFileSync(fileName, newContent)
-    //         matcher.expect([{type: 'fileChanged', fullPath:fileName, newContent:newContent}]);
-    //         expect(fs.loadTextFileSync(fileName)).to.equal(newContent);
-    //         matcher.expect([]);
-    //     });
-    // })
-
-}
-
+    

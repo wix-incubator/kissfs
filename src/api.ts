@@ -133,5 +133,5 @@ export interface FileSystem {
 export interface FileSystemSync extends FileSystem {
     loadTextFileSync(fullPath:string):string;
     loadDirectoryTreeSync(fullPath?:string): Directory;
-    loadDirectoryChildrenSync(fullPath:string): Array<File | ShallowDirectory[]>;
+    loadDirectoryChildrenSync(fullPath:string): Array<File | ShallowDirectory>;
 }

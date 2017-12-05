@@ -1,12 +1,12 @@
-import {access, ensureDir, ensureDirSync, readFile, readdir, remove, rmdir, stat, writeFile, writeFileSync, readFileSync} from 'fs-extra';
+import {access, ensureDir, readFile, readdir, remove, rmdir, stat, writeFile} from 'fs-extra';
 import * as walk from 'klaw';
 import * as path from 'path';
-import {Directory, pathSeparator, ShallowDirectory, File, FileSystemSync} from './api';
+import {Directory, pathSeparator, ShallowDirectory, File, FileSystem} from './api';
 import {getIsIgnored, getPathNodes, InternalEventsEmitter, makeEventsEmitter} from './utils';
 import {MemoryFileSystem} from './memory-fs';
 
 // TODO extract chokidar watch mechanism to configuration
-export class LocalFileSystemCrudOnly implements FileSystemSync {
+export class LocalFileSystemCrudOnly implements FileSystem {
     public readonly events: InternalEventsEmitter = makeEventsEmitter();
     protected isIgnored: (path: string) => boolean = () => false;
 
@@ -29,16 +29,6 @@ export class LocalFileSystemCrudOnly implements FileSystemSync {
         const {fullPath, name} = this.getPathAndName(relPath);
         await ensureDir(fullPath);
         await writeFile(path.join(fullPath, name), newContent);
-    }
-
-    saveFileSync(relPath: string, newContent: string): void {
-        if (this.isIgnored(relPath)) {
-            throw new Error(`Unable to save ignored path: '${relPath}'`);
-        }
-
-        const {fullPath, name} = this.getPathAndName(relPath);
-        ensureDirSync(fullPath);
-        writeFileSync(path.join(fullPath, name), newContent);
     }
 
     async deleteFile(relPath: string): Promise<void> {
@@ -99,13 +89,6 @@ export class LocalFileSystemCrudOnly implements FileSystemSync {
         return readFile(path.join(this.baseUrl, relPath), 'utf8');
     }
 
-    loadTextFileSync(relPath: string): string {
-        if (this.isIgnored(relPath)) {
-            throw new Error(`Unable to read ignored path: '${relPath}'`);
-        }
-        return readFileSync(path.join(this.baseUrl, relPath), 'utf8');
-    }
-
     async loadDirectoryChildren(fullPath: string): Promise<(File | ShallowDirectory)[]> {
         if (this.isIgnored(fullPath)) {
             throw new Error(`Unable to read ignored path: '${fullPath}'`);
@@ -130,6 +113,7 @@ export class LocalFileSystemCrudOnly implements FileSystemSync {
 
         return processedChildren.filter((i): i is File | ShallowDirectory => i !== null);
     }
+
 
     async loadDirectoryTree(fullPath: string): Promise<Directory> {
         if (fullPath && this.isIgnored(fullPath)) {
@@ -165,6 +149,7 @@ export class LocalFileSystemCrudOnly implements FileSystemSync {
         });
     }
 
+
     async ensureDirectory(relPath: string): Promise<void> {
         if (this.isIgnored(relPath)) {
             throw new Error(`Unable to read and write ignored path: '${relPath}'`);
@@ -173,12 +158,5 @@ export class LocalFileSystemCrudOnly implements FileSystemSync {
         const fullPath = path.join(this.baseUrl, ...pathArr);
         return ensureDir(fullPath);
     }
-    ensureDirectorySync(relPath: string): void {
-        if (this.isIgnored(relPath)) {
-            throw new Error(`Unable to read and write ignored path: '${relPath}'`);
-        }
-        const pathArr = getPathNodes(relPath);
-        const fullPath = path.join(this.baseUrl, ...pathArr);
-        return ensureDirSync(fullPath);
-    }
+
 }
