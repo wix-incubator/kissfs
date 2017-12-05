@@ -1,7 +1,7 @@
-import {access, ensureDir, readFile, readdir, remove, rmdir, stat, writeFile} from 'fs-extra';
+import {access, ensureDir, readdir, readFile, remove, rmdir, stat, writeFile} from 'fs-extra';
 import * as walk from 'klaw';
 import * as path from 'path';
-import {Directory, pathSeparator, ShallowDirectory, File, FileSystem} from './api';
+import {Directory, File, FileSystem, pathSeparator, ShallowDirectory} from './api';
 import {getIsIgnored, getPathNodes, InternalEventsEmitter, makeEventsEmitter} from './utils';
 import {MemoryFileSystem} from './memory-fs';
 
@@ -15,12 +15,7 @@ export class LocalFileSystemCrudOnly implements FileSystem {
             this.isIgnored = getIsIgnored(ignore);
         }
     }
-    private getPathAndName(relPath: string):{fullPath:string,name:string}{
-        const pathArr = getPathNodes(relPath);
-        const name = pathArr.pop() || '';
-        const fullPath = path.join(this.baseUrl, ...pathArr);
-        return {fullPath,name}
-    }
+
     async saveFile(relPath: string, newContent: string): Promise<void> {
         if (this.isIgnored(relPath)) {
             throw new Error(`Unable to save ignored path: '${relPath}'`);
@@ -45,7 +40,8 @@ export class LocalFileSystemCrudOnly implements FileSystem {
         try {
             await access(fullPath);
             stats = await stat(fullPath);
-        } catch (e) {}
+        } catch (e) {
+        }
 
         if (stats) {
             if (stats.isFile()) {
@@ -71,7 +67,8 @@ export class LocalFileSystemCrudOnly implements FileSystem {
         try {
             await access(fullPath);
             stats = await stat(fullPath);
-        } catch (e) {}
+        } catch (e) {
+        }
 
         if (stats) {
             if (stats.isDirectory()) {
@@ -114,7 +111,6 @@ export class LocalFileSystemCrudOnly implements FileSystem {
         return processedChildren.filter((i): i is File | ShallowDirectory => i !== null);
     }
 
-
     async loadDirectoryTree(fullPath: string): Promise<Directory> {
         if (fullPath && this.isIgnored(fullPath)) {
             throw new Error(`Unable to read ignored path: '${fullPath}'`);
@@ -149,7 +145,6 @@ export class LocalFileSystemCrudOnly implements FileSystem {
         });
     }
 
-
     async ensureDirectory(relPath: string): Promise<void> {
         if (this.isIgnored(relPath)) {
             throw new Error(`Unable to read and write ignored path: '${relPath}'`);
@@ -157,6 +152,13 @@ export class LocalFileSystemCrudOnly implements FileSystem {
         const pathArr = getPathNodes(relPath);
         const fullPath = path.join(this.baseUrl, ...pathArr);
         return ensureDir(fullPath);
+    }
+
+    private getPathAndName(relPath: string): { fullPath: string, name: string } {
+        const pathArr = getPathNodes(relPath);
+        const name = pathArr.pop() || '';
+        const fullPath = path.join(this.baseUrl, ...pathArr);
+        return {fullPath, name}
     }
 
 }

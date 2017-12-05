@@ -1,5 +1,5 @@
 import * as path from 'path';
-import {watch, FSWatcher} from 'chokidar';
+import {FSWatcher, watch} from 'chokidar';
 import {retryPromise, RetryPromiseOptions} from './promise-utils';
 
 import {FileSystem, pathSeparator} from './api';
@@ -8,13 +8,12 @@ import {LocalFileSystemCrudOnly} from './local-fs-crud-only';
 export class LocalFileSystem extends LocalFileSystemCrudOnly implements FileSystem {
     private watcher: FSWatcher;
 
-    constructor(
-        public baseUrl: string,
-        ignore?: Array<string>,
-        private retryOptions: RetryPromiseOptions = {
-            interval: 100,
-            retries: 3
-        }) {
+    constructor(public baseUrl: string,
+                ignore?: Array<string>,
+                private retryOptions: RetryPromiseOptions = {
+                    interval: 100,
+                    retries: 3
+                }) {
         super(baseUrl, ignore)
     }
 
@@ -32,16 +31,16 @@ export class LocalFileSystem extends LocalFileSystemCrudOnly implements FileSyst
         return new Promise<LocalFileSystem>(resolve => {
             this.watcher.once('ready', () => {
 
-                this.watcher.on('addDir', (relPath:string)=> {
-                        if (relPath) { // ignore event of root folder creation
-                            this.events.emit('directoryCreated', {
-                                type: 'directoryCreated',
-                                fullPath: relPath.split(path.sep).join(pathSeparator)
-                            });
-                        }
-                    });
+                this.watcher.on('addDir', (relPath: string) => {
+                    if (relPath) { // ignore event of root folder creation
+                        this.events.emit('directoryCreated', {
+                            type: 'directoryCreated',
+                            fullPath: relPath.split(path.sep).join(pathSeparator)
+                        });
+                    }
+                });
 
-                this.watcher.on('add', (relPath:string) => {
+                this.watcher.on('add', (relPath: string) => {
                     retryPromise(
                         () => this.loadTextFile(relPath)
                             .then(content => this.events.emit('fileCreated', {
@@ -53,10 +52,10 @@ export class LocalFileSystem extends LocalFileSystemCrudOnly implements FileSyst
                     ).catch(() => this.events.emit('unexpectedError', {type: 'unexpectedError'}));
                 });
 
-                this.watcher.on('change', (relPath:string) => {
+                this.watcher.on('change', (relPath: string) => {
                     retryPromise(
                         () => this.loadTextFile(relPath)
-                            .then((content)=>this.events.emit('fileChanged', {
+                            .then((content) => this.events.emit('fileChanged', {
                                 type: 'fileChanged',
                                 fullPath: relPath.split(path.sep).join(pathSeparator),
                                 newContent: content
@@ -65,13 +64,13 @@ export class LocalFileSystem extends LocalFileSystemCrudOnly implements FileSyst
                     ).catch(() => this.events.emit('unexpectedError', {type: 'unexpectedError'}));
                 });
 
-                this.watcher.on('unlinkDir', (relPath:string) =>
+                this.watcher.on('unlinkDir', (relPath: string) =>
                     this.events.emit('directoryDeleted', {
                         type: 'directoryDeleted',
                         fullPath: relPath.split(path.sep).join(pathSeparator)
                     }));
 
-                this.watcher.on('unlink', (relPath:string) =>
+                this.watcher.on('unlink', (relPath: string) =>
                     this.events.emit('fileDeleted', {
                         type: 'fileDeleted',
                         fullPath: relPath.split(path.sep).join(pathSeparator)

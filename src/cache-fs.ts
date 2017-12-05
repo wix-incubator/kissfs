@@ -1,16 +1,17 @@
 import {
-    FileSystem,
-    FileSystemNode,
     Directory,
     File,
+    FileSystem,
+    FileSystemNode,
     isDir,
+    isDisposable,
     isFile,
-    UnexpectedErrorEvent,
-    isDisposable, ShallowDirectory
+    ShallowDirectory,
+    UnexpectedErrorEvent
 } from './api';
 import {MemoryFileSystem} from './memory-fs';
 import {InternalEventsEmitter, makeEventsEmitter} from './utils';
-import { FileSystemReadSync } from './browser';
+import {FileSystemReadSync} from './browser';
 
 type PathInCache = {
     [prop: string]: boolean
@@ -66,8 +67,13 @@ export class CacheFileSystem implements FileSystemReadSync, FileSystem {
     private cache: MemoryFileSystem;
     private isTreeCached: boolean = false;
     private pathsInCache: PathInCache = {};
+    private onFsError = ({stack}: Error | UnexpectedErrorEvent) => {
+        this.shouldRescanOnError ?
+            this.rescanOnError() :
+            this.emit('unexpectedError', {stack});
+    };
 
-    constructor(private fs: FileSystem , private shouldRescanOnError: boolean = true) {
+    constructor(private fs: FileSystem, private shouldRescanOnError: boolean = true) {
         this.baseUrl = fs.baseUrl;
         this.cache = new MemoryFileSystem();
 
@@ -80,7 +86,7 @@ export class CacheFileSystem implements FileSystemReadSync, FileSystem {
                 this.cache.saveFileSync(fullPath, newContent);
                 this.pathsInCache[fullPath] = true;
                 this.events.emit('fileCreated', event)
-            } catch(e) {
+            } catch (e) {
                 this.onFsError(e)
             }
         });
@@ -91,7 +97,7 @@ export class CacheFileSystem implements FileSystemReadSync, FileSystem {
                 this.cache.saveFileSync(fullPath, newContent);
                 this.pathsInCache[fullPath] = true;
                 this.events.emit('fileChanged', event);
-            } catch(e) {
+            } catch (e) {
                 this.onFsError(e)
             }
         });
@@ -101,7 +107,7 @@ export class CacheFileSystem implements FileSystemReadSync, FileSystem {
                 this.cache.deleteFileSync(event.fullPath);
                 this.pathsInCache[event.fullPath] = true;
                 this.events.emit('fileDeleted', event);
-            } catch(e) {
+            } catch (e) {
                 this.onFsError(e)
             }
         });
@@ -110,7 +116,7 @@ export class CacheFileSystem implements FileSystemReadSync, FileSystem {
             try {
                 this.cache.ensureDirectorySync(event.fullPath);
                 this.events.emit('directoryCreated', event);
-            } catch(e) {
+            } catch (e) {
                 this.onFsError(e)
             }
         });
@@ -119,19 +125,19 @@ export class CacheFileSystem implements FileSystemReadSync, FileSystem {
             try {
                 this.cache.deleteDirectorySync(event.fullPath, true);
                 this.events.emit('directoryDeleted', event);
-            } catch(e) {
+            } catch (e) {
                 this.onFsError(e)
             }
         });
     }
 
-    async saveFile(fullPath:string, newContent:string): Promise<void> {
+    async saveFile(fullPath: string, newContent: string): Promise<void> {
         await this.fs.saveFile(fullPath, newContent);
         this.cache.saveFileSync(fullPath, newContent);
         this.pathsInCache[fullPath] = true;
     }
 
-    async deleteFile(fullPath:string): Promise<void> {
+    async deleteFile(fullPath: string): Promise<void> {
         await this.fs.deleteFile(fullPath);
         this.cache.deleteFileSync(fullPath);
     }
@@ -141,7 +147,7 @@ export class CacheFileSystem implements FileSystemReadSync, FileSystem {
         this.cache.deleteDirectorySync(fullPath, recursive);
     }
 
-    async ensureDirectory(fullPath:string): Promise<void> {
+    async ensureDirectory(fullPath: string): Promise<void> {
         await this.fs.ensureDirectory(fullPath);
         this.cache.ensureDirectorySync(fullPath);
     }
@@ -161,7 +167,7 @@ export class CacheFileSystem implements FileSystemReadSync, FileSystem {
     }
 
 
-    async loadDirectoryTree(fullPath?:string): Promise<Directory> {
+    async loadDirectoryTree(fullPath?: string): Promise<Directory> {
         if (this.isTreeCached) {
             return this.cache.loadDirectoryTreeSync(fullPath);
         }
@@ -171,12 +177,12 @@ export class CacheFileSystem implements FileSystemReadSync, FileSystem {
         return this.cache.loadDirectoryTreeSync(fullPath);
     }
 
-    loadDirectoryTreeSync(fullPath:string): Directory {
+    loadDirectoryTreeSync(fullPath: string): Directory {
         return this.cache.loadDirectoryTreeSync(fullPath);
     }
 
 
-    async loadDirectoryChildren(fullPath:string): Promise<(File | ShallowDirectory)[]> {
+    async loadDirectoryChildren(fullPath: string): Promise<(File | ShallowDirectory)[]> {
         if (this.isTreeCached) {
             return this.cache.loadDirectoryChildrenSync(fullPath);
         }
@@ -186,19 +192,13 @@ export class CacheFileSystem implements FileSystemReadSync, FileSystem {
         return this.cache.loadDirectoryChildrenSync(fullPath);
     }
 
-    loadDirectoryChildrenSync(fullPath:string):Array<File | ShallowDirectory>{
+    loadDirectoryChildrenSync(fullPath: string): Array<File | ShallowDirectory> {
         return this.cache.loadDirectoryChildrenSync(fullPath);
     }
 
 
     dispose() {
         if (isDisposable(this.fs)) this.fs.dispose();
-    }
-
-    private onFsError = ({stack}: Error | UnexpectedErrorEvent) => {
-        this.shouldRescanOnError ?
-            this.rescanOnError() :
-            this.emit('unexpectedError', {stack});
     }
 
     private rescanOnError() {

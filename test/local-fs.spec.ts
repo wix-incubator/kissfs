@@ -1,41 +1,26 @@
 import {dir} from 'tmp';
 
-import {
-    mkdirSync,
-    rmdirSync,
-    writeFileSync,
-    unlinkSync
-} from 'fs';
+import {mkdirSync, rmdirSync, unlinkSync, writeFileSync} from 'fs';
 
 import {join} from 'path';
 import {expect} from 'chai';
 import {EventEmitter} from 'eventemitter3';
 
-import {
-    assertFileSystemContract,
-    dirName,
-    fileName,
-    content,
-    ignoredDir,
-    ignoredFile
-} from './implementation-suite'
+import {assertFileSystemContract, content, dirName, fileName, ignoredDir, ignoredFile} from './implementation-suite'
 
 import {EventsMatcher} from '../test-kit/drivers/events-matcher';
 
-import {
-    FileSystem,
-    fileSystemEventNames
-} from '../src/universal';
+import {FileSystem, fileSystemEventNames} from '../src/universal';
 
 import {LocalFileSystem} from '../src/nodejs';
 
 describe(`the local filesystem implementation`, () => {
-    let dirCleanup: () => void, rootPath: string, testPath : string;
+    let dirCleanup: () => void, rootPath: string, testPath: string;
     let counter = 0;
     let disposableFileSystem: LocalFileSystem;
 
     before(done => {
-        dir({unsafeCleanup:true}, (_err, path, cleanupCallback) => {
+        dir({unsafeCleanup: true}, (_err, path, cleanupCallback) => {
             dirCleanup = cleanupCallback;
             rootPath = path;
             done();
@@ -45,16 +30,17 @@ describe(`the local filesystem implementation`, () => {
         try {
             dirCleanup();
 
-        } catch(e) {
+        } catch (e) {
             console.log('cleanup error', e);
         }
     });
-    afterEach(() =>{
+    afterEach(() => {
         // if beforeEach fails, disposableFileSystem can stay undefined
         disposableFileSystem && disposableFileSystem.dispose();
     });
+
     function getFS() {
-        testPath = join(rootPath, 'fs_'+(counter++));
+        testPath = join(rootPath, 'fs_' + (counter++));
         mkdirSync(testPath);
         disposableFileSystem = new LocalFileSystem(
             testPath,
@@ -62,6 +48,7 @@ describe(`the local filesystem implementation`, () => {
         );
         return disposableFileSystem.init();
     }
+
     const eventMatcherOptions: EventsMatcher.Options = {
         retries: 40,
         interval: 50,
@@ -85,7 +72,7 @@ describe(`the local filesystem implementation`, () => {
             mkdirSync(path);
             return expect(fs.loadDirectoryTree())
                 .to.eventually.have.property('children').eql([
-                    {children: [], fullPath: dirName, name: dirName, type:'dir'}
+                    {children: [], fullPath: dirName, name: dirName, type: 'dir'}
                 ]);
         });
 
@@ -138,7 +125,7 @@ describe(`the local filesystem implementation`, () => {
                 name: '',
                 type: 'dir',
                 fullPath: '',
-                children: [{ name: dirName, type: 'dir', fullPath: dirName, children: []}]
+                children: [{name: dirName, type: 'dir', fullPath: dirName, children: []}]
             };
             mkdirSync(join(testPath, ignoredDir))
             mkdirSync(join(testPath, dirName))
@@ -151,7 +138,7 @@ describe(`the local filesystem implementation`, () => {
                 name: '',
                 type: 'dir',
                 fullPath: '',
-                children: [{ name: dirName, type: 'dir', fullPath: dirName, children: []}]
+                children: [{name: dirName, type: 'dir', fullPath: dirName, children: []}]
             };
             mkdirSync(join(testPath, ignoredDir))
             mkdirSync(join(testPath, ignoredDir, 'name-with-dashes'))
@@ -169,7 +156,7 @@ describe(`the local filesystem implementation`, () => {
             return matcher.expect([]);
         });
 
-        it(`loading existed ignored file - fails`, function() {
+        it(`loading existed ignored file - fails`, function () {
             mkdirSync(join(testPath, dirName))
             writeFileSync(join(testPath, ignoredFile), content)
 

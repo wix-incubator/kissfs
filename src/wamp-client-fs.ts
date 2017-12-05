@@ -1,5 +1,5 @@
 import {Connection, Session} from 'autobahn';
-import { File, FileSystem, fileSystemEventNames, Directory, ShallowDirectory} from './api';
+import {Directory, File, FileSystem, fileSystemEventNames, ShallowDirectory} from './api';
 import {InternalEventsEmitter, makeEventsEmitter} from "./utils";
 import {timeoutPromise} from './promise-utils';
 
@@ -34,7 +34,7 @@ export class WampClientFileSystem implements FileSystem {
         }), initTimeout, `Cant't open connection to the WAMP server at ${baseUrl} for ${initTimeout}ms.`);
     }
 
-    async saveFile(fullPath:string, newContent:string): Promise<void> {
+    async saveFile(fullPath: string, newContent: string): Promise<void> {
         this.throwIfDisconnected();
 
         try {
@@ -44,7 +44,7 @@ export class WampClientFileSystem implements FileSystem {
         }
     }
 
-    async deleteFile(fullPath:string): Promise<void> {
+    async deleteFile(fullPath: string): Promise<void> {
         this.throwIfDisconnected();
 
         try {
@@ -64,7 +64,7 @@ export class WampClientFileSystem implements FileSystem {
         }
     }
 
-    async ensureDirectory(fullPath:string): Promise<void> {
+    async ensureDirectory(fullPath: string): Promise<void> {
         this.throwIfDisconnected();
 
         try {
@@ -84,7 +84,7 @@ export class WampClientFileSystem implements FileSystem {
         }
     }
 
-    async loadDirectoryTree(fullPath:string = ''): Promise<Directory> {
+    async loadDirectoryTree(fullPath: string = ''): Promise<Directory> {
         this.throwIfDisconnected();
 
         try {
@@ -94,7 +94,7 @@ export class WampClientFileSystem implements FileSystem {
         }
     }
 
-    async loadDirectoryChildren(fullPath:string): Promise<(File | ShallowDirectory)[]> {
+    async loadDirectoryChildren(fullPath: string): Promise<(File | ShallowDirectory)[]> {
         this.throwIfDisconnected();
 
         try {

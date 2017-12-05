@@ -1,21 +1,10 @@
-import {
-    Directory,
-    File,
-    pathSeparator,
-    isDir,
-    isFile, ShallowDirectory, FileSystemReadSync, FileSystem
-} from "./api";
+import {Directory, File, FileSystem, FileSystemReadSync, isDir, isFile, pathSeparator, ShallowDirectory} from "./api";
 
-import {
-    InternalEventsEmitter,
-    getPathNodes,
-    makeEventsEmitter,
-    getIsIgnored
-} from "./utils";
+import {getIsIgnored, getPathNodes, InternalEventsEmitter, makeEventsEmitter} from "./utils";
 
 let id = 0;
 
-export class MemoryFileSystem implements FileSystemReadSync, FileSystem{
+export class MemoryFileSystem implements FileSystemReadSync, FileSystem {
     public readonly events: InternalEventsEmitter = makeEventsEmitter();
     private readonly root = new Directory('', '');
     private isIgnored: (path: string) => boolean = () => false;
@@ -25,24 +14,6 @@ export class MemoryFileSystem implements FileSystemReadSync, FileSystem{
         if (ignore) {
             this.isIgnored = getIsIgnored(ignore)
         }
-    }
-
-    private getPathTarget(pathArr: string[]): Directory | null {
-        let current: Directory = this.root;
-        while (pathArr.length) {
-            const targetName = pathArr.shift();
-            if (targetName && current.children) {
-                const node = current.children.find(({name}) => name === targetName);
-                if (isDir(node)){
-                    current = node;
-                } else {
-                    return null;
-                }
-            } else {
-                return null;
-            }
-        }
-        return current;
     }
 
     async saveFile(fullPath: string, newContent: string): Promise<void> {
@@ -73,7 +44,7 @@ export class MemoryFileSystem implements FileSystemReadSync, FileSystem{
         return this.loadDirectoryChildrenSync(fullPath);
     }
 
-    saveFileSync(fullPath:string, newContent:string): void {
+    saveFileSync(fullPath: string, newContent: string): void {
         if (this.isIgnored(fullPath)) {
             throw new Error(`Unable to save ignored path: '${fullPath}'`);
         }
@@ -110,7 +81,7 @@ export class MemoryFileSystem implements FileSystemReadSync, FileSystem{
 
     }
 
-    deleteFileSync(fullPath:string): void {
+    deleteFileSync(fullPath: string): void {
         const pathArr = getPathNodes(fullPath);
         const parent = pathArr.length ? this.getPathTarget(pathArr.slice(0, pathArr.length - 1)) : null;
         if (isDir(parent) && !this.isIgnored(fullPath)) {
@@ -118,7 +89,7 @@ export class MemoryFileSystem implements FileSystemReadSync, FileSystem{
             if (isFile(node)) {
                 parent.children = parent.children.filter(({name}) => name !== node.name);
                 this.events.emit('fileDeleted', {type: 'fileDeleted', fullPath});
-            } else if (isDir(node)){
+            } else if (isDir(node)) {
                 throw new Error(`Directory is not a file '${fullPath}'`);
             }
         }
@@ -126,7 +97,7 @@ export class MemoryFileSystem implements FileSystemReadSync, FileSystem{
 
     deleteDirectorySync(fullPath: string, recursive?: boolean): void {
         const pathArr = getPathNodes(fullPath);
-        if (pathArr.length === 0){
+        if (pathArr.length === 0) {
             throw new Error(`Can't delete root directory`);
         }
         const parent = this.getPathTarget(pathArr.slice(0, pathArr.length - 1));
@@ -134,7 +105,7 @@ export class MemoryFileSystem implements FileSystemReadSync, FileSystem{
             const node = parent.children.find(({name}) => name === pathArr[pathArr.length - 1]);
             if (isFile(node)) {
                 throw new Error(`File is not a directory '${fullPath}'`);
-            } else if(isDir(node)){
+            } else if (isDir(node)) {
                 if (!recursive && node.children.length) {
                     throw new Error(`Directory is not empty '${fullPath}'`);
                 } else {
@@ -145,7 +116,7 @@ export class MemoryFileSystem implements FileSystemReadSync, FileSystem{
         }
     }
 
-    ensureDirectorySync(fullPath:string): void {
+    ensureDirectorySync(fullPath: string): void {
         if (this.isIgnored(fullPath)) {
             throw new Error(`Unable to read and write ignored path: '${fullPath}'`);
         }
@@ -188,28 +159,46 @@ export class MemoryFileSystem implements FileSystemReadSync, FileSystem{
         throw new Error(`Cannot find file ${fullPath}`);
     }
 
-    loadDirectoryTreeSync(fullPath:string = ''): Directory {
+    loadDirectoryTreeSync(fullPath: string = ''): Directory {
         if (this.isIgnored(fullPath)) {
             throw new Error(`Unable to read ignored path: '${fullPath}'`);
         }
         const pathArr = getPathNodes(fullPath);
         const dir = pathArr.length ? this.getPathTarget(pathArr) : this.root;
-        if (!dir){
+        if (!dir) {
             throw new Error(`Unable to read folder in path: '${fullPath}'`);
         }
         return this.parseTree(dir)
     }
 
-    loadDirectoryChildrenSync(fullPath:string): (File | ShallowDirectory)[] {
+    loadDirectoryChildrenSync(fullPath: string): (File | ShallowDirectory)[] {
         if (this.isIgnored(fullPath)) {
             throw new Error(`Unable to read ignored path: '${fullPath}'`);
         }
         const pathArr = getPathNodes(fullPath);
         const dir = pathArr.length ? this.getPathTarget(pathArr) : this.root;
-        if (!dir){
+        if (!dir) {
             throw new Error(`Unable to read folder in path: '${fullPath}'`);
         }
         return dir.children.map(child => isDir(child) ? new ShallowDirectory(child.name, child.fullPath) : new File(child.name, child.fullPath));
+    }
+
+    private getPathTarget(pathArr: string[]): Directory | null {
+        let current: Directory = this.root;
+        while (pathArr.length) {
+            const targetName = pathArr.shift();
+            if (targetName && current.children) {
+                const node = current.children.find(({name}) => name === targetName);
+                if (isDir(node)) {
+                    current = node;
+                } else {
+                    return null;
+                }
+            } else {
+                return null;
+            }
+        }
+        return current;
     }
 
     private parseTree(node: Directory): Directory {

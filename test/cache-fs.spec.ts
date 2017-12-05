@@ -4,25 +4,20 @@ import {expect} from 'chai';
 import {EventsMatcher} from '../test-kit/drivers/events-matcher';
 import {SlowFs} from '../test-kit/drivers/slow-fs';
 
-import {
-    FileSystem,
-    fileSystemEventNames,
-    CacheFileSystem,
-    MemoryFileSystem
-} from '../src/universal';
+import {CacheFileSystem, FileSystem, fileSystemEventNames, MemoryFileSystem} from '../src/universal';
 
 import {
     assertFileSystemContract,
     assertFileSystemSyncContract,
-    ignoredDir,
-    ignoredFile,
-    fileName,
+    content,
     dirName,
-    content
+    fileName,
+    ignoredDir,
+    ignoredFile
 } from './implementation-suite';
 
 describe(`the cache file system implementation`, () => {
-    const eventMatcherOptions: EventsMatcher.Options = { retries: 15, interval: 2, timeout: 40, noExtraEventsGrace: 10 };
+    const eventMatcherOptions: EventsMatcher.Options = {retries: 15, interval: 2, timeout: 40, noExtraEventsGrace: 10};
 
     assertFileSystemContract(
         async () => new CacheFileSystem(new MemoryFileSystem(undefined, [ignoredDir, ignoredFile])),
@@ -59,11 +54,11 @@ describe(`the cache file system implementation`, () => {
 
         it('loads file faster after it has been saved from outside', () => {
             const onFileCreated = new Promise(resolve => {
-                    fs.events.once('fileCreated', () => {
-                        fs.loadTextFile(fileName)
-                            .then(() => resolve(Date.now() - startTimestamp))
-                    })
+                fs.events.once('fileCreated', () => {
+                    fs.loadTextFile(fileName)
+                        .then(() => resolve(Date.now() - startTimestamp))
                 })
+            })
 
             slow.saveFile(fileName, content)
             return expect(onFileCreated).to.be.eventually.lessThan(timeout * 2)

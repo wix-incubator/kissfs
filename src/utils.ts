@@ -1,16 +1,16 @@
 import {EventEmitter} from 'eventemitter3';
 import * as micromatch from 'micromatch';
-const isGlob = require('is-glob');
+import {EventEmitter as FSEvents, pathSeparator} from './api';
 
-import {pathSeparator, EventEmitter as FSEvents} from './api';
+const isGlob = require('is-glob');
 
 // utility logic for filesystem implementations
 
-export function getPathNodes(path:string):Array<string>{
+export function getPathNodes(path: string): Array<string> {
     return path.split(pathSeparator).filter(n => n.length !== 0);
 }
 
-function extendMatchersWithGlob(paths:Array<string>): Array<string>{
+function extendMatchersWithGlob(paths: Array<string>): Array<string> {
     return paths.reduce((extended: string[], path) => {
         extended.push(path);
         if (!isGlob(path)) {
@@ -26,6 +26,7 @@ export function getIsIgnored(matchers: string[], options: Object = {dot: true}):
 }
 
 export type InternalEventsEmitter = EventEmitter & FSEvents;
+
 export function makeEventsEmitter(): InternalEventsEmitter {
     return (new EventEmitter()) as any as InternalEventsEmitter;
 }
