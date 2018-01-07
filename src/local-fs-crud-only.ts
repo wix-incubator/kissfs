@@ -1,7 +1,7 @@
 import {access, ensureDir, readdir, readFile, remove, rmdir, stat, writeFile} from 'fs-extra';
 import * as walk from 'klaw';
 import * as path from 'path';
-import {Directory, File, FileSystem, pathSeparator, ShallowDirectory} from './api';
+import {Correlation, Directory, File, FileSystem, pathSeparator, ShallowDirectory} from './api';
 import {getIsIgnored, getPathNodes, InternalEventsEmitter, makeEventsEmitter} from './utils';
 import {MemoryFileSystem} from './memory-fs';
 
@@ -16,7 +16,7 @@ export class LocalFileSystemCrudOnly implements FileSystem {
         }
     }
 
-    async saveFile(relPath: string, newContent: string): Promise<void> {
+    async saveFile(relPath: string, newContent: string): Promise<Correlation> {
         if (this.isIgnored(relPath)) {
             throw new Error(`Unable to save ignored path: '${relPath}'`);
         }
@@ -26,7 +26,7 @@ export class LocalFileSystemCrudOnly implements FileSystem {
         await writeFile(path.join(fullPath, name), newContent);
     }
 
-    async deleteFile(relPath: string): Promise<void> {
+    async deleteFile(relPath: string): Promise<Correlation> {
         if (!relPath) {
             throw new Error(`Can't delete root directory`);
         }
@@ -52,7 +52,7 @@ export class LocalFileSystemCrudOnly implements FileSystem {
         }
     }
 
-    async deleteDirectory(relPath: string, recursive?: boolean): Promise<void> {
+    async deleteDirectory(relPath: string, recursive?: boolean): Promise<Correlation> {
         const pathArr = getPathNodes(relPath);
         if (pathArr.length === 0) {
             throw new Error(`Can't delete root directory`);
@@ -145,7 +145,7 @@ export class LocalFileSystemCrudOnly implements FileSystem {
         });
     }
 
-    async ensureDirectory(relPath: string): Promise<void> {
+    async ensureDirectory(relPath: string): Promise<Correlation> {
         if (this.isIgnored(relPath)) {
             throw new Error(`Unable to read and write ignored path: '${relPath}'`);
         }

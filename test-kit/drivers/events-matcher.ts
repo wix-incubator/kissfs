@@ -43,7 +43,7 @@ export class EventsMatcher {
     }
 
     private async checkEvents(events: Array<EventObj>): Promise<void> {
-        expect(this.events).to.containSubset(events);
+        expect(this.events, JSON.stringify(events)).to.containSubset(events);
         this.events = [];
     }
 }
