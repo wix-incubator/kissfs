@@ -44,36 +44,42 @@ export function isDir(node?: FileSystemNode | null): node is Directory {
     return node.type === 'dir';
 }
 
-export interface UnexpectedErrorEvent {
-    type: 'unexpectedError',
-    stack?: string
+
+export interface FileSystemEvent {
+    type: keyof Events;
+    correlation?: Correlation;
 }
 
-export interface FileCreatedEvent {
-    type: 'fileCreated',
-    fullPath: string,
-    newContent: string
+export interface UnexpectedErrorEvent extends FileSystemEvent{
+    type: 'unexpectedError';
+    stack?: string;
 }
 
-export interface FileChangedEvent {
-    type: 'fileChanged',
-    fullPath: string,
-    newContent: string
+export interface FileCreatedEvent extends FileSystemEvent {
+    type: 'fileCreated';
+    fullPath: string;
+    newContent: string;
 }
 
-export interface FileDeletedEvent {
-    type: 'fileDeleted',
-    fullPath: string
+export interface FileChangedEvent extends FileSystemEvent {
+    type: 'fileChanged';
+    fullPath: string;
+    newContent: string;
 }
 
-export interface DirectoryCreatedEvent {
-    type: 'directoryCreated',
-    fullPath: string,
+export interface FileDeletedEvent extends FileSystemEvent {
+    type: 'fileDeleted';
+    fullPath: string;
 }
 
-export interface DirectoryDeletedEvent {
-    type: 'directoryDeleted',
-    fullPath: string
+export interface DirectoryCreatedEvent extends FileSystemEvent {
+    type: 'directoryCreated';
+    fullPath: string;
+}
+
+export interface DirectoryDeletedEvent extends FileSystemEvent {
+    type: 'directoryDeleted';
+    fullPath: string;
 }
 
 export interface Disposable {
@@ -97,6 +103,8 @@ export type Events = {
 }
 export const fileSystemEventNames: Array<keyof Events> = ['unexpectedError', 'fileCreated', 'fileChanged', 'fileDeleted', 'directoryCreated', 'directoryDeleted'];
 export const fileSystemAsyncMethods: Array<keyof FileSystem> = ['saveFile', 'deleteFile', 'deleteDirectory', 'loadTextFile', 'loadDirectoryTree', 'ensureDirectory', 'loadDirectoryChildren'];
+
+export type Correlation = string;
 
 export interface EventEmitter {
     listeners<S extends keyof Events>(event: S, exists: boolean): Array<ListenerFn<Events[S]>> | boolean;
@@ -123,19 +131,19 @@ export interface FileSystem {
     readonly events: EventEmitter;
     readonly baseUrl: string;
 
-    saveFile(fullPath: string, newContent: string): Promise<void>;
+    saveFile(fullPath: string, newContent: string): Promise<Correlation>;
 
-    deleteFile(fullPath: string): Promise<void>;
+    deleteFile(fullPath: string): Promise<Correlation>;
 
-    deleteDirectory(fullPath: string, recursive?: boolean): Promise<void>;
+    deleteDirectory(fullPath: string, recursive?: boolean): Promise<Correlation>;
+
+    ensureDirectory(fullPath: string): Promise<Correlation>;
 
     loadTextFile(fullPath: string): Promise<string>;
 
     loadDirectoryTree(fullPath?: string): Promise<Directory>;
 
     loadDirectoryChildren(fullPath: string): Promise<(File | ShallowDirectory)[]>;
-
-    ensureDirectory(fullPath: string): Promise<void>;
 }
 
 

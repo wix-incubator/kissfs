@@ -1,6 +1,16 @@
-import {Directory, File, FileSystem, FileSystemReadSync, isDir, isFile, pathSeparator, ShallowDirectory} from "./api";
+import {
+    Correlation,
+    Directory,
+    File,
+    FileSystem,
+    FileSystemReadSync,
+    isDir,
+    isFile,
+    pathSeparator,
+    ShallowDirectory
+} from "./api";
 
-import {getIsIgnored, getPathNodes, InternalEventsEmitter, makeEventsEmitter} from "./utils";
+import {getIsIgnored, getPathNodes, InternalEventsEmitter, makeCorrelationId, makeEventsEmitter} from "./utils";
 
 let id = 0;
 
@@ -16,19 +26,19 @@ export class MemoryFileSystem implements FileSystemReadSync, FileSystem {
         }
     }
 
-    async saveFile(fullPath: string, newContent: string): Promise<void> {
+    async saveFile(fullPath: string, newContent: string): Promise<Correlation> {
         return this.saveFileSync(fullPath, newContent);
     }
 
-    async deleteFile(fullPath: string): Promise<void> {
+    async deleteFile(fullPath: string): Promise<Correlation> {
         return this.deleteFileSync(fullPath);
     }
 
-    async deleteDirectory(fullPath: string, recursive?: boolean): Promise<void> {
+    async deleteDirectory(fullPath: string, recursive?: boolean): Promise<Correlation> {
         return this.deleteDirectorySync(fullPath, recursive)
     }
 
-    async ensureDirectory(fullPath: string): Promise<void> {
+    async ensureDirectory(fullPath: string): Promise<Correlation> {
         return this.ensureDirectorySync(fullPath);
     }
 
@@ -44,7 +54,7 @@ export class MemoryFileSystem implements FileSystemReadSync, FileSystem {
         return this.loadDirectoryChildrenSync(fullPath);
     }
 
-    saveFileSync(fullPath: string, newContent: string): void {
+    saveFileSync(fullPath: string, newContent: string): Correlation {
         if (this.isIgnored(fullPath)) {
             throw new Error(`Unable to save ignored path: '${fullPath}'`);
         }
@@ -54,8 +64,9 @@ export class MemoryFileSystem implements FileSystemReadSync, FileSystem {
         if (!fileName) {
             throw new Error(`root is not a legal file name`);
         }
+        const correlation = makeCorrelationId();
 
-        this.ensureDirectorySync(pathArr.join(pathSeparator));
+        this._ensureDirectorySync(pathArr.join(pathSeparator), correlation);
         const parent = this.getPathTarget(pathArr);
         if (!parent) {
             // we get here if findNode couldn't resolve the parent and the node is not the root dir.
@@ -71,35 +82,39 @@ export class MemoryFileSystem implements FileSystemReadSync, FileSystem {
             if (existingChild.content !== newContent) {
                 existingChild.content = newContent
                 const type = 'fileChanged';
-                this.events.emit(type, {type, fullPath, newContent});
+                this.events.emit(type, {type, fullPath, newContent, correlation});
             }
         } else {
             const type = 'fileCreated';
-            parent.children.push(new File(fileName, fullPath, newContent))
-            this.events.emit(type, {type, fullPath, newContent});
+            parent.children.push(new File(fileName, fullPath, newContent));
+            this.events.emit(type, {type, fullPath, newContent, correlation});
         }
-
+        return correlation;
     }
 
-    deleteFileSync(fullPath: string): void {
+    deleteFileSync(fullPath: string): Correlation {
         const pathArr = getPathNodes(fullPath);
         const parent = pathArr.length ? this.getPathTarget(pathArr.slice(0, pathArr.length - 1)) : null;
+        const correlation = makeCorrelationId();
         if (isDir(parent) && !this.isIgnored(fullPath)) {
             const node = parent.children.find(({name}) => name === pathArr[pathArr.length - 1]);
             if (isFile(node)) {
                 parent.children = parent.children.filter(({name}) => name !== node.name);
-                this.events.emit('fileDeleted', {type: 'fileDeleted', fullPath});
+                this.events.emit('fileDeleted', {type: 'fileDeleted', fullPath, correlation});
             } else if (isDir(node)) {
                 throw new Error(`Directory is not a file '${fullPath}'`);
             }
         }
+        return correlation;
     }
 
-    deleteDirectorySync(fullPath: string, recursive?: boolean): void {
+    deleteDirectorySync(fullPath: string, recursive?: boolean): Correlation {
         const pathArr = getPathNodes(fullPath);
         if (pathArr.length === 0) {
             throw new Error(`Can't delete root directory`);
         }
+        const correlation = makeCorrelationId();
+
         const parent = this.getPathTarget(pathArr.slice(0, pathArr.length - 1));
         if (isDir(parent) && !this.isIgnored(fullPath)) {
             const node = parent.children.find(({name}) => name === pathArr[pathArr.length - 1]);
@@ -110,17 +125,21 @@ export class MemoryFileSystem implements FileSystemReadSync, FileSystem {
                     throw new Error(`Directory is not empty '${fullPath}'`);
                 } else {
                     parent.children = parent.children.filter(({name}) => name !== node.name);
-                    this.recursiveEmitDeletion(node)
+                    this.recursiveEmitDeletion(node, correlation)
                 }
             }
         }
+        return correlation;
     }
 
-    ensureDirectorySync(fullPath: string): void {
+    ensureDirectorySync(fullPath: string): Correlation {
+        return this._ensureDirectorySync(fullPath);
+    }
+
+    private _ensureDirectorySync(fullPath: string, correlation: Correlation = makeCorrelationId()): Correlation {
         if (this.isIgnored(fullPath)) {
             throw new Error(`Unable to read and write ignored path: '${fullPath}'`);
         }
-
         getPathNodes(fullPath).reduce((current, nodeName) => {
             const next = current.children.find(({name}) => name === nodeName);
             if (isDir(next)) {
@@ -136,10 +155,12 @@ export class MemoryFileSystem implements FileSystemReadSync, FileSystem {
             current.children.push(newDir)
             this.events.emit('directoryCreated', {
                 type: 'directoryCreated',
-                fullPath: newDir.fullPath
+                fullPath: newDir.fullPath,
+                correlation
             });
             return newDir;
-        }, this.root)
+        }, this.root);
+        return correlation;
     }
 
     loadTextFileSync(fullPath: string): string {
@@ -209,11 +230,11 @@ export class MemoryFileSystem implements FileSystemReadSync, FileSystem {
         )
     }
 
-    private recursiveEmitDeletion(node: Directory) {
-        this.events.emit('directoryDeleted', {type: 'directoryDeleted', fullPath: node.fullPath});
+    private recursiveEmitDeletion(node: Directory, correlation: Correlation) {
+        this.events.emit('directoryDeleted', {type: 'directoryDeleted', fullPath: node.fullPath, correlation});
         node.children.forEach(child => {
-            if (isDir(child)) this.recursiveEmitDeletion(child)
-            this.events.emit('fileDeleted', {type: 'fileDeleted', fullPath: child.fullPath});
+            if (isDir(child)) this.recursiveEmitDeletion(child, correlation)
+            this.events.emit('fileDeleted', {type: 'fileDeleted', fullPath: child.fullPath, correlation});
         })
     }
 }

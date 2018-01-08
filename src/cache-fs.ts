@@ -1,4 +1,5 @@
 import {
+    Correlation,
     Directory,
     File,
     FileSystem,
@@ -131,25 +132,29 @@ export class CacheFileSystem implements FileSystemReadSync, FileSystem {
         });
     }
 
-    async saveFile(fullPath: string, newContent: string): Promise<void> {
-        await this.fs.saveFile(fullPath, newContent);
+    async saveFile(fullPath: string, newContent: string): Promise<Correlation> {
+        const correlation = await this.fs.saveFile(fullPath, newContent);
         this.cache.saveFileSync(fullPath, newContent);
         this.pathsInCache[fullPath] = true;
+        return correlation;
     }
 
-    async deleteFile(fullPath: string): Promise<void> {
-        await this.fs.deleteFile(fullPath);
+    async deleteFile(fullPath: string): Promise<Correlation> {
+        const correlation = await this.fs.deleteFile(fullPath);
         this.cache.deleteFileSync(fullPath);
+        return correlation;
     }
 
-    async deleteDirectory(fullPath: string, recursive: boolean = false): Promise<void> {
-        await this.fs.deleteDirectory(fullPath, recursive);
+    async deleteDirectory(fullPath: string, recursive: boolean = false): Promise<Correlation> {
+        const correlation = await this.fs.deleteDirectory(fullPath, recursive);
         this.cache.deleteDirectorySync(fullPath, recursive);
+        return correlation;
     }
 
-    async ensureDirectory(fullPath: string): Promise<void> {
-        await this.fs.ensureDirectory(fullPath);
+    async ensureDirectory(fullPath: string): Promise<Correlation> {
+        const correlation = await this.fs.ensureDirectory(fullPath);
         this.cache.ensureDirectorySync(fullPath);
+        return correlation;
     }
 
     async loadTextFile(fullPath: string): Promise<string> {

@@ -1,4 +1,4 @@
-import {Directory, EventEmitter, File, FileSystem, isDisposable, ShallowDirectory} from './api';
+import {Correlation, Directory, EventEmitter, File, FileSystem, isDisposable, ShallowDirectory} from './api';
 import {timeoutPromise} from './promise-utils';
 
 export class TimeoutFileSystem implements FileSystem {
@@ -13,15 +13,15 @@ export class TimeoutFileSystem implements FileSystem {
         return this.fs.baseUrl;
     }
 
-    saveFile(fullPath: string, newContent: string): Promise<void> {
+    saveFile(fullPath: string, newContent: string): Promise<Correlation> {
         return timeoutPromise(this.fs.saveFile(fullPath, newContent), this.timeout);
     }
 
-    deleteFile(fullPath: string): Promise<void> {
+    deleteFile(fullPath: string): Promise<Correlation> {
         return timeoutPromise(this.fs.deleteFile(fullPath), this.timeout);
     }
 
-    deleteDirectory(fullPath: string, recursive?: boolean): Promise<void> {
+    deleteDirectory(fullPath: string, recursive?: boolean): Promise<Correlation> {
         return timeoutPromise(this.fs.deleteDirectory(fullPath, recursive), this.timeout);
     }
 
@@ -37,7 +37,7 @@ export class TimeoutFileSystem implements FileSystem {
         return timeoutPromise(this.fs.loadDirectoryChildren(fullPath), this.timeout);
     }
 
-    ensureDirectory(fullPath: string): Promise<void> {
+    ensureDirectory(fullPath: string): Promise<Correlation> {
         return timeoutPromise(this.fs.ensureDirectory(fullPath), this.timeout);
     }
 
