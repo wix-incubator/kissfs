@@ -47,7 +47,7 @@ export function isDir(node?: FileSystemNode | null): node is Directory {
 
 export interface FileSystemEvent {
     type: keyof Events;
-    correlation: Correlation;
+    correlation?: Correlation;
 }
 
 export interface UnexpectedErrorEvent extends FileSystemEvent{

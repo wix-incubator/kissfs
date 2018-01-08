@@ -1,7 +1,7 @@
 import {expect} from "chai";
 import {Correlation, FileSystem, fileSystemEventNames, FileSystemReadSync, pathSeparator} from '../src/api';
 import {EventsMatcher} from '../test-kit/drivers/events-matcher';
-import {EventEmitter} from 'eventemitter3';
+import {delayedPromise} from "../src/promise-utils";
 
 
 export const dirName = 'foo';
@@ -19,7 +19,7 @@ export function assertFileSystemContract(fsProvider: () => Promise<FileSystem>, 
             return fsProvider()
                 .then(newFs => {
                     fs = newFs;
-                    matcher.track(fs.events as any as EventEmitter, ...fileSystemEventNames);
+                    matcher.track(fs.events, ...fileSystemEventNames);
                 });
         });
 
@@ -290,27 +290,32 @@ export function assertFileSystemContract(fsProvider: () => Promise<FileSystem>, 
 
         describe(`action-event correlation`, function () {
             it(`single event per action`, async function () {
+                this.timeout(30*1000);
                 let allCorelations: Set<Correlation> = new Set();
                 let correlation = await fs.saveFile(fileName, 'foo');
                 expect(correlation).to.be.a('string');
                 allCorelations.add(correlation);
                 expect(allCorelations.size).to.eql(1);
                 await matcher.expect([{type: 'fileCreated', fullPath: fileName, correlation}]);
+                await delayedPromise(100);
                 correlation = await fs.saveFile(fileName, 'bar');
                 expect(correlation).to.be.a('string');
                 allCorelations.add(correlation);
                 expect(allCorelations.size).to.eql(2);
                 await matcher.expect([{type: 'fileChanged', fullPath: fileName, correlation}]);
+                await delayedPromise(100);
                 correlation = await fs.deleteFile(fileName);
                 expect(correlation).to.be.a('string');
                 allCorelations.add(correlation);
                 expect(allCorelations.size).to.eql(3);
                 await matcher.expect([{type: 'fileDeleted', fullPath: fileName, correlation}]);
+                await delayedPromise(100);
                 correlation = await fs.ensureDirectory(dirName);
                 expect(correlation).to.be.a('string');
                 allCorelations.add(correlation);
                 expect(allCorelations.size).to.eql(4);
                 await matcher.expect([{type: 'directoryCreated', fullPath: dirName, correlation}]);
+                await delayedPromise(100);
                 correlation = await fs.deleteDirectory(dirName);
                 expect(correlation).to.be.a('string');
                 allCorelations.add(correlation);
@@ -319,6 +324,7 @@ export function assertFileSystemContract(fsProvider: () => Promise<FileSystem>, 
             });
 
             it(`multiple events per action`, async function () {
+                this.timeout(10*1000);
                 let correlation = await fs.saveFile(`${dirName}/${fileName}`, content);
                 expect(correlation).to.be.a('string');
                 await matcher.expect([
@@ -350,7 +356,7 @@ export function assertFileSystemSyncContract(fsProvider: () => Promise<FileSyste
         return fsProvider()
             .then(newFs => {
                 fs = newFs;
-                matcher.track(fs.events as any as EventEmitter, ...fileSystemEventNames);
+                matcher.track(fs.events, ...fileSystemEventNames);
             });
     });
 
@@ -362,7 +368,7 @@ export function assertFileSystemSyncContract(fsProvider: () => Promise<FileSyste
             return fsProvider()
                 .then(newFs => {
                     fs = newFs;
-                    matcher.track(fs.events as any as EventEmitter, ...fileSystemEventNames);
+                    matcher.track(fs.events, ...fileSystemEventNames);
                 });
         });
 

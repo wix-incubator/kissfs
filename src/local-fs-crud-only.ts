@@ -1,14 +1,12 @@
 import {access, ensureDir, readdir, readFile, remove, rmdir, stat, writeFile} from 'fs-extra';
 import * as walk from 'klaw';
 import * as path from 'path';
-import {Correlation, Directory, File, FileSystem, pathSeparator, ShallowDirectory} from './api';
-import {getIsIgnored, getPathNodes, InternalEventsEmitter, makeEventsEmitter} from './utils';
+import {Directory, File, pathSeparator, ShallowDirectory} from './api';
+import {getIsIgnored, getPathNodes} from './utils';
 import {MemoryFileSystem} from './memory-fs';
 
-// TODO extract chokidar watch mechanism to configuration
-export class LocalFileSystemCrudOnly implements FileSystem {
-    public readonly events: InternalEventsEmitter = makeEventsEmitter();
-    protected isIgnored: (path: string) => boolean = () => false;
+export class LocalFileSystemCrudOnly {
+    isIgnored: (path: string) => boolean = () => false;
 
     constructor(public baseUrl: string, ignore?: Array<string>) {
         if (ignore) {
@@ -16,7 +14,7 @@ export class LocalFileSystemCrudOnly implements FileSystem {
         }
     }
 
-    async saveFile(relPath: string, newContent: string): Promise<Correlation> {
+    async saveFile(relPath: string, newContent: string): Promise<void> {
         if (this.isIgnored(relPath)) {
             throw new Error(`Unable to save ignored path: '${relPath}'`);
         }
@@ -26,55 +24,52 @@ export class LocalFileSystemCrudOnly implements FileSystem {
         await writeFile(path.join(fullPath, name), newContent);
     }
 
-    async deleteFile(relPath: string): Promise<Correlation> {
+    async deleteFile(relPath: string): Promise<void> {
         if (!relPath) {
             throw new Error(`Can't delete root directory`);
         }
 
-        if (this.isIgnored(relPath)) {
-            return;
-        }
+        if (!this.isIgnored(relPath)) {
+            const fullPath = path.join(this.baseUrl, ...getPathNodes(relPath));
+            let stats;
+            try {
+                await access(fullPath);
+                stats = await stat(fullPath);
+            } catch (e) {
+            }
 
-        const fullPath = path.join(this.baseUrl, ...getPathNodes(relPath));
-        let stats;
-        try {
-            await access(fullPath);
-            stats = await stat(fullPath);
-        } catch (e) {
-        }
-
-        if (stats) {
-            if (stats.isFile()) {
-                return remove(fullPath);
-            } else {
-                throw new Error(`not a file: ${relPath}`);
+            if (stats) {
+                if (stats.isFile()) {
+                    await remove(fullPath);
+                } else {
+                    throw new Error(`not a file: ${relPath}`);
+                }
             }
         }
     }
 
-    async deleteDirectory(relPath: string, recursive?: boolean): Promise<Correlation> {
+    async deleteDirectory(relPath: string, recursive?: boolean): Promise<void> {
         const pathArr = getPathNodes(relPath);
         if (pathArr.length === 0) {
             throw new Error(`Can't delete root directory`);
         }
 
-        if (this.isIgnored(relPath)) {
-            return;
-        }
+        if (!this.isIgnored(relPath)) {
 
-        const fullPath = path.join(this.baseUrl, ...pathArr);
-        let stats;
-        try {
-            await access(fullPath);
-            stats = await stat(fullPath);
-        } catch (e) {
-        }
+            const fullPath = path.join(this.baseUrl, ...pathArr);
+            let stats;
+            try {
+                await access(fullPath);
+                stats = await stat(fullPath);
+            } catch (e) {
+            }
 
-        if (stats) {
-            if (stats.isDirectory()) {
-                return recursive ? remove(fullPath) : rmdir(fullPath);
-            } else {
-                throw new Error(`not a directory: ${relPath}`);
+            if (stats) {
+                if (stats.isDirectory()) {
+                    await (recursive ? remove(fullPath) : rmdir(fullPath));
+                } else {
+                    throw new Error(`not a directory: ${relPath}`);
+                }
             }
         }
     }
@@ -111,7 +106,7 @@ export class LocalFileSystemCrudOnly implements FileSystem {
         return processedChildren.filter((i): i is File | ShallowDirectory => i !== null);
     }
 
-    async loadDirectoryTree(fullPath: string): Promise<Directory> {
+    async loadDirectoryTree(fullPath?: string): Promise<Directory> {
         if (fullPath && this.isIgnored(fullPath)) {
             throw new Error(`Unable to read ignored path: '${fullPath}'`);
         }
@@ -123,21 +118,22 @@ export class LocalFileSystemCrudOnly implements FileSystem {
             const {baseUrl, isIgnored} = this;
             const rootPath = fullPath ? path.join(baseUrl, fullPath) : baseUrl;
             const walker = walk(rootPath);
-            walker.on('readable', function () {
-                let item: walk.Item;
-                while ((item = walker.read())) {
-                    const itemPath = path.relative(baseUrl, item.path).split(path.sep).join(pathSeparator);
-                    if (isIgnored(itemPath)) {
-                        return;
-                    } else if (item.stats.isDirectory()) {
-                        memFs.ensureDirectorySync(itemPath);
-                    } else if (item.stats.isFile()) {
-                        memFs.saveFileSync(itemPath, '');
-                    } else {
-                        console.warn(`unknown node type at ${itemPath}`, item);
+            walker
+                .on('readable', function () {
+                    let item: walk.Item;
+                    while ((item = walker.read())) {
+                        const itemPath = path.relative(baseUrl, item.path).split(path.sep).join(pathSeparator);
+                        if (isIgnored(itemPath)) {
+                            return;
+                        } else if (item.stats.isDirectory()) {
+                            memFs.ensureDirectorySync(itemPath);
+                        } else if (item.stats.isFile()) {
+                            memFs.saveFileSync(itemPath, '');
+                        } else {
+                            console.warn(`unknown node type at ${itemPath}`, item);
+                        }
                     }
-                }
-            })
+                })
                 .on('end', function () {
                     resolve(memFs.loadDirectoryTreeSync(fullPath));
                 })
@@ -145,7 +141,7 @@ export class LocalFileSystemCrudOnly implements FileSystem {
         });
     }
 
-    async ensureDirectory(relPath: string): Promise<Correlation> {
+    async ensureDirectory(relPath: string): Promise<void> {
         if (this.isIgnored(relPath)) {
             throw new Error(`Unable to read and write ignored path: '${relPath}'`);
         }

@@ -1,4 +1,4 @@
-import {Directory, File, FileSystem, isDisposable, ShallowDirectory} from "../../src/api";
+import {Correlation, Directory, File, FileSystem, isDisposable, ShallowDirectory} from "../../src/api";
 
 import {MemoryFileSystem} from '../../src/memory-fs';
 import {InternalEventsEmitter} from '../../src/utils';
@@ -15,32 +15,39 @@ export class SlowFs implements FileSystem {
         this.events = this.fs.events as InternalEventsEmitter;
     }
 
-    saveFile(fullPath: string, newContent: string): Promise<void> {
-        return delayedPromise(this.delay).then(() => this.fs.saveFile(fullPath, newContent));
+    async saveFile(fullPath: string, newContent: string): Promise<Correlation> {
+        await delayedPromise(this.delay);
+        return this.fs.saveFile(fullPath, newContent);
     }
 
-    deleteFile(fullPath: string): Promise<void> {
-        return delayedPromise(this.delay).then(() => this.fs.deleteFile(fullPath));
+    async deleteFile(fullPath: string): Promise<Correlation> {
+        await delayedPromise(this.delay);
+        return this.fs.deleteFile(fullPath);
     }
 
-    deleteDirectory(fullPath: string, recursive: boolean = false): Promise<void> {
-        return delayedPromise(this.delay).then(() => this.fs.deleteDirectory(fullPath, recursive));
+    async deleteDirectory(fullPath: string, recursive: boolean = false): Promise<Correlation> {
+        await delayedPromise(this.delay);
+        return this.fs.deleteDirectory(fullPath, recursive);
     }
 
-    ensureDirectory(fullPath: string): Promise<void> {
-        return delayedPromise(this.delay).then(() => this.fs.ensureDirectory(fullPath));
+    async ensureDirectory(fullPath: string): Promise<Correlation> {
+        await delayedPromise(this.delay);
+        return this.fs.ensureDirectory(fullPath);
     }
 
-    loadTextFile(fullPath: string): Promise<string> {
-        return delayedPromise(this.delay).then(() => this.fs.loadTextFile(fullPath));
+    async loadTextFile(fullPath: string): Promise<string> {
+        await delayedPromise(this.delay);
+        return this.fs.loadTextFile(fullPath);
     }
 
-    loadDirectoryTree(fullPath?: string): Promise<Directory> {
-        return delayedPromise(this.delay).then(() => this.fs.loadDirectoryTree(fullPath));
+    async loadDirectoryTree(fullPath?: string): Promise<Directory> {
+        await delayedPromise(this.delay);
+        return this.fs.loadDirectoryTree(fullPath);
     }
 
-    loadDirectoryChildren(fullPath: string): Promise<(File | ShallowDirectory)[]> {
-        return delayedPromise(this.delay).then(() => this.fs.loadDirectoryChildren(fullPath));
+    async loadDirectoryChildren(fullPath: string): Promise<(File | ShallowDirectory)[]> {
+        await delayedPromise(this.delay);
+        return this.fs.loadDirectoryChildren(fullPath);
     }
 
     dispose() {

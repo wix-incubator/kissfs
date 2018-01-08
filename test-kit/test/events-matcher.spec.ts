@@ -10,32 +10,28 @@ describe('events test driver', () => {
     beforeEach(() => {
         emitter = new EventEmitter();
         matcher = new EventsMatcher({retries: 5, interval: 10, noExtraEventsGrace: 20});
+        matcher.track(emitter as any, 'event' as any);
     });
 
     it('failure when event has no type field', () => {
-        matcher.track(emitter, 'event');
         return expect(() => emitter.emit('event', {foo: 'bar'})).to.throw(Error);
     });
 
     it('failure when event has incorrect type field', () => {
-        matcher.track(emitter, 'event');
         return expect(() => emitter.emit('event', {type: 'eventz', foo: 'bar'})).to.throw(Error);
     });
 
     it('success when existing events', () => {
-        matcher.track(emitter, 'event');
         emitter.emit('event', {type: 'event', foo: 'bar'});
         return matcher.expect([{type: 'event', foo: 'bar'}]);
     });
 
     it('success when subset events', () => {
-        matcher.track(emitter, 'event');
         emitter.emit('event', {type: 'event', foo: 'bar'});
         return matcher.expect([{type: 'event'}]);
     });
 
     it('error contains original chai data', () => {
-        matcher.track(emitter, 'event');
         emitter.emit('event', {type: 'event', foo: 'bar'});
         var rejection = matcher.expect([{type: 'event', foo: 'baz'}]).catch(e => e);
         return expect(rejection).to.eventually.satisfy(
@@ -43,7 +39,6 @@ describe('events test driver', () => {
     });
 
     it('failure when mismatched events', () => {
-        matcher.track(emitter, 'event');
         emitter.emit('event', {type: 'event', foo: 'bar'});
         return expect(matcher.expect([{
             type: 'event',
@@ -52,7 +47,6 @@ describe('events test driver', () => {
     });
 
     it('success when matching delayed events', () => {
-        matcher.track(emitter, 'event');
         const result = matcher.expect([{type: 'event', foo: 'bar'}]);
         setTimeout(() => emitter.emit('event', {type: 'event', foo: 'bar'}), 25);
         return result;

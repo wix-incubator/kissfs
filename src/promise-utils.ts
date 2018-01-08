@@ -5,7 +5,7 @@ export function delayedPromise(delay: number): Promise<void> {
 export function timeoutPromise<T>(promise: Promise<T>, ms: number, message = `timed out after ${ms}ms`): Promise<T> {
     return new Promise(function (resolve, reject) {
         setTimeout(() => reject(new Error(message)), ms);
-        promise.then(resolve).catch(reject);
+        promise.then(resolve, reject);
     });
 }
 
