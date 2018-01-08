@@ -1,6 +1,6 @@
 import {EventEmitter} from 'eventemitter3';
 import * as micromatch from 'micromatch';
-import {EventEmitter as FSEvents, pathSeparator} from './api';
+import {Correlation, EventEmitter as FSEvents, pathSeparator} from './api';
 
 const isGlob = require('is-glob');
 
@@ -25,8 +25,12 @@ export function getIsIgnored(matchers: string[], options: Object = {dot: true}):
     return (path: string) => micromatch.any(path, patterns, options);
 }
 
-export type InternalEventsEmitter = EventEmitter & FSEvents;
+export type InternalEventsEmitter = FSEvents & EventEmitter;
 
 export function makeEventsEmitter(): InternalEventsEmitter {
     return (new EventEmitter()) as any as InternalEventsEmitter;
+}
+
+export function makeCorrelationId() : Correlation{
+    return (Math.random().toString(36)+'0000').substr(2, 4);
 }

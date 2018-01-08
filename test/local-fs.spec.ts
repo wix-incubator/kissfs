@@ -62,8 +62,8 @@ describe(`the local filesystem implementation`, () => {
         beforeEach(() => {
             matcher = new EventsMatcher(eventMatcherOptions);
             return getFS().then(newFs => {
-                fs = newFs
-                matcher.track(fs.events as any as EventEmitter, ...fileSystemEventNames);
+                fs = newFs;
+                matcher.track(fs.events, ...fileSystemEventNames);
             });
         });
 

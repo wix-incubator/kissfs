@@ -42,7 +42,7 @@ describe(`the cache file system implementation`, () => {
             slow = new SlowFs(timeout)
             fs = new CacheFileSystem(slow)
             matcher = new EventsMatcher(eventMatcherOptions);
-            matcher.track(fs.events as any as EventEmitter, ...fileSystemEventNames)
+            matcher.track(fs.events, ...fileSystemEventNames)
         });
 
 
@@ -86,7 +86,7 @@ describe(`the cache file system implementation`, () => {
                 noExtraEventsGrace: 150,
                 timeout: 300
             });
-            matcher.track(fs.events as any as EventEmitter, ...fileSystemEventNames)
+            matcher.track(fs.events, ...fileSystemEventNames)
         });
 
         it('emits `fileCreated` if there is not cached file after error', () => {
@@ -129,7 +129,7 @@ describe(`the cache file system implementation`, () => {
         it('emits `unexpectedError` if cache created with `rescanOnError = false` flag', () => {
             const fs = new CacheFileSystem(original, false);
             const matcher = new EventsMatcher(eventMatcherOptions);
-            matcher.track(fs.events as any as EventEmitter, ...fileSystemEventNames);
+            matcher.track(fs.events, ...fileSystemEventNames);
             (original.events as InternalEventsEmitter).emit('unexpectedError', {type: 'unexpectedError'});
             return matcher.expect([{type: 'unexpectedError'}]);
         })

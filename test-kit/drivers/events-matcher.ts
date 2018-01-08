@@ -1,5 +1,5 @@
 import {expect} from 'chai';
-import {EventEmitter} from 'eventemitter3';
+import {EventEmitter, Events} from "../../src/api";
 import {delayedPromise, retryPromise} from '../../src/promise-utils';
 
 export interface EventObj {
@@ -23,7 +23,7 @@ export class EventsMatcher {
     constructor(private options: EventsMatcher.Options) {
     }
 
-    track(emitter: EventEmitter, ...eventNames: Array<string>) {
+    track(emitter: EventEmitter, ...eventNames: Array<keyof Events>) {
         eventNames.forEach(eventName => emitter.on(eventName, (event: EventObj) => {
             expect(event.type, `type of event dispatched as ${eventName}`).to.eql(eventName);
             this.events.push(event);
@@ -43,7 +43,7 @@ export class EventsMatcher {
     }
 
     private async checkEvents(events: Array<EventObj>): Promise<void> {
-        expect(this.events).to.containSubset(events);
+        expect(this.events, JSON.stringify(events)).to.containSubset(events);
         this.events = [];
     }
 }
