@@ -4,7 +4,6 @@ import {mkdirSync, rmdirSync, unlinkSync, writeFileSync} from 'fs';
 
 import {join} from 'path';
 import {expect} from 'chai';
-import {EventEmitter} from 'eventemitter3';
 
 import {assertFileSystemContract, content, dirName, fileName, ignoredDir, ignoredFile} from './implementation-suite'
 

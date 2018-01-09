@@ -16,7 +16,7 @@ import {
     ignoredFile
 } from './implementation-suite';
 
-describe(`the cache file system implementation`, () => {
+describe(`the cache file system proxy`, () => {
     const eventMatcherOptions: EventsMatcher.Options = {retries: 15, interval: 2, timeout: 40, noExtraEventsGrace: 10};
 
     assertFileSystemContract(
@@ -27,7 +27,7 @@ describe(`the cache file system implementation`, () => {
     assertFileSystemSyncContract(
         async () => new CacheFileSystem(new MemoryFileSystem(undefined, [ignoredDir, ignoredFile])),
         eventMatcherOptions
-    )
+    );
 
     describe(`using slow FileSystem`, () => {
         const timeout = 200;
