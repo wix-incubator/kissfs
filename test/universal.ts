@@ -5,3 +5,4 @@ import './cache-fs.spec';
 import './timeout-fs.spec';
 import './promise-utils.spec';
 import './events-manager.spec';
+import './no-feedback-events-fs.spec';

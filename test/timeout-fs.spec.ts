@@ -3,7 +3,7 @@ import {assertFileSystemContract, dirName, fileName, ignoredDir, ignoredFile,} f
 import {SlowFs} from '../test-kit/drivers/slow-fs';
 import {FileSystem, MemoryFileSystem, TimeoutFileSystem} from '../src/universal';
 
-describe('the timeout file system implementation', () => {
+describe('the timeout file system proxy', () => {
     const timeout = 200;
 
     assertFileSystemContract(() =>

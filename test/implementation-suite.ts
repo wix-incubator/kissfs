@@ -290,7 +290,7 @@ export function assertFileSystemContract(fsProvider: () => Promise<FileSystem>, 
 
         describe(`action-event correlation`, function () {
             it(`single event per action`, async function () {
-                this.timeout(30*1000);
+                this.timeout(30 * 1000);
                 let allCorelations: Set<Correlation> = new Set();
                 let correlation = await fs.saveFile(fileName, 'foo');
                 expect(correlation).to.be.a('string');
@@ -324,7 +324,7 @@ export function assertFileSystemContract(fsProvider: () => Promise<FileSystem>, 
             });
 
             it(`multiple events per action`, async function () {
-                this.timeout(10*1000);
+                this.timeout(10 * 1000);
                 let correlation = await fs.saveFile(`${dirName}/${fileName}`, content);
                 expect(correlation).to.be.a('string');
                 await matcher.expect([

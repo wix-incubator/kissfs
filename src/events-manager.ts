@@ -1,12 +1,13 @@
 import {makeEventsEmitter} from "./utils";
 
 import {EventEmitter, Events} from "./api";
+import {delayedPromise} from "./promise-utils";
 
 
 export interface EventHandler<S extends keyof Events> {
     types: S[];
     filter: (e: Events[S]) => boolean;
-    apply: (e: Events[S]) => Events[S];
+    apply: (e: Events[S]) => Events[S] | void;
 }
 
 interface RegisteredEventHandler extends EventHandler<any> {
@@ -17,8 +18,20 @@ export class EventsManager {
     public readonly events: EventEmitter = makeEventsEmitter();
     private eventHandlers = new Set<RegisteredEventHandler>();
 
+    constructor(private options: { delay?: number } = {}) {
+
+    }
 
     emit(e: Events[keyof Events]) {
+        if (this.options.delay) {
+            delayedPromise(this.options.delay)
+                .then(() => this._emit(e));
+        } else {
+            this._emit(e);
+        }
+    }
+
+    private _emit(e: Events[keyof Events]) {
         this.eventHandlers.forEach(handler => {
             if (e && ~handler.types.indexOf(e.type) && handler.filter(e)) {
                 e = handler.apply(e);

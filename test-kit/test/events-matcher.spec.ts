@@ -51,4 +51,28 @@ describe('events test driver', () => {
         setTimeout(() => emitter.emit('event', {type: 'event', foo: 'bar'}), 25);
         return result;
     });
+
+    describe('.expect() ignores argument if options.alwaysExpectEmpty is true', () => {
+        let matcher: EventsMatcher;
+        let emitter: EventEmitter;
+
+        beforeEach(() => {
+            emitter = new EventEmitter();
+            matcher = new EventsMatcher({alwaysExpectEmpty: true, retries: 5, interval: 10, noExtraEventsGrace: 20});
+            matcher.track(emitter as any, 'event' as any);
+        });
+
+
+        it('success when matching empty events', () => {
+            return matcher.expect([{type: 'event', foo: 'bar'}]);
+        });
+
+        it('failure when matching non-empty events', () => {
+            emitter.emit('event', {type: 'event', foo: 'bar'});
+            return expect(matcher.expect([{
+                type: 'event',
+                foo: 'bar'
+            }])).to.be.rejectedWith(/{ type: 'event', foo: 'bar' }/);
+        });
+    });
 });
