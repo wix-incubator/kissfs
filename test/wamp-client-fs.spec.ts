@@ -6,7 +6,7 @@ import {noConnectionError} from '../src/wamp-client-fs';
 import {EventsMatcher} from '../test-kit/drivers/events-matcher';
 import {assertFileSystemContract, content, dirName, fileName, ignoredDir, ignoredFile} from './implementation-suite'
 
-describe(`the wamp client filesystem implementation`, () => {
+describe(`the wamp client filesystem proxy`, () => {
 
     let wampServer: WampServer;
 

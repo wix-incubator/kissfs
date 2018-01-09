@@ -14,6 +14,7 @@ export namespace EventsMatcher {
         interval: number;
         noExtraEventsGrace: number;
         timeout?: number;
+        alwaysExpectEmpty?:boolean;
     };
 }
 
@@ -31,15 +32,15 @@ export class EventsMatcher {
     }
 
     async expect(events: Array<EventObj>): Promise<void> {
-        const {interval, timeout, retries} = this.options;
-        if (events.length) {
+        const {interval, timeout, retries, alwaysExpectEmpty, noExtraEventsGrace} = this.options;
+        if (events.length && !alwaysExpectEmpty) {
             await retryPromise(() => this.checkEvents(events), {retries, interval, timeout});
         } else {
             expect(this.events).to.eql([]);
         }
 
-        await delayedPromise(this.options.noExtraEventsGrace);
-        expect(this.events, 'no further events after matching').to.eql([]);
+        await delayedPromise(noExtraEventsGrace);
+        expect(this.events, `no further events after matching, but found:${JSON.stringify(this.events)}`).to.eql([]);
     }
 
     private async checkEvents(events: Array<EventObj>): Promise<void> {
