@@ -133,10 +133,10 @@ export class MemoryFileSystem implements FileSystemReadSync, FileSystem {
     }
 
     ensureDirectorySync(fullPath: string): Correlation {
-        return this._ensureDirectorySync(fullPath);
+        return this._ensureDirectorySync(fullPath, makeCorrelationId());
     }
 
-    private _ensureDirectorySync(fullPath: string, correlation: Correlation = makeCorrelationId()): Correlation {
+    private _ensureDirectorySync(fullPath: string, correlation: Correlation): Correlation {
         if (this.isIgnored(fullPath)) {
             throw new Error(`Unable to read and write ignored path: '${fullPath}'`);
         }
@@ -152,7 +152,7 @@ export class MemoryFileSystem implements FileSystemReadSync, FileSystem {
                 nodeName,
                 current.fullPath ? [current.fullPath, nodeName].join(pathSeparator) : nodeName,
             );
-            current.children.push(newDir)
+            current.children.push(newDir);
             this.events.emit('directoryCreated', {
                 type: 'directoryCreated',
                 fullPath: newDir.fullPath,

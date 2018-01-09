@@ -12,7 +12,8 @@ function proxy<T extends FileSystem>(Proxy: { new (fs: FileSystem): T }, externa
         const innerFs: any = new MemoryFileSystem(undefined, [ignoredDir, ignoredFile]);
         const proxy = new Proxy(innerFs);
         if (externalChanges) {
-            const hybrid = Object.create(proxy);
+            // create FS with the proxied events, but with actions that are applied directly on the inner FS
+            const hybrid = Object.create(innerFs);
             hybrid.events = proxy.events;
             return hybrid;
         }
@@ -20,7 +21,7 @@ function proxy<T extends FileSystem>(Proxy: { new (fs: FileSystem): T }, externa
     }
 }
 
-describe.only(`the no-feedback-events file system proxy`, () => {
+describe(`the no-feedback-events file system proxy`, () => {
     const eventMatcherOptions: EventsMatcher.Options = {
         retries: 15,
         interval: 2,
@@ -50,9 +51,6 @@ describe.only(`the no-feedback-events file system proxy`, () => {
 
         describe(`external changes`, () => {
             assertFileSystemContract(proxy(NoFeedbackEventsFileSystemSync, true), eventMatcherOptions);
-
-            assertFileSystemSyncContract(proxy(NoFeedbackEventsFileSystemSync, true), eventMatcherOptions);
-
         });
     });
 });

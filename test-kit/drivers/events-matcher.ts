@@ -40,7 +40,7 @@ export class EventsMatcher {
         }
 
         await delayedPromise(noExtraEventsGrace);
-        expect(this.events, 'no further events after matching').to.eql([]);
+        expect(this.events, `no further events after matching, but found:${JSON.stringify(this.events)}`).to.eql([]);
     }
 
     private async checkEvents(events: Array<EventObj>): Promise<void> {
