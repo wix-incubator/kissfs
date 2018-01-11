@@ -1,5 +1,5 @@
 import {expect} from "chai";
-import {Correlation, FileSystem, fileSystemEventNames, FileSystemReadSync, pathSeparator} from '../src/api';
+import {Correlation, FileSystem, fileSystemEventNames, FileSystemReadSync, Directory, DirectoryContent, pathSeparator} from '../src/universal';
 import {EventsMatcher} from '../test-kit/drivers/events-matcher';
 import {delayedPromise} from "../src/promise-utils";
 
@@ -434,6 +434,32 @@ export function assertFileSystemSyncContract(fsProvider: () => Promise<FileSyste
 
         it(`loadDirectoryChildrenSync on an illegal sub-path`, function () {
             return expect(() => fs.loadDirectoryChildrenSync(fileName)).to.throw(Error);
+        });
+
+        it(`loadDirectoryContentSync`, function () {
+            const expected = Directory.toContent({
+                fullPath: ``, name: '', type: 'dir', children: [
+                    {
+                        fullPath: `${dirName}`, name: dirName, type: 'dir', children: [
+                        {
+                            fullPath: `${dirName}/_${dirName}`, name: `_${dirName}`, type: 'dir', children: [
+                            {fullPath: `${dirName}/_${dirName}/${fileName}`, name: fileName, type: 'file', content}
+                        ]
+                        }]
+                    }]
+            });
+
+            return fs.saveFile(`${dirName}/_${dirName}/${fileName}`, content)
+                .then(() => {
+                    expect(fs.loadDirectoryContentSync()).to.eql(expected);
+                    expect(fs.loadDirectoryContentSync(dirName), `loadDirectoryContentSync('${dirName}')`).to.eql(expected[dirName]);
+                    expect(fs.loadDirectoryContentSync(`${dirName}/_${dirName}`), `loadDirectoryContentSync('${dirName}/_${dirName}')`).to.eql((expected[dirName] as DirectoryContent)['_' + dirName]);
+                })
+
+        });
+
+        it(`loadDirectoryTreeSync on an illegal sub-path`, function () {
+            return expect(() => fs.loadDirectoryTreeSync(fileName)).to.throw(Error);
         });
     });
 }

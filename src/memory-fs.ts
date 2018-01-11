@@ -1,28 +1,53 @@
-import {
-    Correlation,
-    Directory,
-    File,
-    FileSystem,
-    FileSystemReadSync,
-    isDir,
-    isFile,
-    pathSeparator,
-    ShallowDirectory
-} from "./api";
+import {Correlation, FileSystem, FileSystemReadSync,} from "./api";
+import {Directory, DirectoryContent, File, isDir, isFile, pathSeparator, ShallowDirectory} from "./model";
 
-import {getIsIgnored, getPathNodes, InternalEventsEmitter, makeCorrelationId, makeEventsEmitter} from "./utils";
+import {
+    getIsIgnored,
+    getPathNodes,
+    InternalEventsEmitter,
+    makeCorrelationId,
+    makeEventsEmitter,
+    normalizePathNodes
+} from "./utils";
 
 let id = 0;
 
+export interface MemoryFileSystemOptions {
+    ignore?: Array<string>;
+    content?: DirectoryContent;
+    model?: Directory;
+}
+
 export class MemoryFileSystem implements FileSystemReadSync, FileSystem {
+
+    static addContent(fs: MemoryFileSystem, content: DirectoryContent, path?: string) {
+        const model = fs.root;
+        const pathArr = path && getPathNodes(path);
+        if (path && pathArr && pathArr.length) {
+            fs.ensureDirectorySync(path);
+            let mixin = Directory.fromContent(content, pathArr[pathArr.length - 1], normalizePathNodes(pathArr.slice(0, pathArr.length - 1)));
+            Directory.mix(Directory.getSubDir(model, pathArr)!, mixin);
+        } else {
+            Directory.mix(model, Directory.fromContent(content));
+        }
+    }
+
     public readonly events: InternalEventsEmitter = makeEventsEmitter();
-    private readonly root = new Directory('', '');
+    private readonly root: Directory;
     private isIgnored: (path: string) => boolean = () => false;
 
-    constructor(public baseUrl = `memory-${id++}`, ignore?: Array<string>) {
+    constructor(public baseUrl = `memory-${id++}`, options?: MemoryFileSystemOptions) {
         this.baseUrl += '/';
-        if (ignore) {
-            this.isIgnored = getIsIgnored(ignore)
+        if (options && options.ignore) {
+            this.isIgnored = getIsIgnored(options.ignore)
+        }
+        if (options) {
+            if (options.model && options.content) {
+                throw new Error(`MemoryFileSystem can't accept both model and content options`);
+            }
+            this.root = options.model || Directory.fromContent(options.content || {});
+        } else {
+            this.root = Directory.fromContent({});
         }
     }
 
@@ -67,7 +92,7 @@ export class MemoryFileSystem implements FileSystemReadSync, FileSystem {
         const correlation = makeCorrelationId();
 
         this._ensureDirectorySync(pathArr.join(pathSeparator), correlation);
-        const parent = this.getPathTarget(pathArr);
+        const parent = Directory.getSubDir(this.root, pathArr);
         if (!parent) {
             // we get here if findNode couldn't resolve the parent and the node is not the root dir.
             // this should not happen after running ensureDirectory()
@@ -94,7 +119,7 @@ export class MemoryFileSystem implements FileSystemReadSync, FileSystem {
 
     deleteFileSync(fullPath: string): Correlation {
         const pathArr = getPathNodes(fullPath);
-        const parent = pathArr.length ? this.getPathTarget(pathArr.slice(0, pathArr.length - 1)) : null;
+        const parent = pathArr.length ? Directory.getSubDir(this.root, pathArr.slice(0, pathArr.length - 1)) : null;
         const correlation = makeCorrelationId();
         if (isDir(parent) && !this.isIgnored(fullPath)) {
             const node = parent.children.find(({name}) => name === pathArr[pathArr.length - 1]);
@@ -115,7 +140,7 @@ export class MemoryFileSystem implements FileSystemReadSync, FileSystem {
         }
         const correlation = makeCorrelationId();
 
-        const parent = this.getPathTarget(pathArr.slice(0, pathArr.length - 1));
+        const parent = Directory.getSubDir(this.root, pathArr.slice(0, pathArr.length - 1));
         if (isDir(parent) && !this.isIgnored(fullPath)) {
             const node = parent.children.find(({name}) => name === pathArr[pathArr.length - 1]);
             if (isFile(node)) {
@@ -134,6 +159,47 @@ export class MemoryFileSystem implements FileSystemReadSync, FileSystem {
 
     ensureDirectorySync(fullPath: string): Correlation {
         return this._ensureDirectorySync(fullPath, makeCorrelationId());
+    }
+
+    loadTextFileSync(fullPath: string): string {
+        if (this.isIgnored(fullPath)) {
+            throw new Error(`Unable to read ignored path: '${fullPath}'`);
+        }
+        const pathArr = getPathNodes(fullPath);
+        const parent = pathArr.length ? Directory.getSubDir(this.root, pathArr.slice(0, pathArr.length - 1)) : null;
+        if (isDir(parent)) {
+            const node = parent.children.find(({name}) => name === pathArr[pathArr.length - 1]);
+            if (isFile(node)) {
+                return node.content || '';
+            } else if (isDir(node)) {
+                throw new Error(`File is a directory ${fullPath}`);
+            }
+        }
+        throw new Error(`Cannot find file ${fullPath}`);
+    }
+
+    private getDir(fullPath: string) {
+        if (this.isIgnored(fullPath)) {
+            throw new Error(`Unable to read ignored path: '${fullPath}'`);
+        }
+        const dir = Directory.getSubDir(this.root, fullPath);
+        if (!dir) {
+            throw new Error(`Unable to read folder in path: '${fullPath}'`);
+        }
+        return dir;
+    }
+
+
+    loadDirectoryContentSync(fullPath: string = ''): DirectoryContent {
+        return Directory.toContent(this.getDir(fullPath));
+    }
+
+    loadDirectoryTreeSync(fullPath: string = ''): Directory {
+        return Directory.cloneStructure(this.getDir(fullPath));
+    }
+
+    loadDirectoryChildrenSync(fullPath: string): (File | ShallowDirectory)[] {
+        return this.getDir(fullPath).children.map(child => isDir(child) ? new ShallowDirectory(child.name, child.fullPath) : new File(child.name, child.fullPath));
     }
 
     private _ensureDirectorySync(fullPath: string, correlation: Correlation): Correlation {
@@ -161,73 +227,6 @@ export class MemoryFileSystem implements FileSystemReadSync, FileSystem {
             return newDir;
         }, this.root);
         return correlation;
-    }
-
-    loadTextFileSync(fullPath: string): string {
-        if (this.isIgnored(fullPath)) {
-            throw new Error(`Unable to read ignored path: '${fullPath}'`);
-        }
-        const pathArr = getPathNodes(fullPath);
-        const parent = pathArr.length ? this.getPathTarget(pathArr.slice(0, pathArr.length - 1)) : null;
-        if (isDir(parent)) {
-            const node = parent.children.find(({name}) => name === pathArr[pathArr.length - 1]);
-            if (isFile(node)) {
-                return node.content || '';
-            } else if (isDir(node)) {
-                throw new Error(`File is a directory ${fullPath}`);
-            }
-        }
-        throw new Error(`Cannot find file ${fullPath}`);
-    }
-
-    loadDirectoryTreeSync(fullPath: string = ''): Directory {
-        if (this.isIgnored(fullPath)) {
-            throw new Error(`Unable to read ignored path: '${fullPath}'`);
-        }
-        const pathArr = getPathNodes(fullPath);
-        const dir = pathArr.length ? this.getPathTarget(pathArr) : this.root;
-        if (!dir) {
-            throw new Error(`Unable to read folder in path: '${fullPath}'`);
-        }
-        return this.parseTree(dir)
-    }
-
-    loadDirectoryChildrenSync(fullPath: string): (File | ShallowDirectory)[] {
-        if (this.isIgnored(fullPath)) {
-            throw new Error(`Unable to read ignored path: '${fullPath}'`);
-        }
-        const pathArr = getPathNodes(fullPath);
-        const dir = pathArr.length ? this.getPathTarget(pathArr) : this.root;
-        if (!dir) {
-            throw new Error(`Unable to read folder in path: '${fullPath}'`);
-        }
-        return dir.children.map(child => isDir(child) ? new ShallowDirectory(child.name, child.fullPath) : new File(child.name, child.fullPath));
-    }
-
-    private getPathTarget(pathArr: string[]): Directory | null {
-        let current: Directory = this.root;
-        while (pathArr.length) {
-            const targetName = pathArr.shift();
-            if (targetName && current.children) {
-                const node = current.children.find(({name}) => name === targetName);
-                if (isDir(node)) {
-                    current = node;
-                } else {
-                    return null;
-                }
-            } else {
-                return null;
-            }
-        }
-        return current;
-    }
-
-    private parseTree(node: Directory): Directory {
-        return new Directory(
-            node.name,
-            node.fullPath,
-            node.children.map(child => isDir(child) ? this.parseTree(child) : new File(child.name, child.fullPath))
-        )
     }
 
     private recursiveEmitDeletion(node: Directory, correlation: Correlation) {

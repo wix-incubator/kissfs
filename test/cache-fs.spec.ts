@@ -1,4 +1,3 @@
-import {EventEmitter} from 'eventemitter3';
 import {InternalEventsEmitter} from '../src/utils';
 import {expect} from 'chai';
 import {EventsMatcher} from '../test-kit/drivers/events-matcher';
@@ -20,12 +19,12 @@ describe(`the cache file system proxy`, () => {
     const eventMatcherOptions: EventsMatcher.Options = {retries: 15, interval: 2, timeout: 40, noExtraEventsGrace: 10};
 
     assertFileSystemContract(
-        async () => new CacheFileSystem(new MemoryFileSystem(undefined, [ignoredDir, ignoredFile])),
+        async () => new CacheFileSystem(new MemoryFileSystem(undefined, {ignore: [ignoredDir, ignoredFile]})),
         eventMatcherOptions
     );
 
     assertFileSystemSyncContract(
-        async () => new CacheFileSystem(new MemoryFileSystem(undefined, [ignoredDir, ignoredFile])),
+        async () => new CacheFileSystem(new MemoryFileSystem(undefined, {ignore: [ignoredDir, ignoredFile]})),
         eventMatcherOptions
     );
 

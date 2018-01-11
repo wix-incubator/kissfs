@@ -1,7 +1,7 @@
 import {access, ensureDir, readdir, readFile, remove, rmdir, stat, writeFile} from 'fs-extra';
 import * as walk from 'klaw';
 import * as path from 'path';
-import {Directory, File, pathSeparator, ShallowDirectory} from './api';
+import {Directory, File, pathSeparator, ShallowDirectory} from './model';
 import {getIsIgnored, getPathNodes} from './utils';
 import {MemoryFileSystem} from './memory-fs';
 

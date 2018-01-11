@@ -1,6 +1,6 @@
 import {EventHandler, EventsManager} from "../src/events-manager";
 import {EventsMatcher} from "../test-kit/drivers/events-matcher";
-import {DirectoryCreatedEvent, FileDeletedEvent, fileSystemEventNames} from "../src/api";
+import {DirectoryCreatedEvent, FileDeletedEvent, fileSystemEventNames} from "../src/universal";
 import {delayedPromise} from "../src/promise-utils";
 import * as sinon from 'sinon';
 import {expect} from "chai";

@@ -1,15 +1,6 @@
-import {
-    Correlation,
-    Directory,
-    File,
-    FileSystem,
-    FileSystemNode,
-    isDir,
-    isDisposable,
-    isFile,
-    ShallowDirectory,
-    UnexpectedErrorEvent
-} from './api';
+import {Correlation, FileSystem, isDisposable, UnexpectedErrorEvent} from './api';
+import {Directory, DirectoryContent, File, FileSystemNode, isDir, isFile, ShallowDirectory} from "./model";
+
 import {MemoryFileSystem} from './memory-fs';
 import {InternalEventsEmitter, makeEventsEmitter} from './utils';
 import {FileSystemReadSync} from './browser';
@@ -186,6 +177,9 @@ export class CacheFileSystem implements FileSystemReadSync, FileSystem {
         return this.cache.loadDirectoryTreeSync(fullPath);
     }
 
+    loadDirectoryContentSync(fullPath: string = ''): DirectoryContent {
+        return this.cache.loadDirectoryContentSync(fullPath);
+    }
 
     async loadDirectoryChildren(fullPath: string): Promise<(File | ShallowDirectory)[]> {
         if (this.isTreeCached) {

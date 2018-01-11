@@ -1,56 +1,11 @@
-export const pathSeparator = '/';
-
-export interface FileSystemNode {
-    type: 'dir' | 'file';
-    name: string,
-    fullPath: string,
-}
-
-export class ShallowDirectory implements FileSystemNode {
-    public type: 'dir' = 'dir';
-
-    constructor(public name: string,
-                public fullPath: string,) {
-    }
-}
-
-export class Directory implements FileSystemNode {
-    public type: 'dir' = 'dir';
-
-    constructor(public name: string,
-                public fullPath: string,
-                public children: Array<File | Directory> = []) {
-    }
-}
-
-export class File implements FileSystemNode {
-    public type: 'file' = 'file';
-    public content?: string;
-
-    constructor(public name: string,
-                public fullPath: string,
-                content?: string) {
-        if (content) this.content = content;
-    }
-}
-
-export function isFile(node?: FileSystemNode | null): node is File {
-    if (!node) return false;
-    return node.type === 'file';
-}
-
-export function isDir(node?: FileSystemNode | null): node is Directory {
-    if (!node) return false;
-    return node.type === 'dir';
-}
-
+import {Directory, DirectoryContent, File, ShallowDirectory} from "./model";
 
 export interface FileSystemEvent {
     type: keyof Events;
     correlation?: Correlation;
 }
 
-export interface UnexpectedErrorEvent extends FileSystemEvent{
+export interface UnexpectedErrorEvent extends FileSystemEvent {
     type: 'unexpectedError';
     stack?: string;
 }
@@ -148,9 +103,12 @@ export interface FileSystem {
 
 
 export interface FileSystemReadSync extends FileSystem {
+
     loadTextFileSync(fullPath: string): string;
 
     loadDirectoryTreeSync(fullPath?: string): Directory;
+
+    loadDirectoryContentSync(fullPath?: string): DirectoryContent;
 
     loadDirectoryChildrenSync(fullPath: string): Array<File | ShallowDirectory>;
 }
