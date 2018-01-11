@@ -58,7 +58,12 @@ describe(`the in-memory implementation`, function () {
         it('adds content to an existing memory files system', async () => {
             const fs = new MemoryFileSystem('', {content: {"a.file": 'hello'}});
             MemoryFileSystem.addContent(fs, content.src, 'src');
-            expect(fs.loadDirectoryContentSync()).to.equal(content);
+            const newContent = fs.loadDirectoryContentSync();
+
+            // a trick to structural equality with no regards to ordering in arrays
+            // (a contains b && b contains a) === a equals b
+            expect(newContent).to.containSubset(content);
+            expect(content).to.containSubset(newContent);
         });
     });
 });

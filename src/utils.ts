@@ -1,7 +1,7 @@
 import {EventEmitter} from 'eventemitter3';
 import * as micromatch from 'micromatch';
 import {Correlation, EventEmitter as FSEvents} from './api';
-import {pathSeparator} from "./model";
+import {pathSeparator, ShallowDirectory, File} from "./model";
 
 const isGlob = require('is-glob');
 
@@ -12,6 +12,23 @@ export function getPathNodes(path: string): Array<string> {
 }
 export function normalizePathNodes(path: Array<string>): string {
     return path.filter(n => n.length).join(pathSeparator);
+}
+
+export function splitPathToDirAndFile(targetPath: string): { parentPath: string, name: string } {
+    let nameParentSeparator = targetPath.lastIndexOf(pathSeparator);
+    return {
+        parentPath: targetPath.substr(0, nameParentSeparator),
+        name: targetPath.substr(nameParentSeparator + 1)
+    };
+}
+
+export function checkExistsInDir(expectedType: 'file' | 'dir', dirContent: Array<ShallowDirectory | File>, name: string) {
+    for (let node of dirContent) {
+        if (node.type === expectedType && node.name === name) {
+            return true;
+        }
+    }
+    return false;
 }
 
 function extendMatchersWithGlob(paths: Array<string>): Array<string> {

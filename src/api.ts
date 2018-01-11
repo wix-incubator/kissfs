@@ -103,6 +103,7 @@ export interface FileSystem {
 
 
 export interface FileSystemReadSync extends FileSystem {
+
     loadTextFileSync(fullPath: string): string;
 
     loadDirectoryTreeSync(fullPath?: string): Directory;

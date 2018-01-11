@@ -1,4 +1,5 @@
 import './model.spec';
+import './user-utils.spec';
 import './memory-fs.spec';
 import '../test-kit/test/events-matcher.spec';
 import '../test-kit/test/slow-fs.spec';
