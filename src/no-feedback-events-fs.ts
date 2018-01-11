@@ -1,13 +1,5 @@
-import {
-    Correlation,
-    Directory,
-    EventEmitter,
-    File,
-    FileSystem,
-    fileSystemEventNames,
-    FileSystemReadSync,
-    ShallowDirectory
-} from "./api";
+import {Directory, DirectoryContent, File, ShallowDirectory} from "./model";
+import {Correlation, EventEmitter, FileSystem, fileSystemEventNames, FileSystemReadSync} from "./api";
 import {EventsManager} from "./events-manager";
 
 export type Options = {
@@ -16,11 +8,11 @@ export type Options = {
 };
 
 export class NoFeedbackEventsFileSystem implements FileSystem {
+    public baseUrl: string;
     private readonly eventsManager = new EventsManager({delay: this.options.delayEvents});
     public readonly events: EventEmitter = this.eventsManager.events;
     private readonly correlateOnce = new Set<Correlation>();
     private readonly correlateByWindow = new Set<Correlation>();
-    public baseUrl: string;
 
     constructor(private fs: FileSystem, private options: Options = {delayEvents: 1, correlationWindow: 10000}) {
         this.baseUrl = fs.baseUrl;
@@ -34,13 +26,6 @@ export class NoFeedbackEventsFileSystem implements FileSystem {
         });
         const emit = this.eventsManager.emit.bind(this.eventsManager);
         fileSystemEventNames.forEach(type => this.fs.events.on(type, emit));
-    }
-
-    protected registerCorrelation(correlation: Correlation, once: boolean) {
-        const targetSet = once ? this.correlateOnce : this.correlateByWindow;
-        targetSet.add(correlation);
-        setTimeout(() => targetSet.delete(correlation), this.options.correlationWindow);
-        return correlation;
     }
 
     async saveFile(fullPath: string, newContent: string): Promise<Correlation> {
@@ -70,6 +55,13 @@ export class NoFeedbackEventsFileSystem implements FileSystem {
     loadDirectoryChildren(fullPath: string): Promise<(File | ShallowDirectory)[]> {
         return this.fs.loadDirectoryChildren(fullPath);
     }
+
+    protected registerCorrelation(correlation: Correlation, once: boolean) {
+        const targetSet = once ? this.correlateOnce : this.correlateByWindow;
+        targetSet.add(correlation);
+        setTimeout(() => targetSet.delete(correlation), this.options.correlationWindow);
+        return correlation;
+    }
 }
 
 export class NoFeedbackEventsFileSystemSync extends NoFeedbackEventsFileSystem implements FileSystemReadSync {
@@ -88,5 +80,9 @@ export class NoFeedbackEventsFileSystemSync extends NoFeedbackEventsFileSystem i
 
     loadDirectoryChildrenSync(fullPath: string): (File | ShallowDirectory)[] {
         return this.syncFs.loadDirectoryChildrenSync(fullPath);
+    }
+
+    loadDirectoryContentSync(fullPath: string = ''): DirectoryContent {
+        return this.syncFs.loadDirectoryContentSync(fullPath);
     }
 }

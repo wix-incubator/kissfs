@@ -7,7 +7,7 @@ describe('the timeout file system proxy', () => {
     const timeout = 200;
 
     assertFileSystemContract(() =>
-            Promise.resolve(new TimeoutFileSystem(timeout, new MemoryFileSystem(undefined, [ignoredDir, ignoredFile]))),
+            Promise.resolve(new TimeoutFileSystem(timeout, new MemoryFileSystem(undefined, {ignore: [ignoredDir, ignoredFile]}))),
         {retries: 15, interval: 2, timeout: 40, noExtraEventsGrace: 10}
     );
 

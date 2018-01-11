@@ -1,4 +1,5 @@
-import {Correlation, Directory, EventEmitter, File, FileSystem, isDisposable, ShallowDirectory} from './api';
+import {Directory, File, ShallowDirectory} from './model';
+import {Correlation, EventEmitter, FileSystem, isDisposable} from './api';
 import {timeoutPromise} from './promise-utils';
 
 export class TimeoutFileSystem implements FileSystem {

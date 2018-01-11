@@ -11,7 +11,7 @@ describe(`the wamp client filesystem proxy`, () => {
     let wampServer: WampServer;
 
     function server(): Promise<WampServer> {
-        return wampServerOverFs(new MemoryFileSystem(undefined, [ignoredDir, ignoredFile]), 3000);
+        return wampServerOverFs(new MemoryFileSystem(undefined, {ignore: [ignoredDir, ignoredFile]}), 3000);
     }
 
     function getFS(): Promise<WampClientFileSystem> {

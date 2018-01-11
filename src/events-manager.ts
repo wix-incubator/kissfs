@@ -31,17 +31,6 @@ export class EventsManager {
         }
     }
 
-    private _emit(e: Events[keyof Events]) {
-        this.eventHandlers.forEach(handler => {
-            if (e && ~handler.types.indexOf(e.type) && handler.filter(e)) {
-                e = handler.apply(e);
-            }
-        });
-        if (e) {
-            (this.events as any).emit(e.type, e);
-        }
-    }
-
     addEventHandler<S extends keyof Events>(handler: EventHandler<S>, timeout?: number) {
         let _handler = handler as RegisteredEventHandler;
         if (timeout) {
@@ -53,5 +42,16 @@ export class EventsManager {
     removeEventHandler<S extends keyof Events>(handler: EventHandler<S>) {
         this.eventHandlers.delete(handler as RegisteredEventHandler);
         clearTimeout((handler as RegisteredEventHandler).timer);
+    }
+
+    private _emit(e: Events[keyof Events]) {
+        this.eventHandlers.forEach(handler => {
+            if (e && ~handler.types.indexOf(e.type) && handler.filter(e)) {
+                e = handler.apply(e);
+            }
+        });
+        if (e) {
+            (this.events as any).emit(e.type, e);
+        }
     }
 }
