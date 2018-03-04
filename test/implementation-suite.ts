@@ -32,17 +32,19 @@ export function assertFileSystemContract(fsProvider: () => Promise<FileSystem>, 
         });
 
         it(`loading a directory as a file - fails`, function () {
-            return fs.ensureDirectory(dirName)
+            return fs.ensureDirectory(dirName, 'dummyCorrelation')
                 .then(() => {
-                    return matcher.expect([{type: 'directoryCreated', fullPath: dirName}])
+                    return matcher.expect([{type: 'directoryCreated', fullPath: dirName, correlation:'dummyCorrelation'}])
                 })
                 .then(() => expect(fs.loadTextFile(dirName)).to.be.rejectedWith(Error))
                 .then(() => matcher.expect([]));
-        });
+            });
 
-        it(`saving an illegal file name - fails`, function () {
-            return expect(fs.saveFile('', content)).to.be.rejectedWith(Error)
-                .then(() => matcher.expect([]));
+            it(`saving an illegal file name - fails`, function () {
+                return expect(fs.saveFile('', content)).to.be.rejectedWith(Error)
+                .then(() => {
+                    return matcher.expect([])
+                });
         });
 
         it(`ensuring existence of directory`, function () {
@@ -51,8 +53,8 @@ export function assertFileSystemContract(fsProvider: () => Promise<FileSystem>, 
                     {type: 'dir', name: dirName, fullPath: dirName, children: []}
                 ]
             };
-            return fs.ensureDirectory(dirName)
-                .then(() => matcher.expect([{type: 'directoryCreated', fullPath: dirName}]))
+            return fs.ensureDirectory(dirName,'dummyCorrelation')
+                .then(() => matcher.expect([{type: 'directoryCreated', fullPath: dirName, correlation:'dummyCorrelation'}]))
                 .then(() => expect(fs.loadDirectoryTree()).to.become(expectedStructure))
                 .then(() => fs.ensureDirectory(dirName)) //2nd time does nothing
                 .then(() => expect(fs.loadDirectoryTree()).to.become(expectedStructure))

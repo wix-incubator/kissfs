@@ -95,34 +95,34 @@ export class LocalFileSystem implements FileSystem {
         this.watcher.close();
     }
 
-    async saveFile(fullPath: string, newContent: string): Promise<Correlation> {
-        const correlation = makeCorrelationId();
+    async saveFile(fullPath: string, newContent: string, correlation?:Correlation): Promise<Correlation> {
+        correlation = correlation || makeCorrelationId();
         await this.crud.saveFile(fullPath, newContent);
         this.registerCorrelator(['directoryCreated'], correlation, e => fullPath.startsWith(e.fullPath), false);
         this.registerCorrelator(['fileChanged', 'fileCreated'], correlation, e => e.fullPath === fullPath && e.newContent === newContent, true);
         return correlation;
     }
 
-    async deleteFile(fullPath: string): Promise<Correlation> {
-        const correlation = makeCorrelationId();
+    async deleteFile(fullPath: string, correlation?:Correlation): Promise<Correlation> {
+        correlation = correlation || makeCorrelationId();
         await this.crud.deleteFile(fullPath);
         this.registerCorrelator(['fileDeleted'], correlation, e => e.fullPath === fullPath, true);
         return correlation;
     }
 
-    async deleteDirectory(fullPath: string, recursive?: boolean): Promise<Correlation> {
-        const correlation = makeCorrelationId();
+    async deleteDirectory(fullPath: string, recursive?: boolean, correlation?:Correlation): Promise<Correlation> {
+        correlation = correlation || makeCorrelationId();
         await this.crud.deleteDirectory(fullPath, recursive);
         this.registerCorrelator(['directoryDeleted'], correlation, e => e.fullPath === fullPath, true);
         if (recursive) {
             const prefix = fullPath + pathSeparator;
             this.registerCorrelator(['directoryDeleted', 'fileDeleted'], correlation, e => e.fullPath.startsWith(prefix), false);
-        }
+        };
         return correlation;
     }
 
-    async ensureDirectory(fullPath: string): Promise<Correlation> {
-        const correlation = makeCorrelationId();
+    async ensureDirectory(fullPath: string, correlation?:Correlation): Promise<Correlation> {
+        correlation = correlation || makeCorrelationId();
         await this.crud.ensureDirectory(fullPath);
         this.registerCorrelator(['directoryCreated'], correlation, e => e.fullPath === fullPath, true);
         return correlation;

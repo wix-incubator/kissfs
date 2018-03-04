@@ -14,16 +14,16 @@ export class TimeoutFileSystem implements FileSystem {
         return this.fs.baseUrl;
     }
 
-    saveFile(fullPath: string, newContent: string): Promise<Correlation> {
-        return timeoutPromise(this.fs.saveFile(fullPath, newContent), this.timeout);
+    saveFile(fullPath: string, newContent: string, correlation?:Correlation):Promise<Correlation> {
+        return timeoutPromise(this.fs.saveFile(fullPath, newContent, correlation), this.timeout);
     }
 
-    deleteFile(fullPath: string): Promise<Correlation> {
-        return timeoutPromise(this.fs.deleteFile(fullPath), this.timeout);
+    deleteFile(fullPath: string, correlation?:Correlation):Promise<Correlation> {
+        return timeoutPromise(this.fs.deleteFile(fullPath, correlation), this.timeout);
     }
 
-    deleteDirectory(fullPath: string, recursive?: boolean): Promise<Correlation> {
-        return timeoutPromise(this.fs.deleteDirectory(fullPath, recursive), this.timeout);
+    deleteDirectory(fullPath: string, recursive?: boolean, correlation?:Correlation):Promise<Correlation> {
+        return timeoutPromise(this.fs.deleteDirectory(fullPath, recursive, correlation), this.timeout);
     }
 
     loadTextFile(fullPath: string): Promise<string> {
@@ -38,8 +38,8 @@ export class TimeoutFileSystem implements FileSystem {
         return timeoutPromise(this.fs.loadDirectoryChildren(fullPath), this.timeout);
     }
 
-    ensureDirectory(fullPath: string): Promise<Correlation> {
-        return timeoutPromise(this.fs.ensureDirectory(fullPath), this.timeout);
+    ensureDirectory(fullPath: string, correlation?:Correlation):Promise<Correlation> {
+        return timeoutPromise(this.fs.ensureDirectory(fullPath, correlation), this.timeout);
     }
 
     dispose() {

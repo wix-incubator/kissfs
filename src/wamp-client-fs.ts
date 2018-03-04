@@ -35,41 +35,41 @@ export class WampClientFileSystem implements FileSystem {
         }), initTimeout, `Cant't open connection to the WAMP server at ${baseUrl} for ${initTimeout}ms.`);
     }
 
-    async saveFile(fullPath: string, newContent: string): Promise<Correlation> {
+    async saveFile(fullPath: string, newContent: string, correlation?:Correlation):Promise<Correlation> {
         this.throwIfDisconnected();
 
         try {
-            return await this.session.call<Correlation>(`${this.realmPrefix}saveFile`, [fullPath, newContent]);
+            return await this.session.call<Correlation>(`${this.realmPrefix}saveFile`, [fullPath, newContent, correlation]);
         } catch (error) {
             throw new Error(error);
         }
     }
 
-    async deleteFile(fullPath: string): Promise<Correlation> {
+    async deleteFile(fullPath: string, correlation?:Correlation):Promise<Correlation> {
         this.throwIfDisconnected();
 
         try {
-            return await this.session.call<Correlation>(`${this.realmPrefix}deleteFile`, [fullPath]);
+            return await this.session.call<Correlation>(`${this.realmPrefix}deleteFile`, [fullPath, correlation]);
         } catch (error) {
             throw new Error(error);
         }
     }
 
-    async deleteDirectory(fullPath: string, recursive?: boolean): Promise<Correlation> {
+    async deleteDirectory(fullPath: string, recursive?: boolean, correlation?:Correlation):Promise<Correlation> {
         this.throwIfDisconnected();
 
         try {
-            return await this.session.call<Correlation>(`${this.realmPrefix}deleteDirectory`, [fullPath, recursive]);
+            return await this.session.call<Correlation>(`${this.realmPrefix}deleteDirectory`, [fullPath, recursive, correlation]);
         } catch (error) {
             throw new Error(error);
         }
     }
 
-    async ensureDirectory(fullPath: string): Promise<Correlation> {
+    async ensureDirectory(fullPath: string, correlation?:Correlation):Promise<Correlation> {
         this.throwIfDisconnected();
 
         try {
-            return await this.session.call<Correlation>(`${this.realmPrefix}ensureDirectory`, [fullPath]);
+            return await this.session.call<Correlation>(`${this.realmPrefix}ensureDirectory`, [fullPath, correlation]);
         } catch (error) {
             throw new Error(error);
         }
