@@ -55,3 +55,8 @@ export function makeEventsEmitter(): InternalEventsEmitter {
 export function makeCorrelationId(): Correlation {
     return (Math.random().toString(36) + '0000').substr(2, 4);
 }
+
+
+export function endsWith(str:string, maybeSuffix:string):boolean{
+    return str.lastIndexOf(maybeSuffix) === str.length - maybeSuffix.length;
+}

@@ -1,4 +1,4 @@
-import {getPathNodes, normalizePathNodes} from "./utils";
+import {getPathNodes, normalizePathNodes, endsWith} from "./utils";
 
 export const pathSeparator = '/';
 
@@ -74,9 +74,10 @@ export class Directory implements FileSystemNode {
     }
 
     static fromContent(content: DirectoryContent, name: string = '', location: string = ''): Directory {
+
         if (location === pathSeparator) {
             location = '';
-        } else if (location.length && !location.endsWith(pathSeparator)) {
+        } else if (location.length && !endsWith(location,pathSeparator)) {
             location = location + pathSeparator;
         }
         let path = location.length ? location + name : name;
