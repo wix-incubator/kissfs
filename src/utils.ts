@@ -58,5 +58,6 @@ export function makeCorrelationId(): Correlation {
 
 
 export function endsWith(str:string, maybeSuffix:string):boolean{
+
     return str.lastIndexOf(maybeSuffix) === str.length - maybeSuffix.length;
 }
