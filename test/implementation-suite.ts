@@ -9,7 +9,7 @@ export const fileName = 'bar.txt';
 export const content = 'content';
 export const ignoredDir = 'ignored';
 export const ignoredFile = `${dirName}${pathSeparator}ignored.txt`;
-
+const testCorrelation = 'test-correlation';
 export function assertFileSystemContract(fsProvider: () => Promise<FileSystem>, options: EventsMatcher.Options) {
     describe(`filesystem contract`, () => {
         let fs: FileSystem;
@@ -32,9 +32,9 @@ export function assertFileSystemContract(fsProvider: () => Promise<FileSystem>, 
         });
 
         it(`loading a directory as a file - fails`, function () {
-            return fs.ensureDirectory(dirName, 'dummyCorrelation')
-                .then(() => {
-                    return matcher.expect([{type: 'directoryCreated', fullPath: dirName, correlation:'dummyCorrelation'}])
+            return fs.ensureDirectory(dirName)
+                .then((correlation) => {
+                    return matcher.expect([{type: 'directoryCreated', fullPath: dirName, correlation}])
                 })
                 .then(() => expect(fs.loadTextFile(dirName)).to.be.rejectedWith(Error))
                 .then(() => matcher.expect([]));
@@ -53,17 +53,34 @@ export function assertFileSystemContract(fsProvider: () => Promise<FileSystem>, 
                     {type: 'dir', name: dirName, fullPath: dirName, children: []}
                 ]
             };
-            return fs.ensureDirectory(dirName,'dummyCorrelation')
-                .then(() => matcher.expect([{type: 'directoryCreated', fullPath: dirName, correlation:'dummyCorrelation'}]))
+            return fs.ensureDirectory(dirName)
+                .then((correlation) => matcher.expect([{type: 'directoryCreated', fullPath: dirName, correlation}]))
                 .then(() => expect(fs.loadDirectoryTree()).to.become(expectedStructure))
                 .then(() => fs.ensureDirectory(dirName)) //2nd time does nothing
                 .then(() => expect(fs.loadDirectoryTree()).to.become(expectedStructure))
                 .then(() => matcher.expect([]))
         });
 
+        it(`ensuring existence of directory (supplying correlation)`, function () {
+            const expectedStructure = {
+                type: 'dir', name: '', fullPath: '', children: [
+                    {type: 'dir', name: dirName, fullPath: dirName, children: []}
+                ]
+            };
+            return fs.ensureDirectory(dirName, testCorrelation)
+                .then(async (correlation) => {
+                    expect(correlation).to.equal(testCorrelation);
+                    await matcher.expect([{type: 'directoryCreated', fullPath: dirName, correlation}])
+                })
+                .then(() => expect(fs.loadDirectoryTree()).to.become(expectedStructure))
+                .then(() => fs.ensureDirectory(dirName)) //2nd time does nothing
+                .then(() => expect(fs.loadDirectoryTree()).to.become(expectedStructure))
+                .then(() => matcher.expect([]));
+        });
+
         it(`saving a file over a directory - fails`, function () {
             return fs.ensureDirectory(dirName)
-                .then(() => matcher.expect([{type: 'directoryCreated', fullPath: dirName}]))
+                .then((correlation) => matcher.expect([{type: 'directoryCreated', fullPath: dirName, correlation}]))
                 .then(() => expect(fs.saveFile(dirName, content)).to.be.rejectedWith(Error))
                 .then(() => expect(fs.loadDirectoryTree()).to.become({
                     type: 'dir', name: '', fullPath: '', children: [
@@ -76,7 +93,7 @@ export function assertFileSystemContract(fsProvider: () => Promise<FileSystem>, 
         it(`saving a file over a file in its path - fails`, function () {
             const fileNameAsDir = dirName;
             return fs.saveFile(fileNameAsDir, content)
-                .then(() => matcher.expect([{type: 'fileCreated', fullPath: fileNameAsDir, newContent: content}]))
+                .then((correlation) => matcher.expect([{type: 'fileCreated', fullPath: fileNameAsDir, newContent: content, correlation}]))
                 .then(() => expect(fs.saveFile(`${fileNameAsDir}/${fileName}`, '_${content}')).to.be.rejectedWith(Error))
                 .then(() => expect(fs.loadDirectoryTree()).to.become({
                     type: 'dir', name: '', fullPath: '', children: [
@@ -88,10 +105,11 @@ export function assertFileSystemContract(fsProvider: () => Promise<FileSystem>, 
 
         it(`saving a new file (and a new directory to hold it)`, function () {
             return fs.saveFile(`${dirName}/${fileName}`, content)
-                .then(() => matcher.expect([{type: 'directoryCreated', fullPath: dirName}, {
+                .then((correlation) => matcher.expect([{type: 'directoryCreated', fullPath: dirName, correlation}, {
                     type: 'fileCreated',
                     fullPath: `${dirName}/${fileName}`,
-                    newContent: content
+                    newContent: content,
+                    correlation
                 }]))
                 .then(() => expect(fs.loadDirectoryTree()).to.become({
                     type: 'dir', name: '', fullPath: '', children: [
@@ -106,10 +124,25 @@ export function assertFileSystemContract(fsProvider: () => Promise<FileSystem>, 
         it(`saving a file with different content`, function () {
             const newContent = `_${content}`;
             return fs.saveFile(fileName, content)
-                .then(() => matcher.expect([{type: 'fileCreated', fullPath: fileName, newContent: content}]))
+                .then((correlation) => matcher.expect([{type: 'fileCreated', fullPath: fileName, newContent: content, correlation}]))
                 .then(() => expect(fs.loadTextFile(fileName)).to.become(content))
                 .then(() => fs.saveFile(fileName, newContent))
-                .then(() => matcher.expect([{type: 'fileChanged', fullPath: fileName, newContent: newContent}]))
+                .then((correlation) => matcher.expect([{type: 'fileChanged', fullPath: fileName, newContent: newContent, correlation}]))
+                .then(() => expect(fs.loadTextFile(fileName)).to.become(newContent))
+                .then(() => matcher.expect([]));
+        });
+
+
+        it(`saving a file with different content (supplying correlation)`, function () {
+            const newContent = `_${content}`;
+            return fs.saveFile(fileName, content)
+                .then((correlation) => matcher.expect([{type: 'fileCreated', fullPath: fileName, newContent: content, correlation}]))
+                .then(() => expect(fs.loadTextFile(fileName)).to.become(content))
+                .then(() => fs.saveFile(fileName, newContent, testCorrelation))
+                .then((correlation) => {
+                    expect(correlation).to.equal(testCorrelation);
+                    return matcher.expect([{type: 'fileChanged', fullPath: fileName, newContent: newContent, correlation}])
+                })
                 .then(() => expect(fs.loadTextFile(fileName)).to.become(newContent))
                 .then(() => matcher.expect([]));
         });
@@ -122,7 +155,7 @@ export function assertFileSystemContract(fsProvider: () => Promise<FileSystem>, 
             };
 
             return fs.saveFile(fileName, content)
-                .then(() => matcher.expect([{type: 'fileCreated', fullPath: fileName, newContent: content}]))
+                .then((correlation) => matcher.expect([{type: 'fileCreated', fullPath: fileName, newContent: content, correlation}]))
                 .then(() => expect(fs.loadTextFile(fileName)).to.become(content))
                 .then(() => fs.saveFile(fileName, content)) // may or may not trigger an event
                 .then(() => expect(fs.loadDirectoryTree()).to.become(expectedStructure))
@@ -136,11 +169,33 @@ export function assertFileSystemContract(fsProvider: () => Promise<FileSystem>, 
 
         it(`deleting a directory`, function () {
             return fs.ensureDirectory(`${dirName}/_${dirName}`)
-                .then(() => matcher.expect([
-                    {type: 'directoryCreated', fullPath: dirName},
-                    {type: 'directoryCreated', fullPath: `${dirName}/_${dirName}`}]))
+                .then(async (correlation) =>{
+                     fs;
+                     await matcher.expect([
+                        {type: 'directoryCreated', fullPath: dirName, correlation},
+                        {type: 'directoryCreated', fullPath: `${dirName}/_${dirName}`, correlation}
+                    ])
+                })
                 .then(() => fs.deleteDirectory(`${dirName}/_${dirName}`))
-                .then(() => matcher.expect([{type: 'directoryDeleted', fullPath: `${dirName}/_${dirName}`}]))
+                .then(async (correlation) => {
+                    await matcher.expect([{type: 'directoryDeleted', fullPath: `${dirName}/_${dirName}`, correlation}])
+                })
+                .then(() => expect(fs.loadDirectoryTree()).to.eventually.have.property('children').eql([
+                    {children: [], fullPath: dirName, name: dirName, type: 'dir'}]))
+                .then(() => matcher.expect([]));
+        });
+
+
+        it(`deleting a directory (supplying correlation)`, function () {
+            return fs.ensureDirectory(`${dirName}/_${dirName}`)
+                .then((correlation) => matcher.expect([
+                    {type: 'directoryCreated', fullPath: dirName, correlation},
+                    {type: 'directoryCreated', fullPath: `${dirName}/_${dirName}`, correlation}]))
+                .then(() => fs.deleteDirectory(`${dirName}/_${dirName}`, false, testCorrelation))
+                .then((correlation) => {
+                    expect(correlation).to.equal(testCorrelation);
+                    return matcher.expect([{type: 'directoryDeleted', fullPath: `${dirName}/_${dirName}`, correlation}])
+                })
                 .then(() => expect(fs.loadDirectoryTree()).to.eventually.have.property('children').eql([
                     {children: [], fullPath: dirName, name: dirName, type: 'dir'}]))
                 .then(() => matcher.expect([]));
@@ -154,17 +209,17 @@ export function assertFileSystemContract(fsProvider: () => Promise<FileSystem>, 
 
         it(`deleting directory which is actually a file - fails`, function () {
             return fs.saveFile(fileName, content)
-                .then(() => matcher.expect([{type: 'fileCreated', fullPath: fileName, newContent: content}]))
+                .then((correlation) => matcher.expect([{type: 'fileCreated', fullPath: fileName, newContent: content, correlation}]))
                 .then(() => expect(fs.deleteDirectory(fileName)).to.be.rejectedWith(Error))
                 .then(() => matcher.expect([]));
         });
 
         it(`deleting non-empty directory without recursive flag - fails`, function () {
             return fs.saveFile(`${dirName}/_${dirName}/${fileName}`, content)
-                .then(() => matcher.expect([
-                    {type: 'directoryCreated', fullPath: dirName},
-                    {type: 'directoryCreated', fullPath: `${dirName}/_${dirName}`},
-                    {type: 'fileCreated', fullPath: `${dirName}/_${dirName}/${fileName}`, newContent: content}]))
+                .then((correlation) => matcher.expect([
+                    {type: 'directoryCreated', fullPath: dirName, correlation},
+                    {type: 'directoryCreated', fullPath: `${dirName}/_${dirName}`, correlation},
+                    {type: 'fileCreated', fullPath: `${dirName}/_${dirName}/${fileName}`, newContent: content, correlation}]))
                 .then(() => expect(fs.deleteDirectory(`${dirName}/_${dirName}`)).to.be.rejectedWith(Error))
                 .then(() => matcher.expect([]));
         });
@@ -172,14 +227,14 @@ export function assertFileSystemContract(fsProvider: () => Promise<FileSystem>, 
         it(`deleting non-empty directory with recursive flag`, function () {
             const filePath = `${dirName}/_${dirName}/${fileName}`;
             return fs.saveFile(filePath, content)
-                .then(() => matcher.expect([
-                    {type: 'directoryCreated', fullPath: dirName},
-                    {type: 'directoryCreated', fullPath: `${dirName}/_${dirName}`},
-                    {type: 'fileCreated', fullPath: filePath, newContent: content}]))
+                .then((correlation) => matcher.expect([
+                    {type: 'directoryCreated', fullPath: dirName, correlation},
+                    {type: 'directoryCreated', fullPath: `${dirName}/_${dirName}`, correlation},
+                    {type: 'fileCreated', fullPath: filePath, newContent: content, correlation}]))
                 .then(() => fs.deleteDirectory(dirName, true))
-                .then(() => matcher.expect([
-                    {type: 'directoryDeleted', fullPath: dirName},
-                    {type: 'fileDeleted', fullPath: filePath}
+                .then((correlation) => matcher.expect([
+                    {type: 'directoryDeleted', fullPath: dirName, correlation},
+                    {type: 'fileDeleted', fullPath: filePath, correlation}
                 ]))
                 .then(() => expect(fs.loadDirectoryTree()).to.eventually.have.property('children').eql([]))
                 .then(() => matcher.expect([]));
@@ -188,22 +243,23 @@ export function assertFileSystemContract(fsProvider: () => Promise<FileSystem>, 
         it(`deleting file which is actually a directory - fails`, function () {
             const dirNameAsFileName = fileName;
             return fs.ensureDirectory(dirNameAsFileName)
-                .then(() => matcher.expect([{type: 'directoryCreated', fullPath: dirNameAsFileName}]))
+                .then((correlation) => matcher.expect([{type: 'directoryCreated', fullPath: dirNameAsFileName, correlation}]))
                 .then(() => expect(fs.deleteFile(dirNameAsFileName)).to.be.rejectedWith(Error))
                 .then(() => matcher.expect([]));
         });
 
         it(`deleting only one file`, function () {
             return fs.saveFile(fileName, content)
-                .then(() => matcher.expect([{type: 'fileCreated', fullPath: fileName, newContent: content}]))
+                .then((correlation) => matcher.expect([{type: 'fileCreated', fullPath: fileName, newContent: content, correlation}]))
                 .then(() => fs.saveFile(`_${fileName}`, `_${content}`))
-                .then(() => matcher.expect([{
+                .then((correlation) => matcher.expect([{
                     type: 'fileCreated',
                     fullPath: `_${fileName}`,
-                    newContent: `_${content}`
+                    newContent: `_${content}`,
+                    correlation
                 }]))
                 .then(() => fs.deleteFile(`_${fileName}`))
-                .then(() => matcher.expect([{type: 'fileDeleted', fullPath: `_${fileName}`}]))
+                .then((correlation) => matcher.expect([{type: 'fileDeleted', fullPath: `_${fileName}`, correlation}]))
                 .then(() => expect(fs.loadDirectoryTree()).to.eventually.have.property('children').eql([{
                     fullPath: fileName,
                     name: fileName,
@@ -381,8 +437,8 @@ export function assertFileSystemSyncContract(fsProvider: () => Promise<FileSyste
 
         it(`loading a directory as a file - fails`, function () {
             return fs.ensureDirectory(dirName)
-                .then(() => {
-                    return matcher.expect([{type: 'directoryCreated', fullPath: dirName}])
+                .then((correlation) => {
+                    return matcher.expect([{type: 'directoryCreated', fullPath: dirName, correlation}])
                 })
                 .then(() => expect(() => fs.loadTextFileSync(dirName)).to.throw(Error))
                 .then(() => matcher.expect([]));

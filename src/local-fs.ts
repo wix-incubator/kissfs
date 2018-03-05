@@ -9,6 +9,7 @@ import {EventHandler, EventsManager} from "./events-manager";
 
 export type Options = RetryPromiseOptions & {
     correlationWindow: number;
+    eventBufferMs: number;
 };
 
 export class LocalFileSystem implements FileSystem {
@@ -22,7 +23,8 @@ export class LocalFileSystem implements FileSystem {
                 private options: Options = {
                     interval: 100,
                     retries: 3,
-                    correlationWindow: 10000
+                    correlationWindow: 10000,
+                    eventBufferMs: 10
                 }) {
         this.crud = new LocalFileSystemCrudOnly(baseUrl, ignore);
     }
@@ -95,36 +97,39 @@ export class LocalFileSystem implements FileSystem {
         this.watcher.close();
     }
 
+
     async saveFile(fullPath: string, newContent: string, correlation?:Correlation): Promise<Correlation> {
         correlation = correlation || makeCorrelationId();
-        await this.crud.saveFile(fullPath, newContent);
-        this.registerCorrelator(['directoryCreated'], correlation, e => fullPath.startsWith(e.fullPath), false);
+        this.registerCorrelationForPathsInDir(fullPath, correlation, 'directoryCreated')
         this.registerCorrelator(['fileChanged', 'fileCreated'], correlation, e => e.fullPath === fullPath && e.newContent === newContent, true);
+        await this.crud.saveFile(fullPath, newContent);
         return correlation;
     }
 
     async deleteFile(fullPath: string, correlation?:Correlation): Promise<Correlation> {
         correlation = correlation || makeCorrelationId();
-        await this.crud.deleteFile(fullPath);
         this.registerCorrelator(['fileDeleted'], correlation, e => e.fullPath === fullPath, true);
+        await this.crud.deleteFile(fullPath);
         return correlation;
     }
 
     async deleteDirectory(fullPath: string, recursive?: boolean, correlation?:Correlation): Promise<Correlation> {
         correlation = correlation || makeCorrelationId();
-        await this.crud.deleteDirectory(fullPath, recursive);
         this.registerCorrelator(['directoryDeleted'], correlation, e => e.fullPath === fullPath, true);
         if (recursive) {
             const prefix = fullPath + pathSeparator;
             this.registerCorrelator(['directoryDeleted', 'fileDeleted'], correlation, e => e.fullPath.startsWith(prefix), false);
         };
+        await this.crud.deleteDirectory(fullPath, recursive);
+
         return correlation;
     }
 
     async ensureDirectory(fullPath: string, correlation?:Correlation): Promise<Correlation> {
         correlation = correlation || makeCorrelationId();
+        this.registerCorrelationForPathsInDir(fullPath, correlation, 'directoryCreated')
+        // this.registerCorrelator(['directoryCreated'], correlation, e => fullPath.startsWith(e.fullPath), true);
         await this.crud.ensureDirectory(fullPath);
-        this.registerCorrelator(['directoryCreated'], correlation, e => e.fullPath === fullPath, true);
         return correlation;
     }
 
@@ -140,11 +145,38 @@ export class LocalFileSystem implements FileSystem {
         return this.crud.loadDirectoryChildren(fullPath);
     }
 
+    registerCorrelationForPathsInDir(fullPath:string, correlation:Correlation, eventname:keyof Events){
+        const suspectedNewDirs = fullPath.split('/');
+        let currentDirPath = '';
+        suspectedNewDirs.forEach(dirName=>{
+            currentDirPath += dirName;
+            let dirPath = currentDirPath;
+            this.registerCorrelator([eventname], correlation, e => {
+                return dirPath===(e as any).fullPath
+            }, true);
+            currentDirPath += '/';
+        })
+    }
+
     private registerCorrelator<S extends keyof Events>(types: S[], correlation: Correlation, filter: (e: Events[S]) => boolean, single: boolean) {
+        let timeout:NodeJS.Timer;
         const correlator: EventHandler<S> = {
             types,
             filter,
             apply: (e: Events[S]) => {
+                if(this.options.eventBufferMs && !e.correlation && single){
+                    if(timeout){
+                        clearTimeout(timeout)
+                    }
+                    timeout = setTimeout(()=>{
+                        e.correlation = correlation;
+                        if (single) {
+                            this.eventsManager.removeEventHandler(correlator);
+                        }
+                        this.eventsManager.emit(e);
+                    },this.options.eventBufferMs)
+                    return undefined;
+                }
                 e.correlation = correlation;
                 if (single) {
                     this.eventsManager.removeEventHandler(correlator);
