@@ -29,26 +29,22 @@ export class NoFeedbackEventsFileSystem implements FileSystem {
         fileSystemEventNames.forEach(type => this.fs.events.on(type, emit));
     }
 
-    async saveFile(fullPath: string, newContent: string, correlation?:Correlation):Promise<Correlation> {
-        correlation = correlation || makeCorrelationId();
+    async saveFile(fullPath: string, newContent: string, correlation:Correlation = makeCorrelationId()):Promise<Correlation> {
         this.registerCorrelation(correlation, false);
         return await this.fs.saveFile(fullPath, newContent,correlation);
     }
 
-    async deleteFile(fullPath: string, correlation:Correlation): Promise<Correlation> {
-        correlation = correlation || makeCorrelationId();
+    async deleteFile(fullPath: string, correlation:Correlation = makeCorrelationId()): Promise<Correlation> {
         this.registerCorrelation(correlation, true);
         return await this.fs.deleteFile(fullPath, correlation);
     }
 
-    async deleteDirectory(fullPath: string, recursive?: boolean, correlation?:Correlation): Promise<Correlation> {
-        correlation = correlation || makeCorrelationId();
+    async deleteDirectory(fullPath: string, recursive?: boolean, correlation:Correlation = makeCorrelationId()): Promise<Correlation> {
         this.registerCorrelation(correlation, !recursive);
         return await this.fs.deleteDirectory(fullPath, recursive, correlation);
     }
 
-    async ensureDirectory(fullPath: string, correlation?:Correlation): Promise<Correlation> {
-        correlation = correlation || makeCorrelationId();
+    async ensureDirectory(fullPath: string, correlation:Correlation = makeCorrelationId()): Promise<Correlation> {
         this.registerCorrelation(correlation, false);
         return await this.fs.ensureDirectory(fullPath, correlation);
     }

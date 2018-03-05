@@ -1,6 +1,6 @@
 import {Connection, Session} from 'autobahn';
 import {Correlation, FileSystem, fileSystemEventNames} from './api';
-import {InternalEventsEmitter, makeEventsEmitter} from "./utils";
+import {InternalEventsEmitter, makeEventsEmitter, makeCorrelationId} from "./utils";
 import {timeoutPromise} from './promise-utils';
 import {Directory, File, ShallowDirectory} from "./model";
 
@@ -35,7 +35,7 @@ export class WampClientFileSystem implements FileSystem {
         }), initTimeout, `Cant't open connection to the WAMP server at ${baseUrl} for ${initTimeout}ms.`);
     }
 
-    async saveFile(fullPath: string, newContent: string, correlation?:Correlation):Promise<Correlation> {
+    async saveFile(fullPath: string, newContent: string, correlation:Correlation = makeCorrelationId()):Promise<Correlation> {
         this.throwIfDisconnected();
 
         try {
@@ -45,7 +45,7 @@ export class WampClientFileSystem implements FileSystem {
         }
     }
 
-    async deleteFile(fullPath: string, correlation?:Correlation):Promise<Correlation> {
+    async deleteFile(fullPath: string, correlation:Correlation = makeCorrelationId()):Promise<Correlation> {
         this.throwIfDisconnected();
 
         try {
@@ -55,7 +55,7 @@ export class WampClientFileSystem implements FileSystem {
         }
     }
 
-    async deleteDirectory(fullPath: string, recursive?: boolean, correlation?:Correlation):Promise<Correlation> {
+    async deleteDirectory(fullPath: string, recursive?: boolean, correlation:Correlation = makeCorrelationId()):Promise<Correlation> {
         this.throwIfDisconnected();
 
         try {
@@ -65,7 +65,7 @@ export class WampClientFileSystem implements FileSystem {
         }
     }
 
-    async ensureDirectory(fullPath: string, correlation?:Correlation):Promise<Correlation> {
+    async ensureDirectory(fullPath: string, correlation:Correlation = makeCorrelationId()):Promise<Correlation> {
         this.throwIfDisconnected();
 
         try {

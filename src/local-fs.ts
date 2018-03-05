@@ -98,23 +98,20 @@ export class LocalFileSystem implements FileSystem {
     }
 
 
-    async saveFile(fullPath: string, newContent: string, correlation?:Correlation): Promise<Correlation> {
-        correlation = correlation || makeCorrelationId();
+    async saveFile(fullPath: string, newContent: string, correlation:Correlation = makeCorrelationId()): Promise<Correlation> {
         this.registerCorrelationForPathsInDir(fullPath, correlation, 'directoryCreated')
         this.registerCorrelator(['fileChanged', 'fileCreated'], correlation, e => e.fullPath === fullPath && e.newContent === newContent, true);
         await this.crud.saveFile(fullPath, newContent);
         return correlation;
     }
 
-    async deleteFile(fullPath: string, correlation?:Correlation): Promise<Correlation> {
-        correlation = correlation || makeCorrelationId();
+    async deleteFile(fullPath: string, correlation:Correlation = makeCorrelationId()): Promise<Correlation> {
         this.registerCorrelator(['fileDeleted'], correlation, e => e.fullPath === fullPath, true);
         await this.crud.deleteFile(fullPath);
         return correlation;
     }
 
-    async deleteDirectory(fullPath: string, recursive?: boolean, correlation?:Correlation): Promise<Correlation> {
-        correlation = correlation || makeCorrelationId();
+    async deleteDirectory(fullPath: string, recursive?: boolean, correlation:Correlation = makeCorrelationId()): Promise<Correlation> {
         this.registerCorrelator(['directoryDeleted'], correlation, e => e.fullPath === fullPath, true);
         if (recursive) {
             const prefix = fullPath + pathSeparator;
@@ -125,8 +122,7 @@ export class LocalFileSystem implements FileSystem {
         return correlation;
     }
 
-    async ensureDirectory(fullPath: string, correlation?:Correlation): Promise<Correlation> {
-        correlation = correlation || makeCorrelationId();
+    async ensureDirectory(fullPath: string, correlation:Correlation = makeCorrelationId()): Promise<Correlation> {
         this.registerCorrelationForPathsInDir(fullPath, correlation, 'directoryCreated')
         // this.registerCorrelator(['directoryCreated'], correlation, e => fullPath.startsWith(e.fullPath), true);
         await this.crud.ensureDirectory(fullPath);
