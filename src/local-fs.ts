@@ -18,15 +18,42 @@ export class LocalFileSystem implements FileSystem {
     private crud: LocalFileSystemCrudOnly;
     private watcher: FSWatcher;
 
+    private emptyFileTimers:{[filePath:string]:NodeJS.Timer} = {};
     constructor(public baseUrl: string,
                 ignore?: Array<string>,
                 private options: Options = {
                     interval: 100,
                     retries: 3,
-                    correlationWindow: 10000,
-                    eventBufferMs: 10
+                    correlationWindow: 200,
+                    eventBufferMs: 150
                 }) {
         this.crud = new LocalFileSystemCrudOnly(baseUrl, ignore);
+        //remove empty file change events
+        this.eventsManager.addEventHandler({
+            types:['fileChanged'],
+            apply:(ev)=>{
+                if(this.emptyFileTimers[ev.fullPath]){
+                    clearTimeout(this.emptyFileTimers[ev.fullPath]);
+                }
+
+                if(ev.correlation){
+                    return ev;
+                }
+
+                if(ev.newContent===''){
+                    ev.correlation = makeCorrelationId() + '_generatedForEmpty';
+                    this.emptyFileTimers[ev.fullPath] = setTimeout(async ()=>{
+                        const actualContent = await this.crud.loadTextFile(ev.fullPath);
+                        if(actualContent===''){
+                            this.eventsManager.emit(ev);
+                        }
+                    },this.options.eventBufferMs)
+                    return undefined
+                }
+                return ev;
+            },
+            filter:()=>true
+        })
     }
 
     init(): Promise<LocalFileSystem> {
@@ -39,6 +66,7 @@ export class LocalFileSystem implements FileSystem {
         });
 
         this.watcher.on('error', err => console.log('Error in LocalFileSystem watch', err));
+
 
         return new Promise<LocalFileSystem>(resolve => {
             this.watcher.once('ready', () => {
@@ -100,7 +128,7 @@ export class LocalFileSystem implements FileSystem {
 
     async saveFile(fullPath: string, newContent: string, correlation:Correlation = makeCorrelationId()): Promise<Correlation> {
         this.registerCorrelationForPathsInDir(fullPath, correlation, 'directoryCreated')
-        this.registerCorrelator(['fileChanged', 'fileCreated'], correlation, e => e.fullPath === fullPath && e.newContent === newContent, true);
+        this.registerCorrelator(['fileChanged', 'fileCreated'], correlation, e => e.fullPath === fullPath && (e.newContent === newContent), true);
         await this.crud.saveFile(fullPath, newContent);
         return correlation;
     }
