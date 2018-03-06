@@ -216,7 +216,7 @@ describe(`the local filesystem implementation`, () => {
 
 
 
-                const fullText = 'abcefghijklmabcefghijklmabcefghijklmabcefghijklmabcefghijklmabcefghijklmabcefghijklmabcefghijklm';
+                const fullText = 'abcefghijklmabcefghijklmabcefghijklmabcefghijkl';
                 for(var i=1;i<fullText.length;i++){
                     await delayedPromise(1)
                     noFeed.saveFile(fileName,fullText.slice(i));
