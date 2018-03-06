@@ -124,7 +124,6 @@ export class LocalFileSystem implements FileSystem {
 
     async ensureDirectory(fullPath: string, correlation:Correlation = makeCorrelationId()): Promise<Correlation> {
         this.registerCorrelationForPathsInDir(fullPath, correlation, 'directoryCreated')
-        // this.registerCorrelator(['directoryCreated'], correlation, e => fullPath.startsWith(e.fullPath), true);
         await this.crud.ensureDirectory(fullPath);
         return correlation;
     }
