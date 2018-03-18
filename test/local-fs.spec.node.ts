@@ -197,12 +197,13 @@ describe(`the local filesystem implementation`, () => {
             });
             it('should not provide feedback when bombarding changes (with nofeedbackFS)', async () => {
                 const path = join(testPath, fileName);
-                const newContent = `_${content}`;
                 writeFileSync(path, content);
                 await matcher.expect([{type: 'fileCreated', fullPath: fileName, newContent: content}]);
 
+                // this is a magical fix for test flakyness. let the underlying FS calm before bombarding with changes.
+                await delayedPromise(100);
 
-                const noFeed = new NoFeedbackEventsFileSystem(fs, {delayEvents: 0, correlationWindow: 1000});
+                const noFeed = new NoFeedbackEventsFileSystem(fs, {delayEvents: 1, correlationWindow: 10000});
                 let nofeedMatcher: EventsMatcher;
                 nofeedMatcher = new EventsMatcher({
                     alwaysExpectEmpty: true,
