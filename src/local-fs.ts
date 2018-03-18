@@ -15,7 +15,7 @@ export class LocalFileSystem implements FileSystem {
     private readonly eventsManager = new EventsManager();
     public readonly events: EventEmitter = this.eventsManager.events;
     private crud: LocalFileSystemCrudOnly;
-    private watcher: FSWatcher;
+    private watcher?: FSWatcher;
 
     constructor(public baseUrl: string,
                 ignore?: Array<string>,
@@ -28,7 +28,7 @@ export class LocalFileSystem implements FileSystem {
     }
 
     init(): Promise<LocalFileSystem> {
-        this.watcher = watch([this.baseUrl], {
+        const watcher = this.watcher = watch([this.baseUrl], {
             //  usePolling:true,
             //  interval:100,
             ignored: (path: string) => this.crud.isIgnored(path),
@@ -36,12 +36,12 @@ export class LocalFileSystem implements FileSystem {
             cwd: this.baseUrl
         });
 
-        this.watcher.on('error', err => console.log('Error in LocalFileSystem watch', err));
+        watcher.on('error', err => console.log('Error in LocalFileSystem watch', err));
 
         return new Promise<LocalFileSystem>(resolve => {
-            this.watcher.once('ready', () => {
+            watcher.once('ready', () => {
 
-                this.watcher.on('addDir', (relPath: string) => {
+                watcher.on('addDir', (relPath: string) => {
                     if (relPath) { // ignore event of root folder creation
                         this.eventsManager.emit({
                             type: 'directoryCreated',
@@ -50,7 +50,7 @@ export class LocalFileSystem implements FileSystem {
                     }
                 });
 
-                this.watcher.on('add', (relPath: string) => {
+                watcher.on('add', (relPath: string) => {
                     retryPromise(
                         () => this.loadTextFile(relPath)
                             .then(content => this.eventsManager.emit({
@@ -62,7 +62,7 @@ export class LocalFileSystem implements FileSystem {
                     ).catch(() => this.eventsManager.emit({type: 'unexpectedError'}));
                 });
 
-                this.watcher.on('change', (relPath: string) => {
+                watcher.on('change', (relPath: string) => {
                     retryPromise(
                         () => this.loadTextFile(relPath)
                             .then((content) => this.eventsManager.emit({
@@ -74,13 +74,13 @@ export class LocalFileSystem implements FileSystem {
                     ).catch(() => this.eventsManager.emit({type: 'unexpectedError'}));
                 });
 
-                this.watcher.on('unlinkDir', (relPath: string) =>
+                watcher.on('unlinkDir', (relPath: string) =>
                     this.eventsManager.emit({
                         type: 'directoryDeleted',
                         fullPath: relPath.split(path.sep).join(pathSeparator)
                     }));
 
-                this.watcher.on('unlink', (relPath: string) =>
+                watcher.on('unlink', (relPath: string) =>
                     this.eventsManager.emit({
                         type: 'fileDeleted',
                         fullPath: relPath.split(path.sep).join(pathSeparator)
@@ -92,7 +92,7 @@ export class LocalFileSystem implements FileSystem {
     }
 
     dispose() {
-        this.watcher.close();
+        this.watcher && this.watcher.close();
     }
 
     async saveFile(fullPath: string, newContent: string): Promise<Correlation> {

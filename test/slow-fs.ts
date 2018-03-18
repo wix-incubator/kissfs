@@ -8,7 +8,7 @@ import {Directory, File, ShallowDirectory} from "../src/model";
 
 export class SlowFs implements FileSystem {
     public readonly events: InternalEventsEmitter;
-    public baseUrl: string;
+    public baseUrl: string = 'slow';
     private fs: FileSystem;
 
     constructor(private delay: number) {
