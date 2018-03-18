@@ -1,7 +1,7 @@
 import {InternalEventsEmitter} from '../src/utils';
 import {expect} from 'chai';
-import {EventsMatcher} from '../test-kit/drivers/events-matcher';
-import {SlowFs} from '../test-kit/drivers/slow-fs';
+import {EventsMatcher} from './events-matcher';
+import {SlowFs} from './slow-fs';
 
 import {CacheFileSystem, FileSystem, fileSystemEventNames, MemoryFileSystem} from '../src/universal';
 

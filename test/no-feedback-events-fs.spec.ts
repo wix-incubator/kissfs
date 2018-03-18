@@ -1,8 +1,14 @@
-import {EventsMatcher} from '../test-kit/drivers/events-matcher';
-import {MemoryFileSystem, FileSystem, NoFeedbackEventsFileSystem, NoFeedbackEventsFileSystemSync} from '../src/universal';
+import {EventsMatcher} from './events-matcher';
+import {
+    FileSystem,
+    MemoryFileSystem,
+    NoFeedbackEventsFileSystem,
+    NoFeedbackEventsFileSystemSync
+} from '../src/universal';
 import {assertFileSystemContract, assertFileSystemSyncContract, ignoredDir, ignoredFile} from './implementation-suite';
+import {FileSystemReadSync} from "../src/api";
 
-function proxy<T extends FileSystem>(Proxy: { new (fs: FileSystem): T }, externalChanges: boolean): () => Promise<T> {
+function proxy<T extends FileSystem>(Proxy: { new (fs: FileSystemReadSync): T }, externalChanges: boolean): () => Promise<T> {
     return async () => {
         const innerFs: any = new MemoryFileSystem(undefined, {ignore: [ignoredDir, ignoredFile]});
         const proxy = new Proxy(innerFs);

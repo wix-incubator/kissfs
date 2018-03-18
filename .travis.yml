@@ -1,21 +1,13 @@
 dist: trusty
+sudo: required
 language: node_js
 
 node_js:
+  - "9"
   - "8"
-  - "6"
 
 os:
   - linux
-#  - osx
 
-addons:
-  firefox: latest
-  chrome: stable
-
-before_script:
-  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then export DISPLAY=:99.0; fi
-  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sh -e /etc/init.d/xvfb start; fi
-
-cache:
-  yarn: true
+before_install:
+  - sudo sysctl fs.inotify.max_user_watches=524288
