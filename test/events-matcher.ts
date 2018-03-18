@@ -1,6 +1,6 @@
 import {expect} from 'chai';
-import {EventEmitter, Events} from "../../src/api";
-import {delayedPromise, retryPromise} from '../../src/promise-utils';
+import {EventEmitter, Events} from "../src/api";
+import {delayedPromise, retryPromise} from '../src/promise-utils';
 
 export interface EventObj {
     type: string;
@@ -14,7 +14,7 @@ export namespace EventsMatcher {
         interval: number;
         noExtraEventsGrace: number;
         timeout?: number;
-        alwaysExpectEmpty?:boolean;
+        alwaysExpectEmpty?: boolean;
     };
 }
 

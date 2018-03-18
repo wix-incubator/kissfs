@@ -1,18 +1,18 @@
-import {Correlation, FileSystem, isDisposable} from "../../src/api";
+import {Correlation, FileSystem, isDisposable} from "../src/api";
 
-import {MemoryFileSystem} from '../../src/memory-fs';
-import {InternalEventsEmitter} from '../../src/utils';
-import {ignoredDir, ignoredFile} from '../../test/implementation-suite';
-import {delayedPromise} from '../../src/promise-utils';
-import {Directory, File, ShallowDirectory} from "../../src/model";
+import {MemoryFileSystem} from '../src/memory-fs';
+import {InternalEventsEmitter} from '../src/utils';
+import {ignoredDir, ignoredFile} from './implementation-suite';
+import {delayedPromise} from '../src/promise-utils';
+import {Directory, File, ShallowDirectory} from "../src/model";
 
 export class SlowFs implements FileSystem {
     public readonly events: InternalEventsEmitter;
-    public baseUrl: string;
+    public baseUrl: string = 'slow';
     private fs: FileSystem;
 
     constructor(private delay: number) {
-        this.fs = new MemoryFileSystem(undefined, {ignore:[ignoredDir, ignoredFile]});
+        this.fs = new MemoryFileSystem(undefined, {ignore: [ignoredDir, ignoredFile]});
         this.events = this.fs.events as InternalEventsEmitter;
     }
 

@@ -9,8 +9,8 @@ export const noConnectionError = `WampClientFileSystem hasn't opened connection 
 export class WampClientFileSystem implements FileSystem {
     public readonly events: InternalEventsEmitter = makeEventsEmitter();
     private connection: Connection;
-    private session: Session;
-    private realmPrefix: string;
+    private session?: Session;
+    private realmPrefix?: string;
 
     constructor(public baseUrl: string, private realm: string, private initTimeout: number = 5000) {
         this.realm = realm;
@@ -25,7 +25,7 @@ export class WampClientFileSystem implements FileSystem {
                 this.session = session;
                 this.realmPrefix = this.realm.replace(/(.*\..*)(\..*)$/, '$1.'); // 'xxx.yyy.zzz' => 'xxx.yyy.'
                 fileSystemEventNames.forEach(fsEvent => {
-                    this.session.subscribe(
+                    session.subscribe(
                         this.realmPrefix + fsEvent,
                         res => this.events.emit(fsEvent, res && res[0])
                     )
@@ -36,8 +36,9 @@ export class WampClientFileSystem implements FileSystem {
     }
 
     async saveFile(fullPath: string, newContent: string, correlation:Correlation = makeCorrelationId()):Promise<Correlation> {
-        this.throwIfDisconnected();
-
+        if (!this.session || !this.session.isOpen) {
+            throw new Error(noConnectionError);
+        }
         try {
             return await this.session.call<Correlation>(`${this.realmPrefix}saveFile`, [fullPath, newContent, correlation]);
         } catch (error) {
@@ -46,8 +47,9 @@ export class WampClientFileSystem implements FileSystem {
     }
 
     async deleteFile(fullPath: string, correlation:Correlation = makeCorrelationId()):Promise<Correlation> {
-        this.throwIfDisconnected();
-
+        if (!this.session || !this.session.isOpen) {
+            throw new Error(noConnectionError);
+        }
         try {
             return await this.session.call<Correlation>(`${this.realmPrefix}deleteFile`, [fullPath, correlation]);
         } catch (error) {
@@ -56,8 +58,9 @@ export class WampClientFileSystem implements FileSystem {
     }
 
     async deleteDirectory(fullPath: string, recursive?: boolean, correlation:Correlation = makeCorrelationId()):Promise<Correlation> {
-        this.throwIfDisconnected();
-
+        if (!this.session || !this.session.isOpen) {
+            throw new Error(noConnectionError);
+        }
         try {
             return await this.session.call<Correlation>(`${this.realmPrefix}deleteDirectory`, [fullPath, recursive, correlation]);
         } catch (error) {
@@ -66,8 +69,9 @@ export class WampClientFileSystem implements FileSystem {
     }
 
     async ensureDirectory(fullPath: string, correlation:Correlation = makeCorrelationId()):Promise<Correlation> {
-        this.throwIfDisconnected();
-
+        if (!this.session || !this.session.isOpen) {
+            throw new Error(noConnectionError);
+        }
         try {
             return await this.session.call<Correlation>(`${this.realmPrefix}ensureDirectory`, [fullPath, correlation]);
         } catch (error) {
@@ -76,8 +80,9 @@ export class WampClientFileSystem implements FileSystem {
     }
 
     async loadTextFile(fullPath: string): Promise<string> {
-        this.throwIfDisconnected();
-
+        if (!this.session || !this.session.isOpen) {
+            throw new Error(noConnectionError);
+        }
         try {
             return await this.session.call<string>(`${this.realmPrefix}loadTextFile`, [fullPath]);
         } catch (error) {
@@ -86,8 +91,9 @@ export class WampClientFileSystem implements FileSystem {
     }
 
     async loadDirectoryTree(fullPath: string = ''): Promise<Directory> {
-        this.throwIfDisconnected();
-
+        if (!this.session || !this.session.isOpen) {
+            throw new Error(noConnectionError);
+        }
         try {
             return await this.session.call<Directory>(`${this.realmPrefix}loadDirectoryTree`, [fullPath]);
         } catch (error) {
@@ -96,8 +102,9 @@ export class WampClientFileSystem implements FileSystem {
     }
 
     async loadDirectoryChildren(fullPath: string): Promise<(File | ShallowDirectory)[]> {
-        this.throwIfDisconnected();
-
+        if (!this.session || !this.session.isOpen) {
+            throw new Error(noConnectionError);
+        }
         try {
             return await this.session.call<(File | ShallowDirectory)[]>(`${this.realmPrefix}loadDirectoryChildren`, [fullPath]);
         } catch (error) {
@@ -107,12 +114,6 @@ export class WampClientFileSystem implements FileSystem {
 
     dispose() {
         this.connection && this.connection.close();
-    }
-
-    private throwIfDisconnected() {
-        if (!this.session || !this.session.isOpen) {
-            throw new Error(noConnectionError);
-        }
     }
 }
 

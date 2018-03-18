@@ -1,7 +1,7 @@
 import {EventEmitter} from 'eventemitter3';
 import * as micromatch from 'micromatch';
 import {Correlation, EventEmitter as FSEvents} from './api';
-import {pathSeparator, ShallowDirectory, File} from "./model";
+import {File, pathSeparator, ShallowDirectory} from "./model";
 
 const isGlob = require('is-glob');
 
@@ -10,6 +10,7 @@ const isGlob = require('is-glob');
 export function getPathNodes(path: string): Array<string> {
     return path.split(pathSeparator).filter(n => n.length);
 }
+
 export function normalizePathNodes(path: Array<string>): string {
     return path.filter(n => n.length).join(pathSeparator);
 }

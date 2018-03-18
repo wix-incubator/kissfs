@@ -1,6 +1,14 @@
 import {expect} from "chai";
-import {Correlation, FileSystem, fileSystemEventNames, FileSystemReadSync, Directory, DirectoryContent, pathSeparator} from '../src/universal';
-import {EventsMatcher} from '../test-kit/drivers/events-matcher';
+import {
+    Correlation,
+    Directory,
+    DirectoryContent,
+    FileSystem,
+    fileSystemEventNames,
+    FileSystemReadSync,
+    pathSeparator
+} from '../src/universal';
+import {EventsMatcher} from './events-matcher';
 import {delayedPromise} from "../src/promise-utils";
 
 
