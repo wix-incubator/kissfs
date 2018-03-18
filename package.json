@@ -43,7 +43,7 @@
     "klaw": "^2.1.0",
     "micromatch": "^2.3.11",
     "tslib": "^1.7.1",
-    "wamp-server": "^0.0.6"
+    "wamp-server": "^0.0.8"
   },
   "devDependencies": {
     "@types/autobahn": "^0.9.37",
