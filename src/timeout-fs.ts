@@ -14,15 +14,15 @@ export class TimeoutFileSystem implements FileSystem {
         return this.fs.baseUrl;
     }
 
-    saveFile(fullPath: string, newContent: string, correlation?:Correlation):Promise<Correlation> {
+    saveFile(fullPath: string, newContent: string, correlation?: Correlation): Promise<Correlation> {
         return timeoutPromise(this.fs.saveFile(fullPath, newContent, correlation), this.timeout);
     }
 
-    deleteFile(fullPath: string, correlation?:Correlation):Promise<Correlation> {
+    deleteFile(fullPath: string, correlation?: Correlation): Promise<Correlation> {
         return timeoutPromise(this.fs.deleteFile(fullPath, correlation), this.timeout);
     }
 
-    deleteDirectory(fullPath: string, recursive?: boolean, correlation?:Correlation):Promise<Correlation> {
+    deleteDirectory(fullPath: string, recursive?: boolean, correlation?: Correlation): Promise<Correlation> {
         return timeoutPromise(this.fs.deleteDirectory(fullPath, recursive, correlation), this.timeout);
     }
 
@@ -38,7 +38,7 @@ export class TimeoutFileSystem implements FileSystem {
         return timeoutPromise(this.fs.loadDirectoryChildren(fullPath), this.timeout);
     }
 
-    ensureDirectory(fullPath: string, correlation?:Correlation):Promise<Correlation> {
+    ensureDirectory(fullPath: string, correlation?: Correlation): Promise<Correlation> {
         return timeoutPromise(this.fs.ensureDirectory(fullPath, correlation), this.timeout);
     }
 

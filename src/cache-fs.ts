@@ -123,26 +123,26 @@ export class CacheFileSystem implements FileSystemReadSync, FileSystem {
         });
     }
 
-    async saveFile(fullPath: string, newContent: string, correlation?:Correlation): Promise<Correlation> {
+    async saveFile(fullPath: string, newContent: string, correlation?: Correlation): Promise<Correlation> {
         correlation = await this.fs.saveFile(fullPath, newContent, correlation);
         this.cache.saveFileSync(fullPath, newContent, correlation);
         this.pathsInCache[fullPath] = true;
         return correlation;
     }
 
-    async deleteFile(fullPath: string, correlation?:Correlation): Promise<Correlation> {
+    async deleteFile(fullPath: string, correlation?: Correlation): Promise<Correlation> {
         correlation = await this.fs.deleteFile(fullPath, correlation);
         this.cache.deleteFileSync(fullPath);
         return correlation;
     }
 
-    async deleteDirectory(fullPath: string, recursive: boolean = false, correlation?:Correlation): Promise<Correlation> {
+    async deleteDirectory(fullPath: string, recursive: boolean = false, correlation?: Correlation): Promise<Correlation> {
         correlation = await this.fs.deleteDirectory(fullPath, recursive, correlation);
         this.cache.deleteDirectorySync(fullPath, recursive);
         return correlation;
     }
 
-    async ensureDirectory(fullPath: string, correlation?:Correlation): Promise<Correlation> {
+    async ensureDirectory(fullPath: string, correlation?: Correlation): Promise<Correlation> {
         correlation = await this.fs.ensureDirectory(fullPath, correlation);
         this.cache.ensureDirectorySync(fullPath, correlation);
         return correlation;

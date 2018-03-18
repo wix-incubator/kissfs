@@ -86,13 +86,13 @@ export interface FileSystem {
     readonly events: EventEmitter;
     readonly baseUrl: string;
 
-    saveFile(fullPath: string, newContent: string, correlation?:Correlation): Promise<Correlation>;
+    saveFile(fullPath: string, newContent: string, correlation?: Correlation): Promise<Correlation>;
 
-    deleteFile(fullPath: string, correlation?:Correlation): Promise<Correlation>;
+    deleteFile(fullPath: string, correlation?: Correlation): Promise<Correlation>;
 
-    deleteDirectory(fullPath: string, recursive?: boolean, correlation?:Correlation): Promise<Correlation>;
+    deleteDirectory(fullPath: string, recursive?: boolean, correlation?: Correlation): Promise<Correlation>;
 
-    ensureDirectory(fullPath: string, correlation?:Correlation): Promise<Correlation>;
+    ensureDirectory(fullPath: string, correlation?: Correlation): Promise<Correlation>;
 
     loadTextFile(fullPath: string): Promise<string>;
 

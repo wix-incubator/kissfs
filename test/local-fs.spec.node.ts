@@ -5,8 +5,8 @@ import {expect} from 'chai';
 import {assertFileSystemContract, content, dirName, fileName, ignoredDir, ignoredFile} from './implementation-suite'
 import {EventsMatcher} from './events-matcher';
 import {FileSystem, fileSystemEventNames, LocalFileSystem} from '../src/nodejs';
-import { NoFeedbackEventsFileSystem } from '../src/no-feedback-events-fs';
-import { delayedPromise } from '../src/promise-utils';
+import {NoFeedbackEventsFileSystem} from '../src/no-feedback-events-fs';
+import {delayedPromise} from '../src/promise-utils';
 
 describe(`the local filesystem implementation`, () => {
     let dirCleanup: () => void, rootPath: string, testPath: string;
@@ -173,8 +173,8 @@ describe(`the local filesystem implementation`, () => {
             });
         });
 
-        describe('Handling feedback', function(){
-            it('should dispatch events for empty files',async ()=>{
+        describe('Handling feedback', function () {
+            it('should dispatch events for empty files', async () => {
                 const path = join(testPath, fileName);
                 const newContent = `_${content}`;
                 writeFileSync(path, content);
@@ -183,7 +183,7 @@ describe(`the local filesystem implementation`, () => {
                 writeFileSync(path, '');
                 await matcher.expect([{type: 'fileChanged', fullPath: fileName, newContent: ''}]);
             });
-            it('should not dispatch events for empty files if another change is detected within buffer time',async ()=>{
+            it('should not dispatch events for empty files if another change is detected within buffer time', async () => {
                 const path = join(testPath, fileName);
                 const newContent = `_${content}`;
                 writeFileSync(path, content);
@@ -195,31 +195,29 @@ describe(`the local filesystem implementation`, () => {
                 await matcher.expect([{type: 'fileChanged', fullPath: fileName, newContent: 'gaga'}]);
 
             });
-            it('should not provide feedback when bombarding changes (with nofeedbackFS)',async ()=>{
+            it('should not provide feedback when bombarding changes (with nofeedbackFS)', async () => {
                 const path = join(testPath, fileName);
                 const newContent = `_${content}`;
                 writeFileSync(path, content);
                 await matcher.expect([{type: 'fileCreated', fullPath: fileName, newContent: content}]);
 
 
-
-                const noFeed = new NoFeedbackEventsFileSystem(fs,{delayEvents:0,correlationWindow:1000});
+                const noFeed = new NoFeedbackEventsFileSystem(fs, {delayEvents: 0, correlationWindow: 1000});
                 let nofeedMatcher: EventsMatcher;
                 nofeedMatcher = new EventsMatcher({
-                    alwaysExpectEmpty:true,
-                    noExtraEventsGrace:1000,
-                    interval:100,
-                    retries:40,
-                    timeout:1000
+                    alwaysExpectEmpty: true,
+                    noExtraEventsGrace: 1000,
+                    interval: 100,
+                    retries: 40,
+                    timeout: 1000
                 });
                 nofeedMatcher.track(noFeed.events, ...fileSystemEventNames);
 
 
-
                 const fullText = 'abcefghijklmabcefghijklmabcefghijklmabcefghijkl';
-                for(var i=1;i<fullText.length;i++){
+                for (var i = 1; i < fullText.length; i++) {
                     await delayedPromise(1)
-                    noFeed.saveFile(fileName,fullText.slice(i));
+                    noFeed.saveFile(fileName, fullText.slice(i));
                 }
 
                 await nofeedMatcher.expect([]);

@@ -18,7 +18,8 @@ export class LocalFileSystem implements FileSystem {
     private crud: LocalFileSystemCrudOnly;
     private watcher?: FSWatcher;
 
-    private emptyFileTimers:{[filePath:string]:NodeJS.Timer} = {};
+    private emptyFileTimers: { [filePath: string]: NodeJS.Timer } = {};
+
     constructor(public baseUrl: string,
                 ignore?: Array<string>,
                 private options: Options = {
@@ -30,29 +31,29 @@ export class LocalFileSystem implements FileSystem {
         this.crud = new LocalFileSystemCrudOnly(baseUrl, ignore);
         //remove empty file change events
         this.eventsManager.addEventHandler({
-            types:['fileChanged'],
-            apply:(ev)=>{
-                if(this.emptyFileTimers[ev.fullPath]){
+            types: ['fileChanged'],
+            apply: (ev) => {
+                if (this.emptyFileTimers[ev.fullPath]) {
                     clearTimeout(this.emptyFileTimers[ev.fullPath]);
                 }
 
-                if(ev.correlation){
+                if (ev.correlation) {
                     return ev;
                 }
 
-                if(ev.newContent===''){
+                if (ev.newContent === '') {
                     ev.correlation = makeCorrelationId() + '_generatedForEmpty';
-                    this.emptyFileTimers[ev.fullPath] = setTimeout(async ()=>{
+                    this.emptyFileTimers[ev.fullPath] = setTimeout(async () => {
                         const actualContent = await this.crud.loadTextFile(ev.fullPath);
-                        if(actualContent===''){
+                        if (actualContent === '') {
                             this.eventsManager.emit(ev);
                         }
-                    },this.options.eventBufferMs)
+                    }, this.options.eventBufferMs)
                     return undefined
                 }
                 return ev;
             },
-            filter:()=>true
+            filter: () => true
         })
     }
 
@@ -126,31 +127,32 @@ export class LocalFileSystem implements FileSystem {
     }
 
 
-    async saveFile(fullPath: string, newContent: string, correlation:Correlation = makeCorrelationId()): Promise<Correlation> {
+    async saveFile(fullPath: string, newContent: string, correlation: Correlation = makeCorrelationId()): Promise<Correlation> {
         this.registerCorrelationForPathsInDir(fullPath, correlation, 'directoryCreated')
         this.registerCorrelator(['fileChanged', 'fileCreated'], correlation, e => e.fullPath === fullPath && (e.newContent === newContent), true);
         await this.crud.saveFile(fullPath, newContent);
         return correlation;
     }
 
-    async deleteFile(fullPath: string, correlation:Correlation = makeCorrelationId()): Promise<Correlation> {
+    async deleteFile(fullPath: string, correlation: Correlation = makeCorrelationId()): Promise<Correlation> {
         this.registerCorrelator(['fileDeleted'], correlation, e => e.fullPath === fullPath, true);
         await this.crud.deleteFile(fullPath);
         return correlation;
     }
 
-    async deleteDirectory(fullPath: string, recursive?: boolean, correlation:Correlation = makeCorrelationId()): Promise<Correlation> {
+    async deleteDirectory(fullPath: string, recursive?: boolean, correlation: Correlation = makeCorrelationId()): Promise<Correlation> {
         this.registerCorrelator(['directoryDeleted'], correlation, e => e.fullPath === fullPath, true);
         if (recursive) {
             const prefix = fullPath + pathSeparator;
             this.registerCorrelator(['directoryDeleted', 'fileDeleted'], correlation, e => e.fullPath.startsWith(prefix), false);
-        };
+        }
+        ;
         await this.crud.deleteDirectory(fullPath, recursive);
 
         return correlation;
     }
 
-    async ensureDirectory(fullPath: string, correlation:Correlation = makeCorrelationId()): Promise<Correlation> {
+    async ensureDirectory(fullPath: string, correlation: Correlation = makeCorrelationId()): Promise<Correlation> {
         this.registerCorrelationForPathsInDir(fullPath, correlation, 'directoryCreated')
         await this.crud.ensureDirectory(fullPath);
         return correlation;
@@ -168,36 +170,36 @@ export class LocalFileSystem implements FileSystem {
         return this.crud.loadDirectoryChildren(fullPath);
     }
 
-    registerCorrelationForPathsInDir(fullPath:string, correlation:Correlation, eventname:keyof Events){
+    registerCorrelationForPathsInDir(fullPath: string, correlation: Correlation, eventname: keyof Events) {
         const suspectedNewDirs = fullPath.split('/');
         let currentDirPath = '';
-        suspectedNewDirs.forEach(dirName=>{
+        suspectedNewDirs.forEach(dirName => {
             currentDirPath += dirName;
             let dirPath = currentDirPath;
             this.registerCorrelator([eventname], correlation, e => {
-                return dirPath===(e as any).fullPath
+                return dirPath === (e as any).fullPath
             }, true);
             currentDirPath += '/';
         })
     }
 
     private registerCorrelator<S extends keyof Events>(types: S[], correlation: Correlation, filter: (e: Events[S]) => boolean, single: boolean) {
-        let timeout:NodeJS.Timer;
+        let timeout: NodeJS.Timer;
         const correlator: EventHandler<S> = {
             types,
             filter,
             apply: (e: Events[S]) => {
-                if(this.options.eventBufferMs && !e.correlation && single){
-                    if(timeout){
+                if (this.options.eventBufferMs && !e.correlation && single) {
+                    if (timeout) {
                         clearTimeout(timeout)
                     }
-                    timeout = setTimeout(()=>{
+                    timeout = setTimeout(() => {
                         e.correlation = correlation;
                         if (single) {
                             this.eventsManager.removeEventHandler(correlator);
                         }
                         this.eventsManager.emit(e);
-                    },this.options.eventBufferMs)
+                    }, this.options.eventBufferMs)
                     return undefined;
                 }
                 e.correlation = correlation;
