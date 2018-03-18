@@ -1789,12 +1789,6 @@ date-now@^0.1.4:
   version "0.1.4"
   resolved "https://registry.yarnpkg.com/date-now/-/date-now-0.1.4.tgz#eaf439fd4d4848ad74e5cc7dbef200672b9e345b"
 
-debug@2.2.0:
-  version "2.2.0"
-  resolved "https://registry.yarnpkg.com/debug/-/debug-2.2.0.tgz#f87057e995b1a1f6ae6a4960664137bc56f039da"
-  dependencies:
-    ms "0.7.1"
-
 debug@2.6.8:
   version "2.6.8"
   resolved "https://registry.yarnpkg.com/debug/-/debug-2.6.8.tgz#e731531ca2ede27d188222427da17821d68ff4fc"
@@ -1807,7 +1801,7 @@ debug@2.6.9, debug@^2.2.0, debug@^2.3.3, debug@^2.6.6, debug@^2.6.8:
   dependencies:
     ms "2.0.0"
 
-debug@^3.1.0:
+debug@3.1.0, debug@^3.1.0:
   version "3.1.0"
   resolved "https://registry.yarnpkg.com/debug/-/debug-3.1.0.tgz#5bb5a0672628b64149566ba16819e61518c67261"
   dependencies:
@@ -3698,10 +3692,6 @@ moment@2.x.x:
 mri@1.1.0:
   version "1.1.0"
   resolved "https://registry.yarnpkg.com/mri/-/mri-1.1.0.tgz#5c0a3f29c8ccffbbb1ec941dcec09d71fa32f36a"
-
-ms@0.7.1:
-  version "0.7.1"
-  resolved "https://registry.yarnpkg.com/ms/-/ms-0.7.1.tgz#9cd13c03adbff25b65effde7ce864ee952017098"
 
 ms@2.0.0:
   version "2.0.0"
@@ -5731,12 +5721,12 @@ wait-on@^2.1.0:
     request "^2.78.0"
     rx "^4.1.0"
 
-wamp-server@^0.0.6:
-  version "0.0.6"
-  resolved "https://registry.yarnpkg.com/wamp-server/-/wamp-server-0.0.6.tgz#0949844f5906a8785e42088907249df0780218ce"
+wamp-server@^0.0.8:
+  version "0.0.8"
+  resolved "https://registry.yarnpkg.com/wamp-server/-/wamp-server-0.0.8.tgz#956ff443416f079a2c6b527b5dbe5d7936a248db"
   dependencies:
-    debug "2.2.0"
-    ws "2.0.2"
+    debug "3.1.0"
+    ws "4.1.0"
 
 watchpack@^1.4.0:
   version "1.5.0"
@@ -5886,11 +5876,12 @@ wrappy@1:
   version "1.0.2"
   resolved "https://registry.yarnpkg.com/wrappy/-/wrappy-1.0.2.tgz#b5243d8f3ec1aa35f1364605bc0d1036e30ab69f"
 
-ws@2.0.2:
-  version "2.0.2"
-  resolved "https://registry.yarnpkg.com/ws/-/ws-2.0.2.tgz#6257d1a679f0cb23658cba3dcad1316e2b1000c5"
+ws@4.1.0:
+  version "4.1.0"
+  resolved "https://registry.yarnpkg.com/ws/-/ws-4.1.0.tgz#a979b5d7d4da68bf54efe0408967c324869a7289"
   dependencies:
-    ultron "~1.1.0"
+    async-limiter "~1.0.0"
+    safe-buffer "~5.1.0"
 
 "ws@>= 1.1.4":
   version "3.2.0"
