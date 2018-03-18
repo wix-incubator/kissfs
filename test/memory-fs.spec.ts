@@ -1,5 +1,5 @@
 import {assertFileSystemContract, assertFileSystemSyncContract, ignoredDir, ignoredFile} from './implementation-suite'
-import {MemoryFileSystem, Directory} from "../src/universal";
+import {Directory, MemoryFileSystem} from "../src/universal";
 import {expect} from "chai";
 
 const content = {

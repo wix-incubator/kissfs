@@ -1,5 +1,10 @@
-import {EventsMatcher} from '../test-kit/drivers/events-matcher';
-import {MemoryFileSystem, FileSystem, NoFeedbackEventsFileSystem, NoFeedbackEventsFileSystemSync} from '../src/universal';
+import {EventsMatcher} from './events-matcher';
+import {
+    FileSystem,
+    MemoryFileSystem,
+    NoFeedbackEventsFileSystem,
+    NoFeedbackEventsFileSystemSync
+} from '../src/universal';
 import {assertFileSystemContract, assertFileSystemSyncContract, ignoredDir, ignoredFile} from './implementation-suite';
 
 function proxy<T extends FileSystem>(Proxy: { new (fs: FileSystem): T }, externalChanges: boolean): () => Promise<T> {

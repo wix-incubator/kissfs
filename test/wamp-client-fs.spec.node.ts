@@ -3,7 +3,7 @@ import {retryPromise} from '../src/promise-utils';
 import {wampRealm, WampServer, wampServerOverFs} from '../src/nodejs';
 import {MemoryFileSystem, WampClientFileSystem} from '../src/universal';
 import {noConnectionError} from '../src/wamp-client-fs';
-import {EventsMatcher} from '../test-kit/drivers/events-matcher';
+import {EventsMatcher} from './events-matcher';
 import {assertFileSystemContract, content, dirName, fileName, ignoredDir, ignoredFile} from './implementation-suite'
 
 describe(`the wamp client filesystem proxy`, () => {

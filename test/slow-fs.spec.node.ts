@@ -1,12 +1,12 @@
 import {expect} from 'chai';
-import {FileSystem} from '../../src/api';
-import {assertFileSystemContract, content, dirName, fileName} from '../../test/implementation-suite'
-import {SlowFs} from '../drivers/slow-fs';
+import {FileSystem} from '../src/api';
+import {assertFileSystemContract, content, dirName, fileName} from '../test/implementation-suite'
+import {SlowFs} from './slow-fs';
 
 describe('the slow (delayed) file system implementation', () => {
     const delay = 200;
     const accuracyFactor = 0.9;
-    assertFileSystemContract(async ()=> new SlowFs(delay), {
+    assertFileSystemContract(async () => new SlowFs(delay), {
         retries: 15,
         interval: 2,
         timeout: 40,
