@@ -3,8 +3,8 @@ import {mkdirSync, rmdirSync, unlinkSync, writeFileSync} from 'fs';
 import {join} from 'path';
 import {expect} from 'chai';
 import {assertFileSystemContract, content, dirName, fileName, ignoredDir, ignoredFile} from './implementation-suite'
-import {EventsMatcher} from '../test-kit/drivers/events-matcher';
-import {LocalFileSystem, FileSystem, fileSystemEventNames} from '../src/nodejs';
+import {EventsMatcher} from './events-matcher';
+import {FileSystem, fileSystemEventNames, LocalFileSystem} from '../src/nodejs';
 
 describe(`the local filesystem implementation`, () => {
     let dirCleanup: () => void, rootPath: string, testPath: string;

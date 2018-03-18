@@ -1,5 +1,5 @@
 import {EventHandler, EventsManager} from "../src/events-manager";
-import {EventsMatcher} from "../test-kit/drivers/events-matcher";
+import {EventsMatcher} from "./events-matcher";
 import {DirectoryCreatedEvent, FileDeletedEvent, fileSystemEventNames} from "../src/universal";
 import {delayedPromise} from "../src/promise-utils";
 import * as sinon from 'sinon';
