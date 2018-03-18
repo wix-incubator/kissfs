@@ -214,9 +214,9 @@ describe(`the local filesystem implementation`, () => {
                 nofeedMatcher.track(noFeed.events, ...fileSystemEventNames);
 
 
-                const fullText = 'abcefghijklmabcefghijklmabcefghijklmabcefghijkl';
-                for (var i = 1; i < fullText.length; i++) {
-                    await delayedPromise(1)
+                const fullText = 'abcefghijklmabcefghijklmabcefghijklmabcefghijklabcefghijklmabcefghijklmabcefghijklmabcefghijklabcefghijklmabcefghijklmabcefghijklmabcefghijklabcefghijklmabcefghijklmabcefghijklmabcefghijklabcefghijklmabcefghijklmabcefghijklmabcefghijkl';
+                for (let i = 1; i < fullText.length; i++) {
+                    await delayedPromise(1);
                     noFeed.saveFile(fileName, fullText.slice(i));
                 }
 
