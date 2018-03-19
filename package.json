@@ -36,12 +36,12 @@
   "homepage": "https://github.com/wix/kissfs#readme",
   "dependencies": {
     "autobahn": "^17.5.2",
-    "chokidar": "^1.7.0",
+    "chokidar": "^2.0.0",
     "eventemitter3": "^2.0.3",
     "fs-extra": "^4.0.2",
     "is-glob": "^4.0.0",
     "klaw": "^2.1.0",
-    "micromatch": "^2.3.11",
+    "micromatch": "^3.0.0",
     "tslib": "^1.7.1",
     "wamp-server": "^0.0.8"
   },
