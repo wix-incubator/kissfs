@@ -1,6 +1,6 @@
 import {expect} from 'chai';
 import {assertFileSystemContract, dirName, fileName, ignoredDir, ignoredFile,} from './implementation-suite'
-import {SlowFs} from '../test-kit/drivers/slow-fs';
+import {SlowFs} from './slow-fs';
 import {FileSystem, MemoryFileSystem, TimeoutFileSystem} from '../src/universal';
 
 describe('the timeout file system proxy', () => {
