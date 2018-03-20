@@ -7,6 +7,7 @@ import {EventsMatcher} from './events-matcher';
 import {FileSystem, fileSystemEventNames, LocalFileSystem} from '../src/nodejs';
 import {NoFeedbackEventsFileSystem} from '../src/no-feedback-events-fs';
 import {delayedPromise} from '../src/promise-utils';
+import {Events} from "../src/api";
 
 describe(`the local filesystem implementation`, () => {
     let dirCleanup: () => void, rootPath: string, testPath: string;
@@ -53,12 +54,10 @@ describe(`the local filesystem implementation`, () => {
     describe(`Local fs tests`, () => {
         let fs: FileSystem;
         let matcher: EventsMatcher;
-        beforeEach(() => {
+        beforeEach(async () => {
             matcher = new EventsMatcher(eventMatcherOptions);
-            return getFS().then(newFs => {
-                fs = newFs;
-                matcher.track(fs.events, ...fileSystemEventNames);
-            });
+            fs = await getFS();
+            matcher.track(fs.events, ...fileSystemEventNames);
         });
 
         describe(`external changes`, () => {
@@ -192,6 +191,7 @@ describe(`the local filesystem implementation`, () => {
             });
             it('should not provide feedback when bombarding changes (stress test with nofeedbackFS)', async () => {
                 const path = join(testPath, fileName);
+                const expectedChangeEvents : Array<Events['fileChanged']> = [];
                 writeFileSync(path, content);
                 await matcher.expect([{type: 'fileCreated', fullPath: fileName, newContent: content}]);
 
@@ -199,8 +199,7 @@ describe(`the local filesystem implementation`, () => {
                 await delayedPromise(100);
 
                 const noFeed = new NoFeedbackEventsFileSystem(fs, {delayEvents: 1, correlationWindow: 10000});
-                let nofeedMatcher: EventsMatcher;
-                nofeedMatcher = new EventsMatcher({
+                const nofeedMatcher = new EventsMatcher({
                     alwaysExpectEmpty: true,
                     noExtraEventsGrace: 1000,
                     interval: 100,
@@ -211,11 +210,11 @@ describe(`the local filesystem implementation`, () => {
 
                 for (let i = 1; i < 100; i++) {
                     await delayedPromise(1);
-                    noFeed.saveFile(fileName, 'content:'+i);
+                    noFeed.saveFile(fileName, 'content:'+i, ''+i);
+                    expectedChangeEvents.push({type: 'fileChanged', fullPath: fileName, newContent: 'content:'+i, correlation: ''+i})
                 }
-
+                await matcher.expect(expectedChangeEvents);
                 await nofeedMatcher.expect([]);
-
             });
 
         });
