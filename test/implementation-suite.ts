@@ -9,8 +9,6 @@ import {
     pathSeparator
 } from '../src/universal';
 import {EventsMatcher} from './events-matcher';
-import {delayedPromise} from "../src/promise-utils";
-
 
 export const dirName = 'foo';
 export const fileName = 'bar.txt';
@@ -156,7 +154,6 @@ export function assertFileSystemContract(fsProvider: () => Promise<FileSystem>, 
                 .then(() => matcher.expect([]));
         });
 
-
         it(`saving a file with different content (supplying correlation)`, function () {
             const newContent = `_${content}`;
             return fs.saveFile(fileName, content)
@@ -223,7 +220,6 @@ export function assertFileSystemContract(fsProvider: () => Promise<FileSystem>, 
                     {children: [], fullPath: dirName, name: dirName, type: 'dir'}]))
                 .then(() => matcher.expect([]));
         });
-
 
         it(`deleting a directory (supplying correlation)`, function () {
             return fs.ensureDirectory(`${dirName}/_${dirName}`)
@@ -404,35 +400,95 @@ export function assertFileSystemContract(fsProvider: () => Promise<FileSystem>, 
             return expect(fs.loadDirectoryChildren(fileName)).to.be.rejectedWith(Error);
         });
 
+        describe(`correlation as argument`, function () {
+            const correlation = 'correlate this!';
+
+            it(`saveFile()`, async () => {
+                const correlationResult = await fs.saveFile(`${dirName}/${fileName}`, content, correlation);
+                expect(correlationResult).to.eql(correlation);
+                await matcher.expect([{
+                    type: 'directoryCreated',
+                    fullPath: dirName,
+                    correlation
+                }, {
+                    type: 'fileCreated',
+                    fullPath: `${dirName}/${fileName}`,
+                    newContent: content,
+                    correlation
+                }]);
+
+                const correlation2 = 'correlate that!';
+                const correlationResult2 = await fs.saveFile(`${dirName}/${fileName}`, '', correlation2);
+                expect(correlationResult2).to.eql(correlation2);
+                await matcher.expect([{
+                    type: 'fileChanged',
+                    fullPath: `${dirName}/${fileName}`,
+                    newContent: '',
+                    correlation : correlation2
+                }]);
+            });
+
+            it(`deleteFile()`, async () => {
+                await fs.saveFile(fileName, content);
+                await matcher.expect([{
+                    type: 'fileCreated',
+                    fullPath: fileName
+                }]);
+                const correlationResult = await fs.deleteFile(fileName, correlation);
+                expect(correlationResult).to.eql(correlation);
+                await matcher.expect([{
+                    type: 'fileDeleted',
+                    fullPath: fileName,
+                    correlation
+                }]);
+            });
+
+            it(`deleteDirectory()`, async () => {
+                await fs.ensureDirectory(`${dirName}/${dirName}`);
+                await matcher.expect([{
+                    type: 'directoryCreated',
+                    fullPath: `${dirName}/${dirName}`
+                }]);
+                const correlationResult = await fs.deleteDirectory(dirName, true, correlation);
+                expect(correlationResult).to.eql(correlation);
+                await matcher.expect([{
+                    type: 'directoryDeleted',
+                    fullPath: dirName,
+                    correlation
+                },{
+                    type: 'directoryDeleted',
+                    fullPath: `${dirName}/${dirName}`,
+                    correlation
+                }]);
+            });
+
+            it(`ensureDirectory()`, async () => {
+                const correlationResult = await fs.ensureDirectory(`${dirName}/${dirName}`, correlation);
+                expect(correlationResult).to.eql(correlation);
+                await matcher.expect([{
+                    type: 'directoryCreated',
+                    fullPath: dirName,
+                    correlation
+                },{
+                    type: 'directoryCreated',
+                    fullPath: `${dirName}/${dirName}`,
+                    correlation
+                }]);
+            });
+        });
+
         describe(`action-event correlation`, function () {
             it(`single event per action`, async function () {
                 this.timeout(30 * 1000);
-                // TODO : move correlation API to unit tests,  incl. using correlation argument
-                let allCorelations: Set<Correlation> = new Set();
                 let correlation = await fs.saveFile(fileName, 'foo');
-                expect(correlation).to.be.a('string');
-                allCorelations.add(correlation);
-                expect(allCorelations.size).to.eql(1);
                 await matcher.expect([{type: 'fileCreated', fullPath: fileName, correlation}]);
                 correlation = await fs.saveFile(fileName, 'bar');
-                expect(correlation).to.be.a('string');
-                allCorelations.add(correlation);
-                expect(allCorelations.size).to.eql(2);
                 await matcher.expect([{type: 'fileChanged', fullPath: fileName, correlation}]);
                 correlation = await fs.deleteFile(fileName);
-                expect(correlation).to.be.a('string');
-                allCorelations.add(correlation);
-                expect(allCorelations.size).to.eql(3);
                 await matcher.expect([{type: 'fileDeleted', fullPath: fileName, correlation}]);
                 correlation = await fs.ensureDirectory(dirName);
-                expect(correlation).to.be.a('string');
-                allCorelations.add(correlation);
-                expect(allCorelations.size).to.eql(4);
                 await matcher.expect([{type: 'directoryCreated', fullPath: dirName, correlation}]);
                 correlation = await fs.deleteDirectory(dirName);
-                expect(correlation).to.be.a('string');
-                allCorelations.add(correlation);
-                expect(allCorelations.size).to.eql(5);
                 await matcher.expect([{type: 'directoryDeleted', fullPath: dirName, correlation}]);
             });
 

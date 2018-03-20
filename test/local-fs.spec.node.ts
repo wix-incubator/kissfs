@@ -45,9 +45,9 @@ describe(`the local filesystem implementation`, () => {
     }
 
     const eventMatcherOptions: EventsMatcher.Options = {
-        retries: 80,
+        retries: 20,
         interval: 25,
-        timeout: 2500,
+        timeout: 1000,
         noExtraEventsGrace: 150
     };
     assertFileSystemContract(getFS, eventMatcherOptions);

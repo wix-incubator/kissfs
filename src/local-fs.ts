@@ -9,7 +9,7 @@ import {EventHandler, EventsManager} from "./events-manager";
 
 export type Options = RetryPromiseOptions & {
     correlationWindow: number;
-    eventBufferMs: number;
+    noiseReduceWindow: number;
 };
 
 export class LocalFileSystem implements FileSystem {
@@ -18,8 +18,9 @@ export class LocalFileSystem implements FileSystem {
     private crud: LocalFileSystemCrudOnly;
     private watcher?: FSWatcher;
 
-    private emptyFileTimers: { [filePath: string]: NodeJS.Timer } = {};
-    private dedupeEvents: { [filePath: string]: Events[keyof Events] } = {};
+    private tempEventsTimers: { [filePath: string]: NodeJS.Timer } = {};
+    private notNoiseEvents: { [filePath: string]: Events[keyof Events] } = {};
+    private lastEvents: { [filePath: string]: Events[keyof Events] } = {};
 
     constructor(public baseUrl: string,
                 ignore?: Array<string>,
@@ -27,48 +28,47 @@ export class LocalFileSystem implements FileSystem {
                     interval: 100,
                     retries: 3,
                     correlationWindow: 200,
-                    eventBufferMs: 150
+                    noiseReduceWindow: 150
                 }) {
         this.crud = new LocalFileSystemCrudOnly(baseUrl, ignore);
-        //remove empty file change events
-        this.eventsManager.addEventHandler({
-            types: ['fileChanged'],
-            apply: (ev) => {
-                if (this.emptyFileTimers[ev.fullPath]) {
-                    clearTimeout(this.emptyFileTimers[ev.fullPath]);
-                }
-
-                if (ev.correlation) {
-                    return ev;
-                }
-
-                // better statistics?
-                if (ev.newContent === '') {
-                    ev.correlation = makeCorrelationId() + '_generatedForEmpty';
-                    this.emptyFileTimers[ev.fullPath] = setTimeout(async () => {
-                        const actualContent = await this.crud.loadTextFile(ev.fullPath);
-                        if (actualContent === '') {
-                            this.eventsManager.emit(ev);
-                        }
-                    }, this.options.eventBufferMs);
-                    return undefined
-                }
-                return ev;
-            },
-            filter: () => true
-        });
-        // de-dupe events
+        // events noise reduction
         this.eventsManager.addEventHandler({
             types: fileSystemEventNames,
             apply: (ev) => {
-                const prevEv = this.dedupeEvents[ev.fullPath];
-                if (prevEv === ev || (prevEv && prevEv.type === ev.type && prevEv.fullPath === ev.fullPath && (prevEv as any).newContent === (ev as any).newContent)) {
-                    // filter out duplicate event
-                    return undefined;
-                } else {
-                    this.dedupeEvents[ev.fullPath] = ev;
+                const prevEv = this.lastEvents[ev.fullPath];
+                this.lastEvents[ev.fullPath] = ev;
+                if (this.notNoiseEvents[ev.fullPath] === ev) {
+                    delete this.notNoiseEvents[ev.fullPath];
                     return ev;
                 }
+                if (prevEv === ev || (prevEv && prevEv.type === ev.type && prevEv.fullPath === ev.fullPath && (prevEv as any).newContent === (ev as any).newContent)) {
+                    // noise reduction for duplicate consecutive event
+                    return undefined;
+                }
+                // clear any existing timer on suspicious file state
+                if (this.tempEventsTimers[ev.fullPath]) {
+                    clearTimeout(this.tempEventsTimers[ev.fullPath]);
+                    delete this.tempEventsTimers[ev.fullPath];
+                }
+                if (ev.type === 'fileChanged' && ev.newContent === '') {
+                    // this is a suspicious file state. hide it for a while
+                    this.tempEventsTimers[ev.fullPath] = setTimeout(async () => {
+                        delete this.tempEventsTimers[ev.fullPath];
+                        // check that no new events were reported meanwhile
+                        if (this.lastEvents[ev.fullPath] === ev) {
+                            // check that file content is still the same
+                            const currentContent = await this.loadTextFile(ev.fullPath);
+                            if (currentContent === ev.newContent) {
+                                // this event is not noise, re - emit it
+                                this.notNoiseEvents[ev.fullPath] = ev;
+                                this.eventsManager.emit(ev);
+                            }
+                        }
+                    }, this.options.noiseReduceWindow);
+                    return undefined;
+
+                }
+                return ev;
             },
             filter: () => true
         });
