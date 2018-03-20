@@ -171,8 +171,8 @@ export class LocalFileSystem implements FileSystem {
         return this.crud.loadDirectoryChildren(fullPath);
     }
 
-    registerCorrelationForPathsInDir(fullPath: string, correlation: Correlation, eventname: keyof Events) {
-        let nextPathSeparator = -1;
+    private registerCorrelationForPathsInDir(fullPath: string, correlation: Correlation, eventname: keyof Events) {
+        let nextPathSeparator = 0;
         while(~(nextPathSeparator = fullPath.indexOf(pathSeparator, nextPathSeparator +1))){
             const subPath = fullPath.substr(0, nextPathSeparator);
             this.registerCorrelator([eventname], correlation, e => subPath === (e as any).fullPath, true);

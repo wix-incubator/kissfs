@@ -91,16 +91,13 @@ describe(`the local filesystem implementation`, () => {
                 return expect(fs.loadTextFile(fileName)).to.eventually.be.rejected;
             });
 
-            it(`handles file change`, () => {
+            it(`handles file change`, async () => {
                 const path = join(testPath, fileName);
                 const newContent = `_${content}`;
                 writeFileSync(path, content);
-                return matcher.expect([{type: 'fileCreated', fullPath: fileName, newContent: content}])
-                    .then(() => {
-                        writeFileSync(path, newContent);
-                        return Promise.resolve();
-                    })
-                    .then(() => expect(fs.loadTextFile(fileName)).to.eventually.equals(newContent));
+                await matcher.expect([{type: 'fileCreated', fullPath: fileName, newContent: content}]);
+                writeFileSync(path, newContent);
+                expect(await fs.loadTextFile(fileName)).to.equal(newContent);
             });
 
             it(`ignores events from ignored dir`, () => {
@@ -193,7 +190,7 @@ describe(`the local filesystem implementation`, () => {
                 await matcher.expect([{type: 'fileChanged', fullPath: fileName, newContent: 'gaga'}]);
 
             });
-            it('should not provide feedback when bombarding changes (with nofeedbackFS)', async () => {
+            it('should not provide feedback when bombarding changes (stress test with nofeedbackFS)', async () => {
                 const path = join(testPath, fileName);
                 writeFileSync(path, content);
                 await matcher.expect([{type: 'fileCreated', fullPath: fileName, newContent: content}]);
@@ -212,16 +209,9 @@ describe(`the local filesystem implementation`, () => {
                 });
                 nofeedMatcher.track(noFeed.events, ...fileSystemEventNames);
 
-
-                const fullText = `abcefghijklmabcefghijklmabcefghijk
-                lmabcefghijklabcefghijklmabcef
-                ghijklmabcefghijklmabcefghijklabcefghijklmabcefghij
-                klmabcefghijklmabcefghijklabcefghi
-                jklmabcefghijklmabcefghijklmabcefghijklabcefghijk
-                lmabcefghijklmabcefghijklmabcefghijkl`;
-                for (let i = 1; i < fullText.length; i++) {
+                for (let i = 1; i < 100; i++) {
                     await delayedPromise(1);
-                    noFeed.saveFile(fileName, fullText.slice(i));
+                    noFeed.saveFile(fileName, 'content:'+i);
                 }
 
                 await nofeedMatcher.expect([]);
