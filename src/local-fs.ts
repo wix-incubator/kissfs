@@ -29,6 +29,7 @@ export class LocalFileSystem implements FileSystem {
                     eventBufferMs: 150
                 }) {
         this.crud = new LocalFileSystemCrudOnly(baseUrl, ignore);
+    //    TODO try remove this
         //remove empty file change events
         this.eventsManager.addEventHandler({
             types: ['fileChanged'],
@@ -41,6 +42,7 @@ export class LocalFileSystem implements FileSystem {
                     return ev;
                 }
 
+                // better statistics?
                 if (ev.newContent === '') {
                     ev.correlation = makeCorrelationId() + '_generatedForEmpty';
                     this.emptyFileTimers[ev.fullPath] = setTimeout(async () => {
@@ -146,7 +148,6 @@ export class LocalFileSystem implements FileSystem {
             const prefix = fullPath + pathSeparator;
             this.registerCorrelator(['directoryDeleted', 'fileDeleted'], correlation, e => e.fullPath.startsWith(prefix), false);
         }
-        ;
         await this.crud.deleteDirectory(fullPath, recursive);
 
         return correlation;
@@ -171,42 +172,37 @@ export class LocalFileSystem implements FileSystem {
     }
 
     registerCorrelationForPathsInDir(fullPath: string, correlation: Correlation, eventname: keyof Events) {
-        const suspectedNewDirs = fullPath.split('/');
-        let currentDirPath = '';
-        suspectedNewDirs.forEach(dirName => {
-            currentDirPath += dirName;
-            let dirPath = currentDirPath;
-            this.registerCorrelator([eventname], correlation, e => {
-                return dirPath === (e as any).fullPath
-            }, true);
-            currentDirPath += '/';
-        })
+        let nextPathSeparator = 0;
+        while(~(nextPathSeparator = fullPath.indexOf(pathSeparator, nextPathSeparator))){
+            const subPath = fullPath.substr(0, nextPathSeparator);
+            this.registerCorrelator([eventname], correlation, e => subPath === (e as any).fullPath, true);
+        }
+        this.registerCorrelator([eventname], correlation, e => fullPath === (e as any).fullPath, true);
     }
 
     private registerCorrelator<S extends keyof Events>(types: S[], correlation: Correlation, filter: (e: Events[S]) => boolean, single: boolean) {
-        let timeout: NodeJS.Timer;
+        // let timeout: NodeJS.Timer;
         const correlator: EventHandler<S> = {
             types,
             filter,
             apply: (e: Events[S]) => {
-                if (this.options.eventBufferMs && !e.correlation && single) {
-                    if (timeout) {
-                        clearTimeout(timeout)
+                // if (this.options.eventBufferMs && !e.correlation && single) {
+                //     if (timeout) {
+                //         clearTimeout(timeout)
+                //     }
+                //     timeout = setTimeout(() => {
+                //         e.correlation = correlation;
+                //         this.eventsManager.removeEventHandler(correlator);
+                //         this.eventsManager.emit(e);
+                //     }, this.options.eventBufferMs);
+                //     return undefined;
+                // } else {
+                    e.correlation = correlation;
+                    if (single) {
+                        this.eventsManager.removeEventHandler(correlator);
                     }
-                    timeout = setTimeout(() => {
-                        e.correlation = correlation;
-                        if (single) {
-                            this.eventsManager.removeEventHandler(correlator);
-                        }
-                        this.eventsManager.emit(e);
-                    }, this.options.eventBufferMs)
-                    return undefined;
-                }
-                e.correlation = correlation;
-                if (single) {
-                    this.eventsManager.removeEventHandler(correlator);
-                }
-                return e;
+                    return e;
+                // }
             },
         };
         this.eventsManager.addEventHandler(correlator, this.options.correlationWindow);

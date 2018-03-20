@@ -165,18 +165,17 @@ describe(`the local filesystem implementation`, () => {
                 return matcher.expect([{type: 'unexpectedError'}]);
             });
 
-            it(`emits 'unexpectedError' if 'loadTextFile' rejected in watcher 'change' callback`, () => {
-                return fs.saveFile(fileName, content)
-                    .then(() => fs.loadTextFile = () => Promise.reject('go away!'))
-                    .then(() => fs.saveFile(fileName, `_${content}`))
-                    .then(() => matcher.expect([{type: 'unexpectedError'}]))
+            it(`emits 'unexpectedError' if 'loadTextFile' rejected in watcher 'change' callback`, async () => {
+                await fs.saveFile(fileName, content);
+                fs.loadTextFile = () => Promise.reject('go away!');
+                await fs.saveFile(fileName, `_${content}`);
+                await matcher.expect([{type: 'unexpectedError'}]);
             });
         });
 
         describe('Handling feedback', function () {
             it('should dispatch events for empty files', async () => {
                 const path = join(testPath, fileName);
-                const newContent = `_${content}`;
                 writeFileSync(path, content);
                 await matcher.expect([{type: 'fileCreated', fullPath: fileName, newContent: content}]);
 
@@ -185,7 +184,6 @@ describe(`the local filesystem implementation`, () => {
             });
             it('should not dispatch events for empty files if another change is detected within buffer time', async () => {
                 const path = join(testPath, fileName);
-                const newContent = `_${content}`;
                 writeFileSync(path, content);
                 await matcher.expect([{type: 'fileCreated', fullPath: fileName, newContent: content}]);
 
@@ -215,7 +213,12 @@ describe(`the local filesystem implementation`, () => {
                 nofeedMatcher.track(noFeed.events, ...fileSystemEventNames);
 
 
-                const fullText = 'abcefghijklmabcefghijklmabcefghijklmabcefghijklabcefghijklmabcefghijklmabcefghijklmabcefghijklabcefghijklmabcefghijklmabcefghijklmabcefghijklabcefghijklmabcefghijklmabcefghijklmabcefghijklabcefghijklmabcefghijklmabcefghijklmabcefghijkl';
+                const fullText = `abcefghijklmabcefghijklmabcefghijk
+                lmabcefghijklabcefghijklmabcef
+                ghijklmabcefghijklmabcefghijklabcefghijklmabcefghij
+                klmabcefghijklmabcefghijklabcefghi
+                jklmabcefghijklmabcefghijklmabcefghijklabcefghijk
+                lmabcefghijklmabcefghijklmabcefghijkl`;
                 for (let i = 1; i < fullText.length; i++) {
                     await delayedPromise(1);
                     noFeed.saveFile(fileName, fullText.slice(i));
