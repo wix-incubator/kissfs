@@ -45,8 +45,8 @@ describe(`the local filesystem implementation`, () => {
     }
 
     const eventMatcherOptions: EventsMatcher.Options = {
-        retries: 40,
-        interval: 50,
+        retries: 80,
+        interval: 25,
         timeout: 2500,
         noExtraEventsGrace: 150
     };

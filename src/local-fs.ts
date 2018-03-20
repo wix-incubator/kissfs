@@ -76,8 +76,9 @@ export class LocalFileSystem implements FileSystem {
 
     init(): Promise<LocalFileSystem> {
         const watcher = this.watcher = watch([this.baseUrl], {
-            //  usePolling:true,
-            //  interval:100,
+            usePolling:true,
+            useFsEvents:false,
+            interval:50,
             ignored: (path: string) => this.crud.isIgnored(path),
             //    atomic: false, //todo 50?
             cwd: this.baseUrl
