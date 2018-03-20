@@ -191,7 +191,7 @@ describe(`the local filesystem implementation`, () => {
             });
             it('should not provide feedback when bombarding changes (stress test with nofeedbackFS)', async () => {
                 const path = join(testPath, fileName);
-                const expectedChangeEvents : Array<Events['fileChanged']> = [];
+                const expectedChangeEvents: Array<Events['fileChanged']> = [];
                 writeFileSync(path, content);
                 await matcher.expect([{type: 'fileCreated', fullPath: fileName, newContent: content}]);
 
@@ -208,13 +208,27 @@ describe(`the local filesystem implementation`, () => {
                 });
                 nofeedMatcher.track(noFeed.events, ...fileSystemEventNames);
 
-                for (let i = 1; i < 100; i++) {
+                for (let i = 1; i < 200; i++) {
                     await delayedPromise(1);
-                    noFeed.saveFile(fileName, 'content:'+i, ''+i);
-                    expectedChangeEvents.push({type: 'fileChanged', fullPath: fileName, newContent: 'content:'+i, correlation: ''+i})
+                    noFeed.saveFile(fileName, 'content:' + i, '' + i);
+                    expectedChangeEvents.push({
+                        type: 'fileChanged',
+                        fullPath: fileName,
+                        newContent: 'content:' + i,
+                        correlation: '' + i
+                    })
                 }
-                await matcher.expect(expectedChangeEvents);
-                await nofeedMatcher.expect([]);
+                try {
+                    await nofeedMatcher.expect([]);
+                } catch (e) {
+                    console.error('nofeedMatcher failed. printing underlying events');
+                    try {
+                        await matcher.expect(expectedChangeEvents);
+                    } catch (e2) {
+                        console.error(e2);
+                    }
+                    throw e;
+                }
             });
 
         });

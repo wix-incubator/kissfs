@@ -1,7 +1,7 @@
 import * as path from 'path';
 import {FSWatcher, watch} from 'chokidar';
 import {retryPromise, RetryPromiseOptions} from './promise-utils';
-import {Correlation, EventEmitter, Events, FileSystem} from './api';
+import {Correlation, EventEmitter, Events, FileSystem, fileSystemEventNames} from './api';
 import {Directory, File, pathSeparator, ShallowDirectory} from './model';
 import {LocalFileSystemCrudOnly} from './local-fs-crud-only';
 import {makeCorrelationId} from "./utils";
@@ -19,6 +19,7 @@ export class LocalFileSystem implements FileSystem {
     private watcher?: FSWatcher;
 
     private emptyFileTimers: { [filePath: string]: NodeJS.Timer } = {};
+    private dedupeEvents: { [filePath: string]: Events[keyof Events] } = {};
 
     constructor(public baseUrl: string,
                 ignore?: Array<string>,
@@ -29,7 +30,6 @@ export class LocalFileSystem implements FileSystem {
                     eventBufferMs: 150
                 }) {
         this.crud = new LocalFileSystemCrudOnly(baseUrl, ignore);
-    //    TODO try remove this
         //remove empty file change events
         this.eventsManager.addEventHandler({
             types: ['fileChanged'],
@@ -50,13 +50,28 @@ export class LocalFileSystem implements FileSystem {
                         if (actualContent === '') {
                             this.eventsManager.emit(ev);
                         }
-                    }, this.options.eventBufferMs)
+                    }, this.options.eventBufferMs);
                     return undefined
                 }
                 return ev;
             },
             filter: () => true
-        })
+        });
+        // de-dupe events
+        this.eventsManager.addEventHandler({
+            types: fileSystemEventNames,
+            apply: (ev) => {
+                const prevEv = this.dedupeEvents[ev.fullPath];
+                if (prevEv === ev || (prevEv && prevEv.type === ev.type && prevEv.fullPath === ev.fullPath && (prevEv as any).newContent === (ev as any).newContent)){
+                    // filter out duplicate event
+                    return undefined;
+                } else {
+                    this.dedupeEvents[ev.fullPath] = ev;
+                    return ev;
+                }
+            },
+            filter: () => true
+        });
     }
 
     init(): Promise<LocalFileSystem> {
@@ -84,27 +99,29 @@ export class LocalFileSystem implements FileSystem {
                 });
 
                 watcher.on('add', (relPath: string) => {
+                    const fullPath = relPath.split(path.sep).join(pathSeparator);
                     retryPromise(
                         () => this.loadTextFile(relPath)
                             .then(content => this.eventsManager.emit({
                                 type: 'fileCreated',
-                                fullPath: relPath.split(path.sep).join(pathSeparator),
+                                fullPath,
                                 newContent: content
                             })),
                         this.options
-                    ).catch(() => this.eventsManager.emit({type: 'unexpectedError'}));
+                    ).catch(() => this.eventsManager.emit({type: 'unexpectedError', fullPath}));
                 });
 
                 watcher.on('change', (relPath: string) => {
+                    let fullPath = relPath.split(path.sep).join(pathSeparator);
                     retryPromise(
                         () => this.loadTextFile(relPath)
                             .then((content) => this.eventsManager.emit({
                                 type: 'fileChanged',
-                                fullPath: relPath.split(path.sep).join(pathSeparator),
+                                fullPath,
                                 newContent: content
                             })),
                         this.options
-                    ).catch(() => this.eventsManager.emit({type: 'unexpectedError'}));
+                    ).catch(() => this.eventsManager.emit({type: 'unexpectedError', fullPath}));
                 });
 
                 watcher.on('unlinkDir', (relPath: string) =>
@@ -173,7 +190,7 @@ export class LocalFileSystem implements FileSystem {
 
     private registerCorrelationForPathsInDir(fullPath: string, correlation: Correlation, eventname: keyof Events) {
         let nextPathSeparator = 0;
-        while(~(nextPathSeparator = fullPath.indexOf(pathSeparator, nextPathSeparator +1))){
+        while (~(nextPathSeparator = fullPath.indexOf(pathSeparator, nextPathSeparator + 1))) {
             const subPath = fullPath.substr(0, nextPathSeparator);
             this.registerCorrelator([eventname], correlation, e => subPath === (e as any).fullPath, true);
         }
@@ -181,28 +198,15 @@ export class LocalFileSystem implements FileSystem {
     }
 
     private registerCorrelator<S extends keyof Events>(types: S[], correlation: Correlation, filter: (e: Events[S]) => boolean, single: boolean) {
-        // let timeout: NodeJS.Timer;
         const correlator: EventHandler<S> = {
             types,
             filter,
             apply: (e: Events[S]) => {
-                // if (this.options.eventBufferMs && !e.correlation && single) {
-                //     if (timeout) {
-                //         clearTimeout(timeout)
-                //     }
-                //     timeout = setTimeout(() => {
-                //         e.correlation = correlation;
-                //         this.eventsManager.removeEventHandler(correlator);
-                //         this.eventsManager.emit(e);
-                //     }, this.options.eventBufferMs);
-                //     return undefined;
-                // } else {
-                    e.correlation = correlation;
-                    if (single) {
-                        this.eventsManager.removeEventHandler(correlator);
-                    }
-                    return e;
-                // }
+                e.correlation = correlation;
+                if (single) {
+                    this.eventsManager.removeEventHandler(correlator);
+                }
+                return e;
             },
         };
         this.eventsManager.addEventHandler(correlator, this.options.correlationWindow);
