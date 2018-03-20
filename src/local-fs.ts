@@ -62,7 +62,7 @@ export class LocalFileSystem implements FileSystem {
             types: fileSystemEventNames,
             apply: (ev) => {
                 const prevEv = this.dedupeEvents[ev.fullPath];
-                if (prevEv === ev || (prevEv && prevEv.type === ev.type && prevEv.fullPath === ev.fullPath && (prevEv as any).newContent === (ev as any).newContent)){
+                if (prevEv === ev || (prevEv && prevEv.type === ev.type && prevEv.fullPath === ev.fullPath && (prevEv as any).newContent === (ev as any).newContent)) {
                     // filter out duplicate event
                     return undefined;
                 } else {
@@ -98,30 +98,34 @@ export class LocalFileSystem implements FileSystem {
                     }
                 });
 
-                watcher.on('add', (relPath: string) => {
+                watcher.on('add', async (relPath: string) => {
                     const fullPath = relPath.split(path.sep).join(pathSeparator);
-                    retryPromise(
-                        () => this.loadTextFile(relPath)
-                            .then(content => this.eventsManager.emit({
-                                type: 'fileCreated',
-                                fullPath,
-                                newContent: content
-                            })),
-                        this.options
-                    ).catch(() => this.eventsManager.emit({type: 'unexpectedError', fullPath}));
+                    try {
+                        await retryPromise(async () =>
+                                this.eventsManager.emit({
+                                    type: 'fileCreated',
+                                    fullPath,
+                                    newContent: await this.loadTextFile(relPath)
+                                })
+                            , this.options)
+                    } catch (e) {
+                        this.eventsManager.emit({type: 'unexpectedError', fullPath, stack: e.stack});
+                    }
                 });
 
-                watcher.on('change', (relPath: string) => {
+                watcher.on('change', async (relPath: string) => {
                     let fullPath = relPath.split(path.sep).join(pathSeparator);
-                    retryPromise(
-                        () => this.loadTextFile(relPath)
-                            .then((content) => this.eventsManager.emit({
-                                type: 'fileChanged',
-                                fullPath,
-                                newContent: content
-                            })),
-                        this.options
-                    ).catch(() => this.eventsManager.emit({type: 'unexpectedError', fullPath}));
+                    try {
+                        await retryPromise(async () =>
+                                this.eventsManager.emit({
+                                    type: 'fileChanged',
+                                    fullPath,
+                                    newContent: await this.loadTextFile(relPath)
+                                })
+                            , this.options)
+                    } catch (e) {
+                        this.eventsManager.emit({type: 'unexpectedError', fullPath, stack: e.stack});
+                    }
                 });
 
                 watcher.on('unlinkDir', (relPath: string) =>
@@ -146,20 +150,20 @@ export class LocalFileSystem implements FileSystem {
     }
 
 
-    async saveFile(fullPath: string, newContent: string, correlation: Correlation = makeCorrelationId()): Promise<Correlation> {
-        this.registerCorrelationForPathsInDir(fullPath, correlation, 'directoryCreated')
+    async saveFile(fullPath: string, newContent: string, correlation = makeCorrelationId()): Promise<Correlation> {
+        this.registerCorrelationForPathsInDir(fullPath, correlation);
         this.registerCorrelator(['fileChanged', 'fileCreated'], correlation, e => e.fullPath === fullPath && (e.newContent === newContent), true);
         await this.crud.saveFile(fullPath, newContent);
         return correlation;
     }
 
-    async deleteFile(fullPath: string, correlation: Correlation = makeCorrelationId()): Promise<Correlation> {
+    async deleteFile(fullPath: string, correlation = makeCorrelationId()): Promise<Correlation> {
         this.registerCorrelator(['fileDeleted'], correlation, e => e.fullPath === fullPath, true);
         await this.crud.deleteFile(fullPath);
         return correlation;
     }
 
-    async deleteDirectory(fullPath: string, recursive?: boolean, correlation: Correlation = makeCorrelationId()): Promise<Correlation> {
+    async deleteDirectory(fullPath: string, recursive?: boolean, correlation = makeCorrelationId()): Promise<Correlation> {
         this.registerCorrelator(['directoryDeleted'], correlation, e => e.fullPath === fullPath, true);
         if (recursive) {
             const prefix = fullPath + pathSeparator;
@@ -170,8 +174,9 @@ export class LocalFileSystem implements FileSystem {
         return correlation;
     }
 
-    async ensureDirectory(fullPath: string, correlation: Correlation = makeCorrelationId()): Promise<Correlation> {
-        this.registerCorrelationForPathsInDir(fullPath, correlation, 'directoryCreated')
+    async ensureDirectory(fullPath: string, correlation = makeCorrelationId()): Promise<Correlation> {
+        this.registerCorrelationForPathsInDir(fullPath, correlation);
+        this.registerCorrelator(['directoryCreated'], correlation, e => fullPath === (e as any).fullPath, true);
         await this.crud.ensureDirectory(fullPath);
         return correlation;
     }
@@ -188,13 +193,12 @@ export class LocalFileSystem implements FileSystem {
         return this.crud.loadDirectoryChildren(fullPath);
     }
 
-    private registerCorrelationForPathsInDir(fullPath: string, correlation: Correlation, eventname: keyof Events) {
+    private registerCorrelationForPathsInDir(fullPath: string, correlation: Correlation) {
         let nextPathSeparator = 0;
         while (~(nextPathSeparator = fullPath.indexOf(pathSeparator, nextPathSeparator + 1))) {
             const subPath = fullPath.substr(0, nextPathSeparator);
-            this.registerCorrelator([eventname], correlation, e => subPath === (e as any).fullPath, true);
+            this.registerCorrelator(['directoryCreated'], correlation, e => subPath === (e as any).fullPath, true);
         }
-        this.registerCorrelator([eventname], correlation, e => fullPath === (e as any).fullPath, true);
     }
 
     private registerCorrelator<S extends keyof Events>(types: S[], correlation: Correlation, filter: (e: Events[S]) => boolean, single: boolean) {

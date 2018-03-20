@@ -153,7 +153,9 @@ describe(`the local filesystem implementation`, () => {
 
                 return expect(fs.loadTextFile(ignoredFile)).to.be.rejectedWith(Error)
             });
+        });
 
+        describe(`events with 'newContent'`, () => {
             it(`emits 'unexpectedError' if 'loadTextFile' rejected in watcher 'add' callback`, () => {
                 fs.loadTextFile = () => Promise.reject('go away!');
                 const path = join(testPath, fileName);
@@ -163,10 +165,25 @@ describe(`the local filesystem implementation`, () => {
 
             it(`emits 'unexpectedError' if 'loadTextFile' rejected in watcher 'change' callback`, async () => {
                 await fs.saveFile(fileName, content);
+                await matcher.expect([{type: 'fileCreated', fullPath: fileName, newContent: content}]);
                 fs.loadTextFile = () => Promise.reject('go away!');
                 await fs.saveFile(fileName, `_${content}`);
                 await matcher.expect([{type: 'unexpectedError'}]);
             });
+
+            it(`emits exactly one 'change' event if 'loadTextFile' returns same content on multiple change events (unit for stress scenario)`, async () => {
+                await fs.saveFile(fileName, content);
+                await matcher.expect([{type: 'fileCreated', fullPath: fileName, newContent: content}]);
+                const newContent = `newContent`;
+                fs.loadTextFile = async () => newContent;
+                await fs.saveFile(fileName, '123');
+                await matcher.expect([{type: 'fileChanged', fullPath: fileName, newContent: newContent}]);
+                await fs.saveFile(fileName, '456');
+                await matcher.expect([]);
+                await fs.saveFile(fileName, '789');
+                await matcher.expect([]);
+            });
+
         });
 
         describe('Handling feedback', function () {
