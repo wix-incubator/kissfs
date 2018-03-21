@@ -16,24 +16,24 @@ export class SlowFs implements FileSystem {
         this.events = this.fs.events as InternalEventsEmitter;
     }
 
-    async saveFile(fullPath: string, newContent: string): Promise<Correlation> {
+    async saveFile(fullPath: string, newContent: string, correlation?: Correlation): Promise<Correlation> {
         await delayedPromise(this.delay);
-        return this.fs.saveFile(fullPath, newContent);
+        return this.fs.saveFile(fullPath, newContent, correlation);
     }
 
-    async deleteFile(fullPath: string): Promise<Correlation> {
+    async deleteFile(fullPath: string, correlation?: Correlation): Promise<Correlation> {
         await delayedPromise(this.delay);
-        return this.fs.deleteFile(fullPath);
+        return this.fs.deleteFile(fullPath, correlation);
     }
 
-    async deleteDirectory(fullPath: string, recursive: boolean = false): Promise<Correlation> {
+    async deleteDirectory(fullPath: string, recursive: boolean = false, correlation?: Correlation): Promise<Correlation> {
         await delayedPromise(this.delay);
-        return this.fs.deleteDirectory(fullPath, recursive);
+        return this.fs.deleteDirectory(fullPath, recursive, correlation);
     }
 
-    async ensureDirectory(fullPath: string): Promise<Correlation> {
+    async ensureDirectory(fullPath: string, correlation?: Correlation): Promise<Correlation> {
         await delayedPromise(this.delay);
-        return this.fs.ensureDirectory(fullPath);
+        return this.fs.ensureDirectory(fullPath, correlation);
     }
 
     async loadTextFile(fullPath: string): Promise<string> {

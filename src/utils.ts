@@ -22,7 +22,6 @@ export function splitPathToDirAndFile(targetPath: string): { parentPath: string,
         name: targetPath.substr(nameParentSeparator + 1)
     };
 }
-
 export function checkExistsInDir(expectedType: 'file' | 'dir', dirContent: Array<ShallowDirectory | File>, name: string) {
     for (let node of dirContent) {
         if (node.type === expectedType && node.name === name) {
@@ -55,4 +54,10 @@ export function makeEventsEmitter(): InternalEventsEmitter {
 
 export function makeCorrelationId(): Correlation {
     return (Math.random().toString(36) + '0000').substr(2, 4);
+}
+
+
+export function endsWith(str: string, maybeSuffix: string): boolean {
+
+    return str.lastIndexOf(maybeSuffix) === str.length - maybeSuffix.length;
 }

@@ -51,20 +51,20 @@ export class MemoryFileSystem implements FileSystemReadSync, FileSystem {
         }
     }
 
-    async saveFile(fullPath: string, newContent: string): Promise<Correlation> {
-        return this.saveFileSync(fullPath, newContent);
+    async saveFile(fullPath: string, newContent: string, correlation?: Correlation): Promise<Correlation> {
+        return this.saveFileSync(fullPath, newContent, correlation);
     }
 
-    async deleteFile(fullPath: string): Promise<Correlation> {
-        return this.deleteFileSync(fullPath);
+    async deleteFile(fullPath: string, correlation?: Correlation): Promise<Correlation> {
+        return this.deleteFileSync(fullPath, correlation);
     }
 
-    async deleteDirectory(fullPath: string, recursive?: boolean): Promise<Correlation> {
-        return this.deleteDirectorySync(fullPath, recursive)
+    async deleteDirectory(fullPath: string, recursive?: boolean, correlation?: Correlation): Promise<Correlation> {
+        return this.deleteDirectorySync(fullPath, recursive, correlation);
     }
 
-    async ensureDirectory(fullPath: string): Promise<Correlation> {
-        return this.ensureDirectorySync(fullPath);
+    async ensureDirectory(fullPath: string, correlation?: Correlation): Promise<Correlation> {
+        return this.ensureDirectorySync(fullPath, correlation);
     }
 
     async loadTextFile(fullPath: string): Promise<string> {
@@ -79,17 +79,16 @@ export class MemoryFileSystem implements FileSystemReadSync, FileSystem {
         return this.loadDirectoryChildrenSync(fullPath);
     }
 
-    saveFileSync(fullPath: string, newContent: string): Correlation {
+    saveFileSync(fullPath: string, newContent: string, correlation: Correlation = makeCorrelationId()): Correlation {
+
         if (this.isIgnored(fullPath)) {
             throw new Error(`Unable to save ignored path: '${fullPath}'`);
         }
-
         const pathArr = getPathNodes(fullPath);
         const fileName = pathArr.pop();
         if (!fileName) {
             throw new Error(`root is not a legal file name`);
         }
-        const correlation = makeCorrelationId();
 
         this._ensureDirectorySync(pathArr.join(pathSeparator), correlation);
         const parent = Directory.getSubDir(this.root, pathArr);
@@ -117,10 +116,9 @@ export class MemoryFileSystem implements FileSystemReadSync, FileSystem {
         return correlation;
     }
 
-    deleteFileSync(fullPath: string): Correlation {
+    deleteFileSync(fullPath: string, correlation: Correlation = makeCorrelationId()): Correlation {
         const pathArr = getPathNodes(fullPath);
         const parent = pathArr.length ? Directory.getSubDir(this.root, pathArr.slice(0, pathArr.length - 1)) : null;
-        const correlation = makeCorrelationId();
         if (isDir(parent) && !this.isIgnored(fullPath)) {
             const node = parent.children.find(({name}) => name === pathArr[pathArr.length - 1]);
             if (isFile(node)) {
@@ -133,13 +131,11 @@ export class MemoryFileSystem implements FileSystemReadSync, FileSystem {
         return correlation;
     }
 
-    deleteDirectorySync(fullPath: string, recursive?: boolean): Correlation {
+    deleteDirectorySync(fullPath: string, recursive?: boolean, correlation: Correlation = makeCorrelationId()): Correlation {
         const pathArr = getPathNodes(fullPath);
         if (pathArr.length === 0) {
             throw new Error(`Can't delete root directory`);
         }
-        const correlation = makeCorrelationId();
-
         const parent = Directory.getSubDir(this.root, pathArr.slice(0, pathArr.length - 1));
         if (isDir(parent) && !this.isIgnored(fullPath)) {
             const node = parent.children.find(({name}) => name === pathArr[pathArr.length - 1]);
@@ -157,8 +153,8 @@ export class MemoryFileSystem implements FileSystemReadSync, FileSystem {
         return correlation;
     }
 
-    ensureDirectorySync(fullPath: string): Correlation {
-        return this._ensureDirectorySync(fullPath, makeCorrelationId());
+    ensureDirectorySync(fullPath: string, correlation: Correlation = makeCorrelationId()): Correlation {
+        return this._ensureDirectorySync(fullPath, correlation);
     }
 
     loadTextFileSync(fullPath: string): string {

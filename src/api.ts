@@ -2,6 +2,7 @@ import {Directory, DirectoryContent, File, ShallowDirectory} from "./model";
 
 export interface FileSystemEvent {
     type: keyof Events;
+    fullPath: string;
     correlation?: Correlation;
 }
 
@@ -12,29 +13,24 @@ export interface UnexpectedErrorEvent extends FileSystemEvent {
 
 export interface FileCreatedEvent extends FileSystemEvent {
     type: 'fileCreated';
-    fullPath: string;
     newContent: string;
 }
 
 export interface FileChangedEvent extends FileSystemEvent {
     type: 'fileChanged';
-    fullPath: string;
     newContent: string;
 }
 
 export interface FileDeletedEvent extends FileSystemEvent {
     type: 'fileDeleted';
-    fullPath: string;
 }
 
 export interface DirectoryCreatedEvent extends FileSystemEvent {
     type: 'directoryCreated';
-    fullPath: string;
 }
 
 export interface DirectoryDeletedEvent extends FileSystemEvent {
     type: 'directoryDeleted';
-    fullPath: string;
 }
 
 export interface Disposable {
@@ -86,13 +82,13 @@ export interface FileSystem {
     readonly events: EventEmitter;
     readonly baseUrl: string;
 
-    saveFile(fullPath: string, newContent: string): Promise<Correlation>;
+    saveFile(fullPath: string, newContent: string, correlation?: Correlation): Promise<Correlation>;
 
-    deleteFile(fullPath: string): Promise<Correlation>;
+    deleteFile(fullPath: string, correlation?: Correlation): Promise<Correlation>;
 
-    deleteDirectory(fullPath: string, recursive?: boolean): Promise<Correlation>;
+    deleteDirectory(fullPath: string, recursive?: boolean, correlation?: Correlation): Promise<Correlation>;
 
-    ensureDirectory(fullPath: string): Promise<Correlation>;
+    ensureDirectory(fullPath: string, correlation?: Correlation): Promise<Correlation>;
 
     loadTextFile(fullPath: string): Promise<string>;
 

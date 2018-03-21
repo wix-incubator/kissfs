@@ -1,6 +1,7 @@
 import {Directory, DirectoryContent, File, ShallowDirectory} from "./model";
 import {Correlation, EventEmitter, FileSystem, fileSystemEventNames, FileSystemReadSync} from "./api";
 import {EventsManager} from "./events-manager";
+import {makeCorrelationId} from "./utils";
 
 export type Options = {
     delayEvents: number;
@@ -28,20 +29,24 @@ export class NoFeedbackEventsFileSystem implements FileSystem {
         fileSystemEventNames.forEach(type => this.fs.events.on(type, emit));
     }
 
-    async saveFile(fullPath: string, newContent: string): Promise<Correlation> {
-        return this.registerCorrelation(await this.fs.saveFile(fullPath, newContent), false);
+    async saveFile(fullPath: string, newContent: string, correlation: Correlation = makeCorrelationId()): Promise<Correlation> {
+        this.registerCorrelation(correlation, false);
+        return await this.fs.saveFile(fullPath, newContent, correlation);
     }
 
-    async deleteFile(fullPath: string): Promise<Correlation> {
-        return this.registerCorrelation(await this.fs.deleteFile(fullPath), true);
+    async deleteFile(fullPath: string, correlation: Correlation = makeCorrelationId()): Promise<Correlation> {
+        this.registerCorrelation(correlation, true);
+        return await this.fs.deleteFile(fullPath, correlation);
     }
 
-    async deleteDirectory(fullPath: string, recursive?: boolean): Promise<Correlation> {
-        return this.registerCorrelation(await this.fs.deleteDirectory(fullPath, recursive), !recursive);
+    async deleteDirectory(fullPath: string, recursive?: boolean, correlation: Correlation = makeCorrelationId()): Promise<Correlation> {
+        this.registerCorrelation(correlation, !recursive);
+        return await this.fs.deleteDirectory(fullPath, recursive, correlation);
     }
 
-    async ensureDirectory(fullPath: string): Promise<Correlation> {
-        return this.registerCorrelation(await this.fs.ensureDirectory(fullPath), false);
+    async ensureDirectory(fullPath: string, correlation: Correlation = makeCorrelationId()): Promise<Correlation> {
+        this.registerCorrelation(correlation, false);
+        return await this.fs.ensureDirectory(fullPath, correlation);
     }
 
     loadTextFile(fullPath: string): Promise<string> {
