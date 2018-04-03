@@ -24,7 +24,7 @@ export async function retryPromise<T>(promiseProvider: () => Promise<T>,
         return await promiseProvider();
     }
     if (timeout && timeout <= retries * interval) {
-        return Promise.reject(`timeout (${timeout}ms) must be greater than retries (${retries}) times interval (${interval}ms)`)
+        return Promise.reject(new Error(`timeout (${timeout}ms) must be greater than retries (${retries}) times interval (${interval}ms)`))
     }
     const raceWithTimeout = [never, never];
     if (timeout) {
