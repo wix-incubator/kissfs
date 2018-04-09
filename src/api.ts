@@ -53,7 +53,7 @@ export type Events = {
 
 }
 export const fileSystemEventNames: Array<keyof Events> = ['unexpectedError', 'fileCreated', 'fileChanged', 'fileDeleted', 'directoryCreated', 'directoryDeleted'];
-export const fileSystemAsyncMethods: Array<keyof FileSystem> = ['saveFile', 'deleteFile', 'deleteDirectory', 'loadTextFile', 'loadDirectoryTree', 'ensureDirectory', 'loadDirectoryChildren'];
+export const fileSystemAsyncMethods: Array<keyof FileSystem> = ['saveFile', 'deleteFile', 'deleteDirectory', 'loadTextFile', 'loadDirectoryTree', 'ensureDirectory', 'loadDirectoryChildren', 'stat'];
 
 export type Correlation = string;
 
@@ -95,6 +95,8 @@ export interface FileSystem {
     loadDirectoryTree(fullPath?: string): Promise<Directory>;
 
     loadDirectoryChildren(fullPath: string): Promise<(File | ShallowDirectory)[]>;
+
+    stat(fullPath: string): Promise<SimpleStats>;
 }
 
 

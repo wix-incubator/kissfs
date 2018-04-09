@@ -61,6 +61,10 @@ export class NoFeedbackEventsFileSystem implements FileSystem {
         return this.fs.loadDirectoryChildren(fullPath);
     }
 
+    stat(fullPath: string): Promise<SimpleStats> {
+        return this.fs.stat(fullPath);
+    }
+
     protected registerCorrelation(correlation: Correlation, once: boolean) {
         const targetSet = once ? this.correlateOnce : this.correlateByWindow;
         targetSet.add(correlation);
@@ -79,10 +83,6 @@ export class NoFeedbackEventsFileSystemSync extends NoFeedbackEventsFileSystem i
         return this.syncFs.loadTextFileSync(fullPath);
     }
 
-    statSync(fullPath: string): SimpleStats {
-        return this.syncFs.statSync(fullPath);
-    }
-
     loadDirectoryTreeSync(fullPath?: string | undefined): Directory {
         return this.syncFs.loadDirectoryTreeSync(fullPath);
     }
@@ -93,5 +93,9 @@ export class NoFeedbackEventsFileSystemSync extends NoFeedbackEventsFileSystem i
 
     loadDirectoryContentSync(fullPath: string = ''): DirectoryContent {
         return this.syncFs.loadDirectoryContentSync(fullPath);
+    }
+
+    statSync(fullPath: string): SimpleStats {
+        return this.syncFs.statSync(fullPath);
     }
 }

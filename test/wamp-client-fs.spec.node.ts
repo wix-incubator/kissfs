@@ -50,9 +50,9 @@ describe(`the wamp client filesystem proxy`, () => {
                 expect(getFS().then(fs => fs.deleteDirectory(dirName))).to.eventually.be.rejectedWith(noConnectionError),
                 expect(getFS().then(fs => fs.ensureDirectory(dirName))).to.eventually.be.rejectedWith(noConnectionError),
                 expect(getFS().then(fs => fs.loadTextFile(fileName))).to.eventually.be.rejectedWith(noConnectionError),
-                expect(getFS().then(fs => fs.loadDirectoryTree())).to.eventually.be.rejectedWith(noConnectionError)
+                expect(getFS().then(fs => fs.loadDirectoryTree())).to.eventually.be.rejectedWith(noConnectionError),
+                expect(getFS().then(fs => fs.stat(fileName))).to.eventually.be.rejectedWith(noConnectionError)
             ]);
-
         });
     });
 });

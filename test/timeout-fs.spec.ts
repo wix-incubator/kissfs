@@ -50,5 +50,10 @@ describe('the timeout file system proxy', () => {
             return expect(fs.loadDirectoryTree()).to.eventually.be.rejectedWith('timed out')
                 .then(() => expect(startTimestamp - Date.now()).to.be.below(delay));
         });
+
+        it(`stat exit before delay is over`, () => {
+            return expect(fs.stat(dirName)).to.eventually.be.rejectedWith('timed out')
+                .then(() => expect(startTimestamp - Date.now()).to.be.below(delay));
+        });
     });
 });

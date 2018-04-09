@@ -2,7 +2,7 @@ import {Connection, Session} from 'autobahn';
 import {Correlation, FileSystem, fileSystemEventNames} from './api';
 import {InternalEventsEmitter, makeCorrelationId, makeEventsEmitter} from "./utils";
 import {timeoutPromise} from './promise-utils';
-import {Directory, File, ShallowDirectory} from "./model";
+import {Directory, File, ShallowDirectory, SimpleStats} from "./model";
 
 export const noConnectionError = `WampClientFileSystem hasn't opened connection yet (forgot to init()?).`
 
@@ -107,6 +107,17 @@ export class WampClientFileSystem implements FileSystem {
         }
         try {
             return await this.session.call<(File | ShallowDirectory)[]>(`${this.realmPrefix}loadDirectoryChildren`, [fullPath]);
+        } catch (error) {
+            throw new Error(error);
+        }
+    }
+
+    async stat(fullPath: string): Promise<SimpleStats> {
+        if (!this.session || !this.session.isOpen) {
+            throw new Error(noConnectionError);
+        }
+        try {
+            return await this.session.call<SimpleStats>(`${this.realmPrefix}stat`, [fullPath]);
         } catch (error) {
             throw new Error(error);
         }

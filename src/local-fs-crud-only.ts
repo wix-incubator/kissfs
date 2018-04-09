@@ -1,7 +1,7 @@
 import {access, ensureDir, readdir, readFile, remove, rmdir, stat, writeFile} from 'fs-extra';
 import * as walk from 'klaw';
 import * as path from 'path';
-import {Directory, File, pathSeparator, ShallowDirectory} from './model';
+import {Directory, File, pathSeparator, ShallowDirectory, SimpleStats} from './model';
 import {getIsIgnored, getPathNodes} from './utils';
 import {MemoryFileSystem} from './memory-fs';
 
@@ -139,6 +139,21 @@ export class LocalFileSystemCrudOnly {
                 })
                 .on('error', reject);
         });
+    }
+
+    async stat(fullPath: string): Promise<SimpleStats> {
+        // if (this.isIgnored(fullPath)) { // TODO: ???
+        //     throw new Error(`Unable to read ignored path: '${fullPath}'`);
+        // }
+
+        const nodeStat = await stat(fullPath);
+        if (nodeStat.isDirectory()) {
+            return { type: 'dir' };
+        } else if (nodeStat.isFile()) {
+            return { type: 'file'};
+        }
+
+        throw new Error(`Unsupported type ${fullPath}`);
     }
 
     async ensureDirectory(relPath: string): Promise<void> {

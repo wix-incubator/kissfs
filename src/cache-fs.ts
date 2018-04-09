@@ -194,6 +194,15 @@ export class CacheFileSystem implements FileSystemReadSync, FileSystem {
         return this.cache.loadDirectoryChildrenSync(fullPath);
     }
 
+    async stat(fullPath: string): Promise<SimpleStats> {
+        if (this.pathsInCache[fullPath]) {
+            return this.cache.statSync(fullPath);
+        }
+
+        // TODO: Cache?
+        return this.fs.stat(fullPath);
+    }
+
     statSync(fullPath: string): SimpleStats {
         return this.cache.statSync(fullPath);
     }

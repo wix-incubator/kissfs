@@ -4,7 +4,7 @@ import {MemoryFileSystem} from '../src/memory-fs';
 import {InternalEventsEmitter} from '../src/utils';
 import {ignoredDir, ignoredFile} from './implementation-suite';
 import {delayedPromise} from '../src/promise-utils';
-import {Directory, File, ShallowDirectory} from "../src/model";
+import {Directory, File, ShallowDirectory, SimpleStats} from "../src/model";
 
 export class SlowFs implements FileSystem {
     public readonly events: InternalEventsEmitter;
@@ -49,6 +49,11 @@ export class SlowFs implements FileSystem {
     async loadDirectoryChildren(fullPath: string): Promise<(File | ShallowDirectory)[]> {
         await delayedPromise(this.delay);
         return this.fs.loadDirectoryChildren(fullPath);
+    }
+
+    async stat(fullPath: string): Promise<SimpleStats> {
+        await delayedPromise(this.delay);
+        return this.fs.stat(fullPath);
     }
 
     dispose() {

@@ -79,6 +79,10 @@ export class MemoryFileSystem implements FileSystemReadSync, FileSystem {
         return this.loadDirectoryChildrenSync(fullPath);
     }
 
+    async stat(fullPath: string): Promise<SimpleStats> {
+        return this.statSync(fullPath);
+    }
+
     saveFileSync(fullPath: string, newContent: string, correlation: Correlation = makeCorrelationId()): Correlation {
 
         if (this.isIgnored(fullPath)) {
@@ -172,22 +176,6 @@ export class MemoryFileSystem implements FileSystemReadSync, FileSystem {
         throw new Error(`Cannot find file ${fullPath}`);
     }
 
-    loadTextFileSync(fullPath: string): string {
-        const node = this.findNode(fullPath);
-        if (isFile(node)) {
-            return node.content || '';
-        } else {
-            throw new Error(`File is a directory ${fullPath}`);
-        }
-    }
-
-    statSync(fullPath: string): SimpleStats {
-        const node = this.findNode(fullPath);
-        return isFile(node) ?
-            { type: 'file' } :
-            { type: 'dir' }
-    }
-
     private getDir(fullPath: string) {
         if (this.isIgnored(fullPath)) {
             throw new Error(`Unable to read ignored path: '${fullPath}'`);
@@ -199,6 +187,14 @@ export class MemoryFileSystem implements FileSystemReadSync, FileSystem {
         return dir;
     }
 
+    loadTextFileSync(fullPath: string): string {
+        const node = this.findNode(fullPath);
+        if (isFile(node)) {
+            return node.content || '';
+        } else {
+            throw new Error(`File is a directory ${fullPath}`);
+        }
+    }
 
     loadDirectoryContentSync(fullPath: string = ''): DirectoryContent {
         return Directory.toContent(this.getDir(fullPath));
@@ -210,6 +206,13 @@ export class MemoryFileSystem implements FileSystemReadSync, FileSystem {
 
     loadDirectoryChildrenSync(fullPath: string): (File | ShallowDirectory)[] {
         return this.getDir(fullPath).children.map(child => isDir(child) ? new ShallowDirectory(child.name, child.fullPath) : new File(child.name, child.fullPath));
+    }
+
+    statSync(fullPath: string): SimpleStats {
+        const node = this.findNode(fullPath);
+        return isFile(node) ?
+            { type: 'file' } :
+            { type: 'dir' }
     }
 
     private _ensureDirectorySync(fullPath: string, correlation: Correlation): Correlation {
