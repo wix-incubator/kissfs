@@ -1,5 +1,5 @@
 import {Correlation, FileSystem, isDisposable, UnexpectedErrorEvent} from './api';
-import {Directory, DirectoryContent, File, FileSystemNode, isDir, isFile, ShallowDirectory} from "./model";
+import {Directory, DirectoryContent, File, FileSystemNode, isDir, isFile, ShallowDirectory, SimpleStats} from "./model";
 
 import {MemoryFileSystem} from './memory-fs';
 import {InternalEventsEmitter, makeEventsEmitter} from './utils';
@@ -162,7 +162,6 @@ export class CacheFileSystem implements FileSystemReadSync, FileSystem {
         return this.cache.loadTextFileSync(fullPath);
     }
 
-
     async loadDirectoryTree(fullPath?: string): Promise<Directory> {
         if (this.isTreeCached) {
             return this.cache.loadDirectoryTreeSync(fullPath);
@@ -195,6 +194,9 @@ export class CacheFileSystem implements FileSystemReadSync, FileSystem {
         return this.cache.loadDirectoryChildrenSync(fullPath);
     }
 
+    statSync(fullPath: string): SimpleStats {
+        return this.cache.statSync(fullPath);
+    }
 
     dispose() {
         if (isDisposable(this.fs)) this.fs.dispose();

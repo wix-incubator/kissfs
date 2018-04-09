@@ -560,6 +560,26 @@ export function assertFileSystemSyncContract(fsProvider: () => Promise<FileSyste
                 .then(() => expect(() => fs.loadTextFileSync(ignoredFile)).to.throw(Error));
         });
 
+        it(`statSync an existing directory`, async function() {
+            await fs.ensureDirectory(dirName);
+
+            const stat = fs.statSync(dirName);
+
+            expect(stat.type).to.equal('dir');
+        });
+
+        it(`statSync an existing file`, async function() {
+            await fs.saveFile(fileName, content);
+
+            const stat = fs.statSync(fileName);
+
+            expect(stat.type).to.equal('file');
+        });
+
+        it(`statSync a non-existing file - fails`, function () {
+            return expect(() => fs.statSync(fileName)).to.throw(Error);
+        });
+
         it(`loadDirectoryTreeSync`, function () {
             const expected = {
                 fullPath: ``, name: '', type: 'dir', children: [

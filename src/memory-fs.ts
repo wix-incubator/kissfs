@@ -1,5 +1,5 @@
 import {Correlation, FileSystem, FileSystemReadSync,} from "./api";
-import {Directory, DirectoryContent, File, isDir, isFile, pathSeparator, ShallowDirectory} from "./model";
+import {Directory, DirectoryContent, File, isDir, isFile, pathSeparator, ShallowDirectory, SimpleStats} from "./model";
 
 import {
     getIsIgnored,
@@ -157,7 +157,7 @@ export class MemoryFileSystem implements FileSystemReadSync, FileSystem {
         return this._ensureDirectorySync(fullPath, correlation);
     }
 
-    loadTextFileSync(fullPath: string): string {
+    private findNode(fullPath: string): Directory | File {
         if (this.isIgnored(fullPath)) {
             throw new Error(`Unable to read ignored path: '${fullPath}'`);
         }
@@ -165,13 +165,27 @@ export class MemoryFileSystem implements FileSystemReadSync, FileSystem {
         const parent = pathArr.length ? Directory.getSubDir(this.root, pathArr.slice(0, pathArr.length - 1)) : null;
         if (isDir(parent)) {
             const node = parent.children.find(({name}) => name === pathArr[pathArr.length - 1]);
-            if (isFile(node)) {
-                return node.content || '';
-            } else if (isDir(node)) {
-                throw new Error(`File is a directory ${fullPath}`);
+            if (node) {
+                return node;
             }
         }
         throw new Error(`Cannot find file ${fullPath}`);
+    }
+
+    loadTextFileSync(fullPath: string): string {
+        const node = this.findNode(fullPath);
+        if (isFile(node)) {
+            return node.content || '';
+        } else {
+            throw new Error(`File is a directory ${fullPath}`);
+        }
+    }
+
+    statSync(fullPath: string): SimpleStats {
+        const node = this.findNode(fullPath);
+        return isFile(node) ?
+            { type: 'file' } :
+            { type: 'dir' }
     }
 
     private getDir(fullPath: string) {

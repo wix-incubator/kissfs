@@ -1,4 +1,4 @@
-import {Directory, DirectoryContent, File, ShallowDirectory} from "./model";
+import {Directory, DirectoryContent, File, ShallowDirectory, SimpleStats} from "./model";
 import {Correlation, EventEmitter, FileSystem, fileSystemEventNames, FileSystemReadSync} from "./api";
 import {EventsManager} from "./events-manager";
 import {makeCorrelationId} from "./utils";
@@ -77,6 +77,10 @@ export class NoFeedbackEventsFileSystemSync extends NoFeedbackEventsFileSystem i
 
     loadTextFileSync(fullPath: string): string {
         return this.syncFs.loadTextFileSync(fullPath);
+    }
+
+    statSync(fullPath: string): SimpleStats {
+        return this.syncFs.statSync(fullPath);
     }
 
     loadDirectoryTreeSync(fullPath?: string | undefined): Directory {

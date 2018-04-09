@@ -1,4 +1,4 @@
-import {Directory, DirectoryContent, File, ShallowDirectory} from "./model";
+import {Directory, DirectoryContent, File, ShallowDirectory, SimpleStats} from "./model";
 
 export interface FileSystemEvent {
     type: keyof Events;
@@ -107,4 +107,6 @@ export interface FileSystemReadSync extends FileSystem {
     loadDirectoryContentSync(fullPath?: string): DirectoryContent;
 
     loadDirectoryChildrenSync(fullPath: string): Array<File | ShallowDirectory>;
+
+    statSync(fullPath: string): SimpleStats;
 }
