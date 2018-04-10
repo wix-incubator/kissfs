@@ -580,6 +580,8 @@ export function assertFileSystemSyncContract(fsProvider: () => Promise<FileSyste
                 .then(() => expect(() => fs.loadTextFileSync(ignoredFile)).to.throw(Error));
         });
 
+        // TODO: stats and statsSync on ignored file and dir (4 tests)
+
         it(`statSync an existing directory`, async function() {
             await fs.ensureDirectory(dirName);
 

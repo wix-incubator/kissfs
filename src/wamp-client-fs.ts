@@ -35,15 +35,20 @@ export class WampClientFileSystem implements FileSystem {
         }), initTimeout, `Cant't open connection to the WAMP server at ${baseUrl} for ${initTimeout}ms.`);
     }
 
-    async saveFile(fullPath: string, newContent: string, correlation: Correlation = makeCorrelationId()): Promise<Correlation> {
+    // TODO: continue using this.request for implementations
+    private async request<T = Correlation>(method:string, ...args : any[]):Promise<T>{
         if (!this.session || !this.session.isOpen) {
             throw new Error(noConnectionError);
         }
         try {
-            return await this.session.call<Correlation>(`${this.realmPrefix}saveFile`, [fullPath, newContent, correlation]);
+            return await this.session.call<T>(this.realmPrefix + method, args);
         } catch (error) {
             throw new Error(error);
         }
+    }
+
+    async saveFile(fullPath: string, newContent: string, correlation: Correlation = makeCorrelationId()): Promise<Correlation> {
+        return this.request('saveFile', fullPath, newContent, correlation);
     }
 
     async deleteFile(fullPath: string, correlation: Correlation = makeCorrelationId()): Promise<Correlation> {

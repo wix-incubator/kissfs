@@ -38,10 +38,10 @@ describe(`the cache file system proxy`, () => {
 
         beforeEach(() => {
             startTimestamp = Date.now();
-            slow = new SlowFs(timeout)
-            fs = new CacheFileSystem(slow)
+            slow = new SlowFs(timeout);
+            fs = new CacheFileSystem(slow);
             matcher = new EventsMatcher(eventMatcherOptions);
-            matcher.track(fs.events, ...fileSystemEventNames)
+            matcher.track(fs.events, ...fileSystemEventNames);
         });
 
 
