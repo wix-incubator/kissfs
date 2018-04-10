@@ -44,31 +44,41 @@ describe(`the cache file system proxy`, () => {
             matcher.track(fs.events, ...fileSystemEventNames);
         });
 
-
         it('loads file faster after it has been saved', () => {
             return fs.saveFile(fileName, content)
                 .then(() => fs.loadTextFile(fileName))
                 .then(() => expect(Date.now() - startTimestamp).to.be.lessThan(timeout * 2));
-        })
+        });
 
         it('loads file faster after it has been saved from outside', () => {
             const onFileCreated = new Promise(resolve => {
                 fs.events.once('fileCreated', () => {
                     fs.loadTextFile(fileName)
-                        .then(() => resolve(Date.now() - startTimestamp))
+                        .then(() => resolve(Date.now() - startTimestamp));
                 })
             })
 
-            slow.saveFile(fileName, content)
-            return expect(onFileCreated).to.be.eventually.lessThan(timeout * 2)
-
-        })
+            slow.saveFile(fileName, content);
+            return expect(onFileCreated).to.be.eventually.lessThan(timeout * 2);
+        });
 
         it('loads tree faster after it has been loaded before', () => {
             return fs.loadDirectoryTree()
                 .then(() => fs.loadDirectoryTree())
-                .then(() => expect(Date.now() - startTimestamp).to.be.lessThan(timeout * 2))
-        })
+                .then(() => expect(Date.now() - startTimestamp).to.be.lessThan(timeout * 2));
+        });
+
+        it('stat directory faster after it has been cached before', () => {
+            return fs.ensureDirectory(dirName)
+                .then(() => fs.stat(dirName))
+                .then(() => expect(Date.now() - startTimestamp).to.be.lessThan(timeout * 2));
+        });
+
+        it('stat file faster after stat has run on it before', () => {
+            return fs.saveFile(fileName, content)
+                .then(() => fs.stat(fileName))
+                .then(() => expect(Date.now() - startTimestamp).to.be.lessThan(timeout * 2));
+        });
     });
 
     describe(`unexpected error behaviour`, () => {
@@ -85,7 +95,7 @@ describe(`the cache file system proxy`, () => {
                 noExtraEventsGrace: 150,
                 timeout: 300
             });
-            matcher.track(fs.events, ...fileSystemEventNames)
+            matcher.track(fs.events, ...fileSystemEventNames);
         });
 
         it('emits `fileCreated` if there is not cached file after error', () => {
@@ -93,7 +103,7 @@ describe(`the cache file system proxy`, () => {
             return original.saveFile(fileName, content)
                 .then(() => matcher.expect([]))
                 .then(() => (original.events as InternalEventsEmitter).emit('unexpectedError', {type: 'unexpectedError'}))
-                .then(() => matcher.expect([{type: 'fileCreated', fullPath: fileName, newContent: content}]))
+                .then(() => matcher.expect([{type: 'fileCreated', fullPath: fileName, newContent: content}]));
         })
 
         it('emits `directoryCreated` if there is not cached dir after error', () => {
@@ -101,7 +111,7 @@ describe(`the cache file system proxy`, () => {
             return original.ensureDirectory(dirName)
                 .then(() => matcher.expect([]))
                 .then(() => (original.events as InternalEventsEmitter).emit('unexpectedError', {type: 'unexpectedError'}))
-                .then(() => matcher.expect([{type: 'directoryCreated', fullPath: dirName}]))
+                .then(() => matcher.expect([{type: 'directoryCreated', fullPath: dirName}]));
         })
 
         it('emits `fileDeleted` if there is cached file and no real file after error', () => {
@@ -110,8 +120,7 @@ describe(`the cache file system proxy`, () => {
                 return original.deleteFile(fileName)
                     .then(() => matcher.expect([{type: 'fileCreated', fullPath: fileName}]))
                     .then(() => (original.events as InternalEventsEmitter).emit('unexpectedError', {type: 'unexpectedError'}))
-                    .then(() => matcher.expect([{type: 'fileDeleted', fullPath: fileName}]))
-
+                    .then(() => matcher.expect([{type: 'fileDeleted', fullPath: fileName}]));
             })
         })
 
@@ -121,7 +130,7 @@ describe(`the cache file system proxy`, () => {
                 return original.deleteDirectory(dirName)
                     .then(() => matcher.expect([{type: 'directoryCreated', fullPath: dirName}]))
                     .then(() => (original.events as InternalEventsEmitter).emit('unexpectedError', {type: 'unexpectedError'}))
-                    .then(() => matcher.expect([{type: 'directoryDeleted', fullPath: dirName}]))
+                    .then(() => matcher.expect([{type: 'directoryDeleted', fullPath: dirName}]));
             })
         })
 

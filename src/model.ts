@@ -2,7 +2,6 @@ import {endsWith, getPathNodes, normalizePathNodes} from "./utils";
 
 export const pathSeparator = '/';
 
-
 export type DirectoryContent = { [key: string]: string | DirectoryContent }
 
 export interface SimpleStats {

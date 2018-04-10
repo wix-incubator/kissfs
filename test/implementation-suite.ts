@@ -67,6 +67,14 @@ export function assertFileSystemContract(fsProvider: () => Promise<FileSystem>, 
             return expect(fs.stat(fileName)).to.be.rejectedWith(Error);
         });
 
+        it(`stat an ignored folder - fails`, function () {
+            return expect(fs.stat(ignoredDir)).to.be.rejectedWith(Error);
+        });
+
+        it(`stat an ignored file - fails`, function () {
+            return expect(fs.stat(ignoredFile)).to.be.rejectedWith(Error);
+        });
+
         it(`saving an illegal file name - fails`, function () {
             return expect(fs.saveFile('', content)).to.be.rejectedWith(Error)
                 .then(() => {
@@ -600,6 +608,14 @@ export function assertFileSystemSyncContract(fsProvider: () => Promise<FileSyste
 
         it(`statSync a non-existing file - fails`, function () {
             return expect(() => fs.statSync(fileName)).to.throw(Error);
+        });
+
+        it(`statSync an ignored folder - fails`, function () {
+            return expect(() => fs.statSync(ignoredDir)).to.throw(Error);
+        });
+
+        it(`statSync an ignored file - fails`, function () {
+            return expect(() => fs.statSync(ignoredFile)).to.throw(Error);
         });
 
         it(`loadDirectoryTreeSync`, function () {

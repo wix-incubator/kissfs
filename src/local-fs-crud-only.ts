@@ -142,11 +142,11 @@ export class LocalFileSystemCrudOnly {
     }
 
     async stat(fullPath: string): Promise<SimpleStats> {
-        // if (this.isIgnored(fullPath)) { // TODO: ???
-        //     throw new Error(`Unable to read ignored path: '${fullPath}'`);
-        // }
+        if (this.isIgnored(fullPath)) {
+            throw new Error(`Unable to stat ignored path: '${fullPath}'`);
+        }
 
-        const nodeStat = await stat(fullPath);
+        const nodeStat = await stat(path.join(this.baseUrl, fullPath));
         if (nodeStat.isDirectory()) {
             return { type: 'dir' };
         } else if (nodeStat.isFile()) {

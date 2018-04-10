@@ -163,7 +163,7 @@ export class MemoryFileSystem implements FileSystemReadSync, FileSystem {
 
     private findNode(fullPath: string): Directory | File {
         if (this.isIgnored(fullPath)) {
-            throw new Error(`Unable to read ignored path: '${fullPath}'`);
+            throw new Error(`Unable to find ignored path: '${fullPath}'`);
         }
         const pathArr = getPathNodes(fullPath);
         const parent = pathArr.length ? Directory.getSubDir(this.root, pathArr.slice(0, pathArr.length - 1)) : null;
@@ -212,7 +212,7 @@ export class MemoryFileSystem implements FileSystemReadSync, FileSystem {
         const node = this.findNode(fullPath);
         return isFile(node) ?
             { type: 'file' } :
-            { type: 'dir' }
+            { type: 'dir' };
     }
 
     private _ensureDirectorySync(fullPath: string, correlation: Correlation): Correlation {
