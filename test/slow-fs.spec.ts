@@ -3,7 +3,7 @@ import {FileSystem} from '../src/api';
 import {assertFileSystemContract, content, dirName, fileName} from '../test/implementation-suite'
 import {SlowFs} from './slow-fs';
 
-describe.only('the slow (delayed) file system implementation', () => {
+describe('the slow (delayed) file system implementation', () => {
     const delay = 40;
     const accuracyFactor = 0.9;
     assertFileSystemContract(async () => new SlowFs(delay), {
