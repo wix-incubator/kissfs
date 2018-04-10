@@ -195,12 +195,7 @@ export class CacheFileSystem implements FileSystemReadSync, FileSystem {
     }
 
     async stat(fullPath: string): Promise<SimpleStats> {
-        if (this.pathsInCache[fullPath]) {
-            return this.cache.statSync(fullPath);
-        }
-
-        // TODO: Cache?
-        return this.fs.stat(fullPath);
+        return this.cache.stat(fullPath);
     }
 
     statSync(fullPath: string): SimpleStats {

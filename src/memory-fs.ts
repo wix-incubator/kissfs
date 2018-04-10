@@ -173,7 +173,7 @@ export class MemoryFileSystem implements FileSystemReadSync, FileSystem {
                 return node;
             }
         }
-        throw new Error(`Cannot find file ${fullPath}`);
+        throw new Error(`Cannot find ${fullPath}`);
     }
 
     private getDir(fullPath: string) {
