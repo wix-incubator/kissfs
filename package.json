@@ -10,7 +10,7 @@
     "build": "tsc",
     "prepublishOnly": "run-s clean build",
     "test": "run-s test:node test:browser:run",
-    "test:node": "mocha --require ts-node/register  --reporter mocha-env-reporter --require test/setup.ts --require source-map-support/register  --timeout 4000 test/*.spec.ts test/*.spec.node.ts",
+    "test:node": "mocha --require ts-node/register  --reporter mocha-env-reporter --require test/setup.ts --require source-map-support/register  --timeout 4000 test/**/*.spec.ts test/**/*.spec.node.ts",
     "test:browser:run": "run-p -r start test:browser:run2",
     "test:browser:run2": "run-s start:wait test:browser",
     "test:browser": "cross-var mocha-headless-chrome $HL_CHROME_PARAMS -t 120000 -f http://localhost:8080/test.bundle",

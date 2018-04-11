@@ -1,5 +1,5 @@
 import {Correlation, FileSystem, FileSystemReadSync} from "./api";
-import {Directory, DirectoryContent, File, isDir, isFile, pathSeparator, ShallowDirectory} from "./model";
+import {Directory, DirectoryContent, File, isDir, isFile, pathSeparator, ShallowDirectory, SimpleStats} from "./model";
 
 import {
     getPathNodes,
@@ -71,6 +71,10 @@ export class MemoryFileSystem implements FileSystemReadSync, FileSystem {
 
     async loadDirectoryChildren(fullPath: string): Promise<(File | ShallowDirectory)[]> {
         return this.loadDirectoryChildrenSync(fullPath);
+    }
+
+    async stat(fullPath: string): Promise<SimpleStats> {
+        return this.statSync(fullPath);
     }
 
     saveFileSync(fullPath: string, newContent: string, correlation: Correlation = makeCorrelationId()): Correlation {
@@ -147,18 +151,16 @@ export class MemoryFileSystem implements FileSystemReadSync, FileSystem {
         return this._ensureDirectorySync(fullPath, correlation);
     }
 
-    loadTextFileSync(fullPath: string): string {
+    private findNode(fullPath: string): Directory | File {
         const pathArr = getPathNodes(fullPath);
         const parent = pathArr.length ? Directory.getSubDir(this.root, pathArr.slice(0, pathArr.length - 1)) : null;
         if (isDir(parent)) {
             const node = parent.children.find(({name}) => name === pathArr[pathArr.length - 1]);
-            if (isFile(node)) {
-                return node.content || '';
-            } else if (isDir(node)) {
-                throw new Error(`File is a directory ${fullPath}`);
+            if (node) {
+                return node;
             }
         }
-        throw new Error(`Cannot find file ${fullPath}`);
+        throw new Error(`Cannot find ${fullPath}`);
     }
 
     private getDir(fullPath: string) {
@@ -169,6 +171,14 @@ export class MemoryFileSystem implements FileSystemReadSync, FileSystem {
         return dir;
     }
 
+    loadTextFileSync(fullPath: string): string {
+        const node = this.findNode(fullPath);
+        if (isFile(node)) {
+            return node.content || '';
+        } else {
+            throw new Error(`File is a directory ${fullPath}`);
+        }
+    }
 
     loadDirectoryContentSync(fullPath: string = ''): DirectoryContent {
         return Directory.toContent(this.getDir(fullPath));
@@ -180,6 +190,13 @@ export class MemoryFileSystem implements FileSystemReadSync, FileSystem {
 
     loadDirectoryChildrenSync(fullPath: string): (File | ShallowDirectory)[] {
         return this.getDir(fullPath).children.map(child => isDir(child) ? new ShallowDirectory(child.name, child.fullPath) : new File(child.name, child.fullPath));
+    }
+
+    statSync(fullPath: string): SimpleStats {
+        const node = this.findNode(fullPath);
+        return isFile(node) ?
+            { type: 'file' } :
+            { type: 'dir' };
     }
 
     private _ensureDirectorySync(fullPath: string, correlation: Correlation): Correlation {
