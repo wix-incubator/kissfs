@@ -11,7 +11,6 @@ There is currently no support for meta-data (timestamps, permissions, etc.), bin
 
 Feedback, questions and contributions always welcome via issues.
 
-
 ### usage code examples
 coming soon...
 
