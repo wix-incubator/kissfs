@@ -5,10 +5,22 @@ import {expect} from 'chai';
 import {assertFileSystemContract, content, dirName, fileName} from './implementation-suite'
 import {EventsMatcher} from './events-matcher';
 import {FileSystem, fileSystemEventNames, LocalFileSystem} from '../src/nodejs';
-import {NoFeedbackEventsFileSystem} from '../src/no-feedback-events-fs';
 import {delayedPromise} from '../src/promise-utils';
-import {Events} from "../src/api";
 import {Options} from "../src/local-fs";
+
+const eventMatcherOptions = {
+    retries: 20,
+    interval: 25,
+    timeout: 1000,
+    noExtraEventsGrace: 150
+};
+
+const fileSystemOptions: Options = {
+    interval: 100,
+    retries: 3,
+    correlationWindow: 200,
+    noiseReduceWindow: eventMatcherOptions.noExtraEventsGrace / 4 // eventMatcherOptions.timeout * 2.5
+};
 
 describe(`the local filesystem implementation`, () => {
     let dirCleanup: () => void;
@@ -44,19 +56,6 @@ describe(`the local filesystem implementation`, () => {
         return disposableFileSystem.init();
     }
 
-    const eventMatcherOptions: EventsMatcher.Options = {
-        retries: 20,
-        interval: 25,
-        timeout: 1000,
-        noExtraEventsGrace: 150
-    };
-
-    let fileSystemOptions : Options= {
-        interval: 100,
-        retries: 3,
-        correlationWindow: 200,
-        noiseReduceWindow: eventMatcherOptions.noExtraEventsGrace / 2
-    };
     assertFileSystemContract(getFS, eventMatcherOptions);
     describe(`Local fs tests`, () => {
         let fs: FileSystem;
@@ -138,7 +137,7 @@ describe(`the local filesystem implementation`, () => {
 
         });
 
-        describe('Handling feedback', function () {
+        describe('events noise', function () {
             it('should dispatch events for empty files', async () => {
                 const path = join(testPath, fileName);
                 writeFileSync(path, content);
@@ -158,48 +157,6 @@ describe(`the local filesystem implementation`, () => {
                 await matcher.expect([{type: 'fileChanged', fullPath: fileName, newContent: 'gaga'}]);
 
             });
-            it('should not provide feedback when bombarding changes (stress test with nofeedbackFS)', async () => {
-                const path = join(testPath, fileName);
-                const expectedChangeEvents: Array<Events['fileChanged']> = [];
-                writeFileSync(path, content);
-                await matcher.expect([{type: 'fileCreated', fullPath: fileName, newContent: content}]);
-
-                // this is a magical fix for test flakyness. let the underlying FS calm before bombarding with changes.
-                await delayedPromise(100);
-
-                const noFeed = new NoFeedbackEventsFileSystem(fs, {delayEvents: 1, correlationWindow: 10000});
-                const nofeedMatcher = new EventsMatcher({
-                    alwaysExpectEmpty: true,
-                    noExtraEventsGrace: 1000,
-                    interval: 100,
-                    retries: 40,
-                    timeout: 1000
-                });
-                nofeedMatcher.track(noFeed.events, ...fileSystemEventNames);
-
-                for (let i = 1; i < 200; i++) {
-                    await delayedPromise(1);
-                    noFeed.saveFile(fileName, 'content:' + i, '' + i);
-                    expectedChangeEvents.push({
-                        type: 'fileChanged',
-                        fullPath: fileName,
-                        newContent: 'content:' + i,
-                        correlation: '' + i
-                    })
-                }
-                try {
-                    await nofeedMatcher.expect([]);
-                } catch (e) {
-                    console.error('nofeedMatcher failed. printing underlying events');
-                    try {
-                        await matcher.expect(expectedChangeEvents);
-                    } catch (e2) {
-                        console.error(e2);
-                    }
-                    throw e;
-                }
-            });
-
         });
     });
 });
