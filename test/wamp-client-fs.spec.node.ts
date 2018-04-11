@@ -4,14 +4,14 @@ import {wampRealm, WampServer, wampServerOverFs} from '../src/nodejs';
 import {MemoryFileSystem, WampClientFileSystem} from '../src/universal';
 import {noConnectionError} from '../src/wamp-client-fs';
 import {EventsMatcher} from './events-matcher';
-import {assertFileSystemContract, content, dirName, fileName, ignoredDir, ignoredFile} from './implementation-suite'
+import {assertFileSystemContract, content, dirName, fileName} from './implementation-suite'
 
 describe(`the wamp client filesystem proxy`, () => {
 
     let wampServer: WampServer;
 
     function server(): Promise<WampServer> {
-        return wampServerOverFs(new MemoryFileSystem(undefined, {ignore: [ignoredDir, ignoredFile]}), 3000);
+        return wampServerOverFs(new MemoryFileSystem(), 3000);
     }
 
     function getFS(): Promise<WampClientFileSystem> {
@@ -42,17 +42,14 @@ describe(`the wamp client filesystem proxy`, () => {
 
     assertFileSystemContract(getInitedFS, eventMatcherOptions);
 
-    describe(`when not inited`, () => {
-        it(`fails on each CRUD method`, () => {
-            return Promise.all([
-                expect(getFS().then(fs => fs.saveFile(fileName, content))).to.eventually.be.rejectedWith(noConnectionError),
-                expect(getFS().then(fs => fs.deleteFile(fileName))).to.eventually.be.rejectedWith(noConnectionError),
-                expect(getFS().then(fs => fs.deleteDirectory(dirName))).to.eventually.be.rejectedWith(noConnectionError),
-                expect(getFS().then(fs => fs.ensureDirectory(dirName))).to.eventually.be.rejectedWith(noConnectionError),
-                expect(getFS().then(fs => fs.loadTextFile(fileName))).to.eventually.be.rejectedWith(noConnectionError),
-                expect(getFS().then(fs => fs.loadDirectoryTree())).to.eventually.be.rejectedWith(noConnectionError)
-            ]);
-
-        });
+    it(`fails on each CRUD method when not inited`, () => {
+        return Promise.all([
+            expect(getFS().then(fs => fs.saveFile(fileName, content))).to.eventually.be.rejectedWith(noConnectionError),
+            expect(getFS().then(fs => fs.deleteFile(fileName))).to.eventually.be.rejectedWith(noConnectionError),
+            expect(getFS().then(fs => fs.deleteDirectory(dirName))).to.eventually.be.rejectedWith(noConnectionError),
+            expect(getFS().then(fs => fs.ensureDirectory(dirName))).to.eventually.be.rejectedWith(noConnectionError),
+            expect(getFS().then(fs => fs.loadTextFile(fileName))).to.eventually.be.rejectedWith(noConnectionError),
+            expect(getFS().then(fs => fs.loadDirectoryTree())).to.eventually.be.rejectedWith(noConnectionError)
+        ]);
     });
 });

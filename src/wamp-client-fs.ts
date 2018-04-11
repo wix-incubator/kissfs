@@ -42,7 +42,7 @@ export class WampClientFileSystem implements FileSystem {
         try {
             return await this.session.call<Correlation>(`${this.realmPrefix}saveFile`, [fullPath, newContent, correlation]);
         } catch (error) {
-            throw new Error(error);
+            throw new Error(error.args[0]);
         }
     }
 
@@ -53,7 +53,7 @@ export class WampClientFileSystem implements FileSystem {
         try {
             return await this.session.call<Correlation>(`${this.realmPrefix}deleteFile`, [fullPath, correlation]);
         } catch (error) {
-            throw new Error(error);
+            throw new Error(error.args[0]);
         }
     }
 
@@ -64,7 +64,7 @@ export class WampClientFileSystem implements FileSystem {
         try {
             return await this.session.call<Correlation>(`${this.realmPrefix}deleteDirectory`, [fullPath, recursive, correlation]);
         } catch (error) {
-            throw new Error(error);
+            throw new Error(error.args[0]);
         }
     }
 
@@ -75,7 +75,7 @@ export class WampClientFileSystem implements FileSystem {
         try {
             return await this.session.call<Correlation>(`${this.realmPrefix}ensureDirectory`, [fullPath, correlation]);
         } catch (error) {
-            throw new Error(error);
+            throw new Error(error.args[0]);
         }
     }
 
@@ -86,7 +86,7 @@ export class WampClientFileSystem implements FileSystem {
         try {
             return await this.session.call<string>(`${this.realmPrefix}loadTextFile`, [fullPath]);
         } catch (error) {
-            throw new Error(error);
+            throw new Error(error.args[0]);
         }
     }
 
@@ -97,7 +97,7 @@ export class WampClientFileSystem implements FileSystem {
         try {
             return await this.session.call<Directory>(`${this.realmPrefix}loadDirectoryTree`, [fullPath]);
         } catch (error) {
-            throw new Error(error);
+            throw new Error(error.args[0]);
         }
     }
 
@@ -108,7 +108,7 @@ export class WampClientFileSystem implements FileSystem {
         try {
             return await this.session.call<(File | ShallowDirectory)[]>(`${this.realmPrefix}loadDirectoryChildren`, [fullPath]);
         } catch (error) {
-            throw new Error(error);
+            throw new Error(error.args[0]);
         }
     }
 

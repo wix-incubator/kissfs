@@ -23,14 +23,13 @@ export class LocalFileSystem implements FileSystem {
     private lastEvents: { [filePath: string]: Events[keyof Events] } = {};
 
     constructor(public baseUrl: string,
-                ignore?: Array<string>,
                 private options: Options = {
                     interval: 100,
                     retries: 3,
                     correlationWindow: 200,
                     noiseReduceWindow: 150
                 }) {
-        this.crud = new LocalFileSystemCrudOnly(baseUrl, ignore);
+        this.crud = new LocalFileSystemCrudOnly(baseUrl);
         // events noise reduction
         this.eventsManager.addEventHandler({
             types: fileSystemEventNames,
@@ -79,8 +78,7 @@ export class LocalFileSystem implements FileSystem {
             // usePolling:true,
             // useFsEvents:false,
             // interval:50,
-            ignored: (path: string) => this.crud.isIgnored(path),
-            //    atomic: false, //todo 50?
+            //  atomic: false, //todo 50?
             cwd: this.baseUrl
         });
 

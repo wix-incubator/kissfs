@@ -2,7 +2,7 @@ import {dir} from 'tmp';
 import {mkdirSync, rmdirSync, unlinkSync, writeFileSync} from 'fs';
 import {join} from 'path';
 import {expect} from 'chai';
-import {assertFileSystemContract, content, dirName, fileName, ignoredDir, ignoredFile} from './implementation-suite'
+import {assertFileSystemContract, content, dirName, fileName} from './implementation-suite'
 import {EventsMatcher} from './events-matcher';
 import {FileSystem, fileSystemEventNames, LocalFileSystem} from '../src/nodejs';
 import {NoFeedbackEventsFileSystem} from '../src/no-feedback-events-fs';
@@ -10,7 +10,9 @@ import {delayedPromise} from '../src/promise-utils';
 import {Events} from "../src/api";
 
 describe(`the local filesystem implementation`, () => {
-    let dirCleanup: () => void, rootPath: string, testPath: string;
+    let dirCleanup: () => void;
+    let rootPath: string;
+    let testPath: string;
     let counter = 0;
     let disposableFileSystem: LocalFileSystem;
 
@@ -37,10 +39,7 @@ describe(`the local filesystem implementation`, () => {
     function getFS() {
         testPath = join(rootPath, 'fs_' + (counter++));
         mkdirSync(testPath);
-        disposableFileSystem = new LocalFileSystem(
-            testPath,
-            [ignoredDir, ignoredFile]
-        );
+        disposableFileSystem = new LocalFileSystem(testPath);
         return disposableFileSystem.init();
     }
 
@@ -97,61 +96,6 @@ describe(`the local filesystem implementation`, () => {
                 await matcher.expect([{type: 'fileCreated', fullPath: fileName, newContent: content}]);
                 writeFileSync(path, newContent);
                 expect(await fs.loadTextFile(fileName)).to.equal(newContent);
-            });
-
-            it(`ignores events from ignored dir`, () => {
-                mkdirSync(join(testPath, ignoredDir))
-                return matcher.expect([])
-            });
-
-            it(`ignores events from ignored file`, () => {
-                mkdirSync(join(testPath, dirName))
-                return matcher.expect([{type: 'directoryCreated', fullPath: dirName}])
-                    .then(() => writeFileSync(join(testPath, ignoredFile), content))
-                    .then(() => matcher.expect([]))
-            });
-
-            it(`loadDirectoryTree() ignores ignored folder and file`, () => {
-                const expectedStructure = {
-                    name: '',
-                    type: 'dir',
-                    fullPath: '',
-                    children: [{name: dirName, type: 'dir', fullPath: dirName, children: []}]
-                };
-                mkdirSync(join(testPath, ignoredDir))
-                mkdirSync(join(testPath, dirName))
-                writeFileSync(join(testPath, ignoredFile), content)
-                return expect(fs.loadDirectoryTree()).to.eventually.deep.equal(expectedStructure)
-            });
-
-            it(`loadDirectoryTree() ignores ignored folder with special characters`, () => {
-                const expectedStructure = {
-                    name: '',
-                    type: 'dir',
-                    fullPath: '',
-                    children: [{name: dirName, type: 'dir', fullPath: dirName, children: []}]
-                };
-                mkdirSync(join(testPath, ignoredDir))
-                mkdirSync(join(testPath, ignoredDir, 'name-with-dashes'))
-                mkdirSync(join(testPath, ignoredDir, 'name-with-dashes', '.name_starts_with_dot'))
-                mkdirSync(join(testPath, ignoredDir, 'name-with-dashes', '.name_starts_with_dot', '.name_starts_with_dot'))
-                mkdirSync(join(testPath, dirName))
-                return expect(fs.loadDirectoryTree()).to.eventually.deep.equal(expectedStructure)
-            });
-
-            it(`ignores events in dot-folders and files`, () => {
-                mkdirSync(join(testPath, ignoredDir));
-                mkdirSync(join(testPath, ignoredDir, `.${dirName}`));
-                writeFileSync(join(testPath, ignoredDir, `.${dirName}`, `.${fileName}`), content);
-
-                return matcher.expect([]);
-            });
-
-            it(`loading existed ignored file - fails`, function () {
-                mkdirSync(join(testPath, dirName))
-                writeFileSync(join(testPath, ignoredFile), content)
-
-                return expect(fs.loadTextFile(ignoredFile)).to.be.rejectedWith(Error)
             });
         });
 

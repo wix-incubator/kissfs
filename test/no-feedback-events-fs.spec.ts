@@ -5,14 +5,14 @@ import {
     NoFeedbackEventsFileSystem,
     NoFeedbackEventsFileSystemSync
 } from '../src/universal';
-import {assertFileSystemContract, assertFileSystemSyncContract, ignoredDir, ignoredFile} from './implementation-suite';
+import {assertFileSystemContract, assertFileSystemSyncContract} from './implementation-suite';
 import {FileSystemReadSync} from "../src/api";
 import * as sinon from 'sinon';
 import {expect} from 'chai';
 
 function proxy<T extends FileSystem>(Proxy: { new (fs: FileSystemReadSync): T }, externalChanges: boolean): () => Promise<T> {
     return async () => {
-        const innerFs: any = new MemoryFileSystem(undefined, {ignore: [ignoredDir, ignoredFile]});
+        const innerFs: any = new MemoryFileSystem();
         const proxy = new Proxy(innerFs);
         if (externalChanges) {
             // create FS with the proxied events, but with actions that are applied directly on the inner FS
