@@ -46,7 +46,7 @@ export function wampServerOverFs(fs: FileSystem, port = 3000): Promise<WampServe
                 fs.dispose();
             }
             return details.will_retry;
-        }
+        };
 
         connection.open();
     });
