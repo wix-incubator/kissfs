@@ -5,22 +5,26 @@ import {expect} from 'chai';
 import {assertFileSystemContract, content, dirName, fileName} from './implementation-suite'
 import {EventsMatcher} from './events-matcher';
 import {FileSystem, fileSystemEventNames, LocalFileSystem} from '../src/nodejs';
-import {delayedPromise} from '../src/promise-utils';
 import {Options} from "../src/local-fs";
 
 const eventMatcherOptions = {
     retries: 20,
     interval: 25,
-    timeout: 1000,
+    timeout: 1500,
     noExtraEventsGrace: 150
 };
 
 const fileSystemOptions: Options = {
     interval: 100,
     retries: 3,
-    correlationWindow: 200,
-    noiseReduceWindow: eventMatcherOptions.noExtraEventsGrace / 4 // eventMatcherOptions.timeout * 2.5
+    correlationWindow: eventMatcherOptions.noExtraEventsGrace * 3,
+    noiseReduceWindow: eventMatcherOptions.noExtraEventsGrace * 2 // eventMatcherOptions.timeout * 2.5
 };
+
+
+function writeFileToDisk(path: string, content: string) {
+    writeFileSync(path, content);
+}
 
 describe(`the local filesystem implementation`, () => {
     let dirCleanup: () => void;
@@ -85,13 +89,13 @@ describe(`the local filesystem implementation`, () => {
 
             it(`handles file creation`, () => {
                 const path = join(testPath, fileName);
-                writeFileSync(path, content);
+                writeFileToDisk(path, content);
                 return expect(fs.loadTextFile(fileName)).to.eventually.equals(content);
             });
 
             it(`handles file deletion`, () => {
                 const path = join(testPath, fileName);
-                writeFileSync(path, content);
+                writeFileToDisk(path, content);
                 unlinkSync(path);
                 return expect(fs.loadTextFile(fileName)).to.eventually.be.rejected;
             });
@@ -99,9 +103,9 @@ describe(`the local filesystem implementation`, () => {
             it(`handles file change`, async () => {
                 const path = join(testPath, fileName);
                 const newContent = `_${content}`;
-                writeFileSync(path, content);
+                writeFileToDisk(path, content);
                 await matcher.expect([{type: 'fileCreated', fullPath: fileName, newContent: content}]);
-                writeFileSync(path, newContent);
+                writeFileToDisk(path, newContent);
                 expect(await fs.loadTextFile(fileName)).to.equal(newContent);
             });
         });
@@ -110,7 +114,7 @@ describe(`the local filesystem implementation`, () => {
             it(`emits 'unexpectedError' if 'loadTextFile' rejected in watcher 'add' callback`, () => {
                 fs.loadTextFile = () => Promise.reject('go away!');
                 const path = join(testPath, fileName);
-                writeFileSync(path, content);
+                writeFileToDisk(path, content);
                 return matcher.expect([{type: 'unexpectedError'}]);
             });
 
@@ -138,22 +142,32 @@ describe(`the local filesystem implementation`, () => {
         });
 
         describe('events noise', function () {
+            fileSystemEventNames.forEach(type => {
+                it(`de-dupe events of type ${type}`, async () => {
+                    const ev1 = {type, fullPath: 'foo'};
+                    const ev2 = {type, fullPath: 'foo'};
+                     (fs as any).eventsManager.emit(ev1);
+                    await matcher.expect([ev1]);
+                    (fs as any).eventsManager.emit(ev2);
+                    await matcher.expect([]);
+                });
+            });
             it('should dispatch events for empty files', async () => {
                 const path = join(testPath, fileName);
-                writeFileSync(path, content);
+                writeFileToDisk(path, content);
                 await matcher.expect([{type: 'fileCreated', fullPath: fileName, newContent: content}]);
 
-                writeFileSync(path, '');
+                writeFileToDisk(path, '');
                 await matcher.expect([{type: 'fileChanged', fullPath: fileName, newContent: ''}]);
             });
             it('should not dispatch events for empty files if another change is detected within buffer time', async () => {
                 const path = join(testPath, fileName);
-                writeFileSync(path, content);
+                writeFileToDisk(path, content);
                 await matcher.expect([{type: 'fileCreated', fullPath: fileName, newContent: content}]);
 
-                writeFileSync(path, '');
-                await delayedPromise(1);
-                writeFileSync(path, 'gaga');
+                writeFileToDisk(path, '');
+                await matcher.expect([]);
+                writeFileToDisk(path, 'gaga');
                 await matcher.expect([{type: 'fileChanged', fullPath: fileName, newContent: 'gaga'}]);
 
             });
