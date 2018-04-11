@@ -4,14 +4,19 @@ import {wampRealm, WampServer, wampServerOverFs} from '../src/nodejs';
 import {MemoryFileSystem, WampClientFileSystem} from '../src/universal';
 import {noConnectionError} from '../src/wamp-client-fs';
 import {EventsMatcher} from './events-matcher';
-import {assertFileSystemContract, content, dirName, fileName, ignoredDir, ignoredFile} from './implementation-suite'
+import {assertFileSystemContract} from './implementation-suite'
+import {fileSystemAsyncMethods} from "../src/api";
+import {spy} from 'sinon';
+const msg = 'foo';
+const fakeArgs = ['foo', 'bar'];
 
 describe(`the wamp client filesystem proxy`, () => {
-
     let wampServer: WampServer;
+    let underlyingFs: MemoryFileSystem;
 
     function server(): Promise<WampServer> {
-        return wampServerOverFs(new MemoryFileSystem(undefined, {ignore: [ignoredDir, ignoredFile]}), 3000);
+        underlyingFs = new MemoryFileSystem();
+        return wampServerOverFs(underlyingFs, 3000);
     }
 
     function getFS(): Promise<WampClientFileSystem> {
@@ -40,19 +45,26 @@ describe(`the wamp client filesystem proxy`, () => {
         );
     });
 
-    assertFileSystemContract(getInitedFS, eventMatcherOptions);
-
-    describe(`when not inited`, () => {
-        it(`fails on each CRUD method`, () => {
-            return Promise.all([
-                expect(getFS().then(fs => fs.saveFile(fileName, content))).to.eventually.be.rejectedWith(noConnectionError),
-                expect(getFS().then(fs => fs.deleteFile(fileName))).to.eventually.be.rejectedWith(noConnectionError),
-                expect(getFS().then(fs => fs.deleteDirectory(dirName))).to.eventually.be.rejectedWith(noConnectionError),
-                expect(getFS().then(fs => fs.ensureDirectory(dirName))).to.eventually.be.rejectedWith(noConnectionError),
-                expect(getFS().then(fs => fs.loadTextFile(fileName))).to.eventually.be.rejectedWith(noConnectionError),
-                expect(getFS().then(fs => fs.loadDirectoryTree())).to.eventually.be.rejectedWith(noConnectionError),
-                expect(getFS().then(fs => fs.stat(fileName))).to.eventually.be.rejectedWith(noConnectionError)
-            ]);
+    fileSystemAsyncMethods.forEach(asyncMethodName => {
+        describe(`${asyncMethodName} method`, ()=>{
+            it(`fails when not inited`, () => {
+                return expect(getFS().then(fs => (fs[asyncMethodName] as Function)(...fakeArgs))).to.eventually.be.rejectedWith(noConnectionError);
+            });
+            it(`passes arguments and results correctly`, async () => {
+                const fs = await getInitedFS();
+                let methodImpl = spy(async ()=> msg);
+                (underlyingFs as any)[asyncMethodName] = methodImpl;
+                const res = await (fs[asyncMethodName] as Function)(...fakeArgs);
+                expect(res).to.eql(msg);
+                expect(methodImpl).to.have.been.calledWith(...fakeArgs);
+            });
+            it(`reports original error messages`, async () => {
+                const fs = await getInitedFS();
+                (underlyingFs as any)[asyncMethodName] = async () => {throw new Error(msg)};
+                await expect((fs[asyncMethodName] as Function)(...fakeArgs)).to.eventually.be.rejectedWith(msg);
+            });
         });
     });
+
+    assertFileSystemContract(getInitedFS, eventMatcherOptions);
 });

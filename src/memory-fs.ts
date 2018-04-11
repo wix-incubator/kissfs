@@ -1,8 +1,7 @@
-import {Correlation, FileSystem, FileSystemReadSync,} from "./api";
+import {Correlation, FileSystem, FileSystemReadSync} from "./api";
 import {Directory, DirectoryContent, File, isDir, isFile, pathSeparator, ShallowDirectory, SimpleStats} from "./model";
 
 import {
-    getIsIgnored,
     getPathNodes,
     InternalEventsEmitter,
     makeCorrelationId,
@@ -13,7 +12,6 @@ import {
 let id = 0;
 
 export interface MemoryFileSystemOptions {
-    ignore?: Array<string>;
     content?: DirectoryContent;
     model?: Directory;
 }
@@ -34,13 +32,9 @@ export class MemoryFileSystem implements FileSystemReadSync, FileSystem {
 
     public readonly events: InternalEventsEmitter = makeEventsEmitter();
     private readonly root: Directory;
-    private isIgnored: (path: string) => boolean = () => false;
 
     constructor(public baseUrl = `memory-${id++}`, options?: MemoryFileSystemOptions) {
         this.baseUrl += '/';
-        if (options && options.ignore) {
-            this.isIgnored = getIsIgnored(options.ignore)
-        }
         if (options) {
             if (options.model && options.content) {
                 throw new Error(`MemoryFileSystem can't accept both model and content options`);
@@ -84,10 +78,6 @@ export class MemoryFileSystem implements FileSystemReadSync, FileSystem {
     }
 
     saveFileSync(fullPath: string, newContent: string, correlation: Correlation = makeCorrelationId()): Correlation {
-
-        if (this.isIgnored(fullPath)) {
-            throw new Error(`Unable to save ignored path: '${fullPath}'`);
-        }
         const pathArr = getPathNodes(fullPath);
         const fileName = pathArr.pop();
         if (!fileName) {
@@ -123,7 +113,7 @@ export class MemoryFileSystem implements FileSystemReadSync, FileSystem {
     deleteFileSync(fullPath: string, correlation: Correlation = makeCorrelationId()): Correlation {
         const pathArr = getPathNodes(fullPath);
         const parent = pathArr.length ? Directory.getSubDir(this.root, pathArr.slice(0, pathArr.length - 1)) : null;
-        if (isDir(parent) && !this.isIgnored(fullPath)) {
+        if (isDir(parent)) {
             const node = parent.children.find(({name}) => name === pathArr[pathArr.length - 1]);
             if (isFile(node)) {
                 parent.children = parent.children.filter(({name}) => name !== node.name);
@@ -141,7 +131,7 @@ export class MemoryFileSystem implements FileSystemReadSync, FileSystem {
             throw new Error(`Can't delete root directory`);
         }
         const parent = Directory.getSubDir(this.root, pathArr.slice(0, pathArr.length - 1));
-        if (isDir(parent) && !this.isIgnored(fullPath)) {
+        if (isDir(parent)) {
             const node = parent.children.find(({name}) => name === pathArr[pathArr.length - 1]);
             if (isFile(node)) {
                 throw new Error(`File is not a directory '${fullPath}'`);
@@ -162,9 +152,6 @@ export class MemoryFileSystem implements FileSystemReadSync, FileSystem {
     }
 
     private findNode(fullPath: string): Directory | File {
-        if (this.isIgnored(fullPath)) {
-            throw new Error(`Unable to find ignored path: '${fullPath}'`);
-        }
         const pathArr = getPathNodes(fullPath);
         const parent = pathArr.length ? Directory.getSubDir(this.root, pathArr.slice(0, pathArr.length - 1)) : null;
         if (isDir(parent)) {
@@ -177,9 +164,6 @@ export class MemoryFileSystem implements FileSystemReadSync, FileSystem {
     }
 
     private getDir(fullPath: string) {
-        if (this.isIgnored(fullPath)) {
-            throw new Error(`Unable to read ignored path: '${fullPath}'`);
-        }
         const dir = Directory.getSubDir(this.root, fullPath);
         if (!dir) {
             throw new Error(`Unable to read folder in path: '${fullPath}'`);
@@ -216,9 +200,6 @@ export class MemoryFileSystem implements FileSystemReadSync, FileSystem {
     }
 
     private _ensureDirectorySync(fullPath: string, correlation: Correlation): Correlation {
-        if (this.isIgnored(fullPath)) {
-            throw new Error(`Unable to read and write ignored path: '${fullPath}'`);
-        }
         getPathNodes(fullPath).reduce((current, nodeName) => {
             const next = current.children.find(({name}) => name === nodeName);
             if (isDir(next)) {

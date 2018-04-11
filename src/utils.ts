@@ -1,9 +1,6 @@
 import {EventEmitter} from 'eventemitter3';
-import * as micromatch from 'micromatch';
 import {Correlation, EventEmitter as FSEvents} from './api';
 import {File, pathSeparator, ShallowDirectory} from "./model";
-
-const isGlob = require('is-glob');
 
 // utility logic for filesystem implementations
 
@@ -31,20 +28,6 @@ export function checkExistsInDir(expectedType: 'file' | 'dir', dirContent: Array
     return false;
 }
 
-function extendMatchersWithGlob(paths: Array<string>): Array<string> {
-    return paths.reduce((extended: string[], path) => {
-        extended.push(path);
-        if (!isGlob(path)) {
-            extended.push(`${path}/**`, `**/${path}`, `**/${path}/**`);
-        }
-        return extended;
-    }, []);
-}
-
-export function getIsIgnored(matchers: string[], options: Object = {dot: true}): (path: string) => boolean {
-    const patterns = extendMatchersWithGlob(matchers);
-    return (path: string) => micromatch.any(path, patterns, options);
-}
 
 export type InternalEventsEmitter = FSEvents & EventEmitter;
 

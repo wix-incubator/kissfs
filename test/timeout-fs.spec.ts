@@ -1,5 +1,5 @@
 import {expect} from 'chai';
-import {assertFileSystemContract, dirName, fileName, ignoredDir, ignoredFile,} from './implementation-suite'
+import {assertFileSystemContract, dirName, fileName} from './implementation-suite'
 import {SlowFs} from './slow-fs';
 import {FileSystem, MemoryFileSystem, TimeoutFileSystem} from '../src/universal';
 
@@ -7,7 +7,7 @@ describe('the timeout file system proxy', () => {
     const timeout = 200;
 
     assertFileSystemContract(() =>
-            Promise.resolve(new TimeoutFileSystem(timeout, new MemoryFileSystem(undefined, {ignore: [ignoredDir, ignoredFile]}))),
+            Promise.resolve(new TimeoutFileSystem(timeout, new MemoryFileSystem())),
         {retries: 15, interval: 2, timeout: 40, noExtraEventsGrace: 10}
     );
 

@@ -2,23 +2,15 @@ import {access, ensureDir, readdir, readFile, remove, rmdir, stat, writeFile} fr
 import * as walk from 'klaw';
 import * as path from 'path';
 import {Directory, File, pathSeparator, ShallowDirectory, SimpleStats} from './model';
-import {getIsIgnored, getPathNodes} from './utils';
+import {getPathNodes} from './utils';
 import {MemoryFileSystem} from './memory-fs';
 
 export class LocalFileSystemCrudOnly {
-    isIgnored: (path: string) => boolean = () => false;
 
-    constructor(public baseUrl: string, ignore?: Array<string>) {
-        if (ignore) {
-            this.isIgnored = getIsIgnored(ignore);
-        }
+    constructor(public baseUrl: string) {
     }
 
     async saveFile(relPath: string, newContent: string): Promise<void> {
-        if (this.isIgnored(relPath)) {
-            throw new Error(`Unable to save ignored path: '${relPath}'`);
-        }
-
         const {fullPath, name} = this.getPathAndName(relPath);
         await ensureDir(fullPath);
         await writeFile(path.join(fullPath, name), newContent);
@@ -29,7 +21,6 @@ export class LocalFileSystemCrudOnly {
             throw new Error(`Can't delete root directory`);
         }
 
-        if (!this.isIgnored(relPath)) {
             const fullPath = path.join(this.baseUrl, ...getPathNodes(relPath));
             let stats;
             try {
@@ -45,7 +36,6 @@ export class LocalFileSystemCrudOnly {
                     throw new Error(`not a file: ${relPath}`);
                 }
             }
-        }
     }
 
     async deleteDirectory(relPath: string, recursive?: boolean): Promise<void> {
@@ -54,7 +44,6 @@ export class LocalFileSystemCrudOnly {
             throw new Error(`Can't delete root directory`);
         }
 
-        if (!this.isIgnored(relPath)) {
 
             const fullPath = path.join(this.baseUrl, ...pathArr);
             let stats;
@@ -71,20 +60,14 @@ export class LocalFileSystemCrudOnly {
                     throw new Error(`not a directory: ${relPath}`);
                 }
             }
-        }
+
     }
 
     async loadTextFile(relPath: string): Promise<string> {
-        if (this.isIgnored(relPath)) {
-            throw new Error(`Unable to read ignored path: '${relPath}'`);
-        }
         return readFile(path.join(this.baseUrl, relPath), 'utf8');
     }
 
     async loadDirectoryChildren(fullPath: string): Promise<(File | ShallowDirectory)[]> {
-        if (this.isIgnored(fullPath)) {
-            throw new Error(`Unable to read ignored path: '${fullPath}'`);
-        }
         let rootPath = path.join(this.baseUrl, fullPath);
         let pathPrefix = fullPath ? (fullPath + pathSeparator) : fullPath;
         const directoryChildren = await readdir(rootPath);
@@ -107,15 +90,12 @@ export class LocalFileSystemCrudOnly {
     }
 
     async loadDirectoryTree(fullPath?: string): Promise<Directory> {
-        if (fullPath && this.isIgnored(fullPath)) {
-            throw new Error(`Unable to read ignored path: '${fullPath}'`);
-        }
         // using an in-memory instance to build the result
         // if fullPath is not empty, memfs will contain a sub-tree of the real FS but the root is the same
         const memFs = new MemoryFileSystem();
 
         return new Promise<Directory>((resolve, reject) => {
-            const {baseUrl, isIgnored} = this;
+            const {baseUrl} = this;
             const rootPath = fullPath ? path.join(baseUrl, fullPath) : baseUrl;
             const walker = walk(rootPath);
             walker
@@ -123,9 +103,7 @@ export class LocalFileSystemCrudOnly {
                     let item: walk.Item;
                     while ((item = walker.read())) {
                         const itemPath = path.relative(baseUrl, item.path).split(path.sep).join(pathSeparator);
-                        if (isIgnored(itemPath)) {
-                            return;
-                        } else if (item.stats.isDirectory()) {
+                        if (item.stats.isDirectory()) {
                             memFs.ensureDirectorySync(itemPath);
                         } else if (item.stats.isFile()) {
                             memFs.saveFileSync(itemPath, '');
@@ -142,10 +120,6 @@ export class LocalFileSystemCrudOnly {
     }
 
     async stat(fullPath: string): Promise<SimpleStats> {
-        if (this.isIgnored(fullPath)) {
-            throw new Error(`Unable to stat ignored path: '${fullPath}'`);
-        }
-
         const nodeStat = await stat(path.join(this.baseUrl, fullPath));
         if (nodeStat.isDirectory()) {
             return { type: 'dir' };
@@ -157,9 +131,7 @@ export class LocalFileSystemCrudOnly {
     }
 
     async ensureDirectory(relPath: string): Promise<void> {
-        if (this.isIgnored(relPath)) {
-            throw new Error(`Unable to read and write ignored path: '${relPath}'`);
-        }
+
         const pathArr = getPathNodes(relPath);
         const fullPath = path.join(this.baseUrl, ...pathArr);
         return ensureDir(fullPath);
@@ -171,5 +143,4 @@ export class LocalFileSystemCrudOnly {
         const fullPath = path.join(this.baseUrl, ...pathArr);
         return {fullPath, name}
     }
-
 }

@@ -1,7 +1,7 @@
 import * as path from 'path';
 import {FSWatcher, watch} from 'chokidar';
 import {retryPromise, RetryPromiseOptions} from './promise-utils';
-import {Correlation, EventEmitter, Events, FileSystem, fileSystemEventNames} from './api';
+import {Correlation, EventEmitter, Events, FileSystem, FileSystemEvent, fileSystemEventNames} from './api';
 import {Directory, File, pathSeparator, ShallowDirectory, SimpleStats} from './model';
 import {LocalFileSystemCrudOnly} from './local-fs-crud-only';
 import {makeCorrelationId} from "./utils";
@@ -12,6 +12,8 @@ export type Options = RetryPromiseOptions & {
     noiseReduceWindow: number;
 };
 
+const notNoise = new WeakSet<FileSystemEvent>();
+
 export class LocalFileSystem implements FileSystem {
     private readonly eventsManager = new EventsManager();
     public readonly events: EventEmitter = this.eventsManager.events;
@@ -19,59 +21,60 @@ export class LocalFileSystem implements FileSystem {
     private watcher?: FSWatcher;
 
     private tempEventsTimers: { [filePath: string]: NodeJS.Timer } = {};
-    private notNoiseEvents: { [filePath: string]: Events[keyof Events] } = {};
     private lastEvents: { [filePath: string]: Events[keyof Events] } = {};
 
     constructor(public baseUrl: string,
-                ignore?: Array<string>,
                 private options: Options = {
                     interval: 100,
                     retries: 3,
                     correlationWindow: 200,
                     noiseReduceWindow: 150
                 }) {
-        this.crud = new LocalFileSystemCrudOnly(baseUrl, ignore);
+        this.crud = new LocalFileSystemCrudOnly(baseUrl);
         // events noise reduction
         this.eventsManager.addEventHandler({
             types: fileSystemEventNames,
             apply: (ev) => {
-                const prevEv = this.lastEvents[ev.fullPath];
-                this.lastEvents[ev.fullPath] = ev;
-                if (this.notNoiseEvents[ev.fullPath] === ev) {
-                    delete this.notNoiseEvents[ev.fullPath];
+                if (this.isDuplicatedEvent(ev)) {
+                    return undefined;
+                } else {
+                    // clear any existing timer on suspicious file state
+                    if (this.tempEventsTimers[ev.fullPath] !== undefined) {
+                        clearTimeout(this.tempEventsTimers[ev.fullPath]);
+                        delete this.tempEventsTimers[ev.fullPath];
+                    }
+                    if (ev.type === 'fileChanged' && ev.newContent === '') {
+                        // this is a suspicious file state. hide it for a while
+                        this.tempEventsTimers[ev.fullPath] = setTimeout(async () => {
+                            delete this.tempEventsTimers[ev.fullPath];
+                            // check that no new events were reported meanwhile
+                            if (this.lastEvents[ev.fullPath] === ev) {
+                                // check that file content is still the same
+                                const currentContent = await this.loadTextFile(ev.fullPath);
+                                if (currentContent === ev.newContent) {
+                                    // this event is not noise, re - emit it
+                                    notNoise.add(ev);
+                                    this.eventsManager.emit(ev);
+                                }
+                            }
+                        }, this.options.noiseReduceWindow);
+                        return undefined;
+                    }
                     return ev;
                 }
-                if (prevEv === ev || (prevEv && prevEv.type === ev.type && prevEv.fullPath === ev.fullPath && (prevEv as any).newContent === (ev as any).newContent)) {
-                    // noise reduction for duplicate consecutive event
-                    return undefined;
-                }
-                // clear any existing timer on suspicious file state
-                if (this.tempEventsTimers[ev.fullPath]) {
-                    clearTimeout(this.tempEventsTimers[ev.fullPath]);
-                    delete this.tempEventsTimers[ev.fullPath];
-                }
-                if (ev.type === 'fileChanged' && ev.newContent === '') {
-                    // this is a suspicious file state. hide it for a while
-                    this.tempEventsTimers[ev.fullPath] = setTimeout(async () => {
-                        delete this.tempEventsTimers[ev.fullPath];
-                        // check that no new events were reported meanwhile
-                        if (this.lastEvents[ev.fullPath] === ev) {
-                            // check that file content is still the same
-                            const currentContent = await this.loadTextFile(ev.fullPath);
-                            if (currentContent === ev.newContent) {
-                                // this event is not noise, re - emit it
-                                this.notNoiseEvents[ev.fullPath] = ev;
-                                this.eventsManager.emit(ev);
-                            }
-                        }
-                    }, this.options.noiseReduceWindow);
-                    return undefined;
-
-                }
-                return ev;
             },
-            filter: () => true
+            filter: (ev) => !notNoise.has(ev)
         });
+    }
+
+    private isDuplicatedEvent(ev: Events[keyof Events]) {
+        if (ev.fullPath) {
+            const prevEv = this.lastEvents[ev.fullPath];
+            this.lastEvents[ev.fullPath] = ev;
+            return prevEv && (prevEv === ev || (prevEv.type === ev.type && prevEv.fullPath === ev.fullPath && (prevEv as any).newContent === (ev as any).newContent));
+        } else {
+            return false;
+        }
     }
 
     init(): Promise<LocalFileSystem> {
@@ -79,8 +82,7 @@ export class LocalFileSystem implements FileSystem {
             // usePolling:true,
             // useFsEvents:false,
             // interval:50,
-            ignored: (path: string) => this.crud.isIgnored(path),
-            //    atomic: false, //todo 50?
+            //  atomic: false, //todo 50?
             cwd: this.baseUrl
         });
 
