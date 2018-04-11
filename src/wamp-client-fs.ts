@@ -35,80 +35,87 @@ export class WampClientFileSystem implements FileSystem {
         }), initTimeout, `Cant't open connection to the WAMP server at ${baseUrl} for ${initTimeout}ms.`);
     }
 
-    async saveFile(fullPath: string, newContent: string, correlation: Correlation = makeCorrelationId()): Promise<Correlation> {
+    async saveFile(fullPath: string, newContent: string, correlation?: Correlation): Promise<Correlation>;
+    async saveFile(...args:any[]): Promise<Correlation> {
         if (!this.session || !this.session.isOpen) {
             throw new Error(noConnectionError);
         }
         try {
-            return await this.session.call<Correlation>(`${this.realmPrefix}saveFile`, [fullPath, newContent, correlation]);
+            return await this.session.call<Correlation>(`${this.realmPrefix}saveFile`, args);
         } catch (error) {
-            throw new Error(error);
+            throw new Error(error.args[0]);
         }
     }
 
-    async deleteFile(fullPath: string, correlation: Correlation = makeCorrelationId()): Promise<Correlation> {
+    async deleteFile(fullPath: string, correlation?: Correlation): Promise<Correlation>;
+    async deleteFile(...args:any[]): Promise<Correlation> {
         if (!this.session || !this.session.isOpen) {
             throw new Error(noConnectionError);
         }
         try {
-            return await this.session.call<Correlation>(`${this.realmPrefix}deleteFile`, [fullPath, correlation]);
+            return await this.session.call<Correlation>(`${this.realmPrefix}deleteFile`, args);
         } catch (error) {
-            throw new Error(error);
+            throw new Error(error.args[0]);
         }
     }
 
-    async deleteDirectory(fullPath: string, recursive?: boolean, correlation: Correlation = makeCorrelationId()): Promise<Correlation> {
+    async deleteDirectory(fullPath: string, recursive?: boolean, correlation?: Correlation): Promise<Correlation>;
+    async deleteDirectory(...args:any[]): Promise<Correlation> {
         if (!this.session || !this.session.isOpen) {
             throw new Error(noConnectionError);
         }
         try {
-            return await this.session.call<Correlation>(`${this.realmPrefix}deleteDirectory`, [fullPath, recursive, correlation]);
+            return await this.session.call<Correlation>(`${this.realmPrefix}deleteDirectory`, args);
         } catch (error) {
-            throw new Error(error);
+            throw new Error(error.args[0]);
         }
     }
 
-    async ensureDirectory(fullPath: string, correlation: Correlation = makeCorrelationId()): Promise<Correlation> {
+    async ensureDirectory(fullPath: string, correlation?: Correlation): Promise<Correlation> ;
+    async ensureDirectory(...args:any[]): Promise<Correlation> {
         if (!this.session || !this.session.isOpen) {
             throw new Error(noConnectionError);
         }
         try {
-            return await this.session.call<Correlation>(`${this.realmPrefix}ensureDirectory`, [fullPath, correlation]);
+            return await this.session.call<Correlation>(`${this.realmPrefix}ensureDirectory`, args);
         } catch (error) {
-            throw new Error(error);
+            throw new Error(error.args[0]);
         }
     }
 
-    async loadTextFile(fullPath: string): Promise<string> {
+    async loadTextFile(fullPath: string): Promise<string> ;
+    async loadTextFile(...args:any[]): Promise<string> {
         if (!this.session || !this.session.isOpen) {
             throw new Error(noConnectionError);
         }
         try {
-            return await this.session.call<string>(`${this.realmPrefix}loadTextFile`, [fullPath]);
+            return await this.session.call<string>(`${this.realmPrefix}loadTextFile`, args);
         } catch (error) {
-            throw new Error(error);
+            throw new Error(error.args[0]);
         }
     }
 
-    async loadDirectoryTree(fullPath: string = ''): Promise<Directory> {
+    async loadDirectoryTree(fullPath?: string ): Promise<Directory>;
+    async loadDirectoryTree(...args:any[]): Promise<Directory> {
         if (!this.session || !this.session.isOpen) {
             throw new Error(noConnectionError);
         }
         try {
-            return await this.session.call<Directory>(`${this.realmPrefix}loadDirectoryTree`, [fullPath]);
+            return await this.session.call<Directory>(`${this.realmPrefix}loadDirectoryTree`, args);
         } catch (error) {
-            throw new Error(error);
+            throw new Error(error.args[0]);
         }
     }
 
-    async loadDirectoryChildren(fullPath: string): Promise<(File | ShallowDirectory)[]> {
+    async loadDirectoryChildren(fullPath: string): Promise<(File | ShallowDirectory)[]> ;
+    async loadDirectoryChildren(...args:any[]): Promise<(File | ShallowDirectory)[]> {
         if (!this.session || !this.session.isOpen) {
             throw new Error(noConnectionError);
         }
         try {
-            return await this.session.call<(File | ShallowDirectory)[]>(`${this.realmPrefix}loadDirectoryChildren`, [fullPath]);
+            return await this.session.call<(File | ShallowDirectory)[]>(`${this.realmPrefix}loadDirectoryChildren`, args);
         } catch (error) {
-            throw new Error(error);
+            throw new Error(error.args[0]);
         }
     }
 

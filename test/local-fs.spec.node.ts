@@ -2,15 +2,34 @@ import {dir} from 'tmp';
 import {mkdirSync, rmdirSync, unlinkSync, writeFileSync} from 'fs';
 import {join} from 'path';
 import {expect} from 'chai';
-import {assertFileSystemContract, content, dirName, fileName, ignoredDir, ignoredFile} from './implementation-suite'
+import {assertFileSystemContract, content, dirName, fileName} from './implementation-suite'
 import {EventsMatcher} from './events-matcher';
 import {FileSystem, fileSystemEventNames, LocalFileSystem} from '../src/nodejs';
-import {NoFeedbackEventsFileSystem} from '../src/no-feedback-events-fs';
-import {delayedPromise} from '../src/promise-utils';
-import {Events} from "../src/api";
+import {Options} from "../src/local-fs";
+
+const eventMatcherOptions = {
+    retries: 20,
+    interval: 25,
+    timeout: 1500,
+    noExtraEventsGrace: 150
+};
+
+const fileSystemOptions: Options = {
+    interval: 100,
+    retries: 3,
+    correlationWindow: eventMatcherOptions.noExtraEventsGrace * 3,
+    noiseReduceWindow: eventMatcherOptions.noExtraEventsGrace * 2 // eventMatcherOptions.timeout * 2.5
+};
+
+
+function writeFileToDisk(path: string, content: string) {
+    writeFileSync(path, content);
+}
 
 describe(`the local filesystem implementation`, () => {
-    let dirCleanup: () => void, rootPath: string, testPath: string;
+    let dirCleanup: () => void;
+    let rootPath: string;
+    let testPath: string;
     let counter = 0;
     let disposableFileSystem: LocalFileSystem;
 
@@ -37,19 +56,10 @@ describe(`the local filesystem implementation`, () => {
     function getFS() {
         testPath = join(rootPath, 'fs_' + (counter++));
         mkdirSync(testPath);
-        disposableFileSystem = new LocalFileSystem(
-            testPath,
-            [ignoredDir, ignoredFile]
-        );
+        disposableFileSystem = new LocalFileSystem(testPath, fileSystemOptions);
         return disposableFileSystem.init();
     }
 
-    const eventMatcherOptions: EventsMatcher.Options = {
-        retries: 20,
-        interval: 25,
-        timeout: 1000,
-        noExtraEventsGrace: 150
-    };
     assertFileSystemContract(getFS, eventMatcherOptions);
     describe(`Local fs tests`, () => {
         let fs: FileSystem;
@@ -79,13 +89,13 @@ describe(`the local filesystem implementation`, () => {
 
             it(`handles file creation`, () => {
                 const path = join(testPath, fileName);
-                writeFileSync(path, content);
+                writeFileToDisk(path, content);
                 return expect(fs.loadTextFile(fileName)).to.eventually.equals(content);
             });
 
             it(`handles file deletion`, () => {
                 const path = join(testPath, fileName);
-                writeFileSync(path, content);
+                writeFileToDisk(path, content);
                 unlinkSync(path);
                 return expect(fs.loadTextFile(fileName)).to.eventually.be.rejected;
             });
@@ -93,65 +103,10 @@ describe(`the local filesystem implementation`, () => {
             it(`handles file change`, async () => {
                 const path = join(testPath, fileName);
                 const newContent = `_${content}`;
-                writeFileSync(path, content);
+                writeFileToDisk(path, content);
                 await matcher.expect([{type: 'fileCreated', fullPath: fileName, newContent: content}]);
-                writeFileSync(path, newContent);
+                writeFileToDisk(path, newContent);
                 expect(await fs.loadTextFile(fileName)).to.equal(newContent);
-            });
-
-            it(`ignores events from ignored dir`, () => {
-                mkdirSync(join(testPath, ignoredDir))
-                return matcher.expect([])
-            });
-
-            it(`ignores events from ignored file`, () => {
-                mkdirSync(join(testPath, dirName))
-                return matcher.expect([{type: 'directoryCreated', fullPath: dirName}])
-                    .then(() => writeFileSync(join(testPath, ignoredFile), content))
-                    .then(() => matcher.expect([]))
-            });
-
-            it(`loadDirectoryTree() ignores ignored folder and file`, () => {
-                const expectedStructure = {
-                    name: '',
-                    type: 'dir',
-                    fullPath: '',
-                    children: [{name: dirName, type: 'dir', fullPath: dirName, children: []}]
-                };
-                mkdirSync(join(testPath, ignoredDir))
-                mkdirSync(join(testPath, dirName))
-                writeFileSync(join(testPath, ignoredFile), content)
-                return expect(fs.loadDirectoryTree()).to.eventually.deep.equal(expectedStructure)
-            });
-
-            it(`loadDirectoryTree() ignores ignored folder with special characters`, () => {
-                const expectedStructure = {
-                    name: '',
-                    type: 'dir',
-                    fullPath: '',
-                    children: [{name: dirName, type: 'dir', fullPath: dirName, children: []}]
-                };
-                mkdirSync(join(testPath, ignoredDir))
-                mkdirSync(join(testPath, ignoredDir, 'name-with-dashes'))
-                mkdirSync(join(testPath, ignoredDir, 'name-with-dashes', '.name_starts_with_dot'))
-                mkdirSync(join(testPath, ignoredDir, 'name-with-dashes', '.name_starts_with_dot', '.name_starts_with_dot'))
-                mkdirSync(join(testPath, dirName))
-                return expect(fs.loadDirectoryTree()).to.eventually.deep.equal(expectedStructure)
-            });
-
-            it(`ignores events in dot-folders and files`, () => {
-                mkdirSync(join(testPath, ignoredDir));
-                mkdirSync(join(testPath, ignoredDir, `.${dirName}`));
-                writeFileSync(join(testPath, ignoredDir, `.${dirName}`, `.${fileName}`), content);
-
-                return matcher.expect([]);
-            });
-
-            it(`loading existed ignored file - fails`, function () {
-                mkdirSync(join(testPath, dirName))
-                writeFileSync(join(testPath, ignoredFile), content)
-
-                return expect(fs.loadTextFile(ignoredFile)).to.be.rejectedWith(Error)
             });
         });
 
@@ -159,7 +114,7 @@ describe(`the local filesystem implementation`, () => {
             it(`emits 'unexpectedError' if 'loadTextFile' rejected in watcher 'add' callback`, () => {
                 fs.loadTextFile = () => Promise.reject('go away!');
                 const path = join(testPath, fileName);
-                writeFileSync(path, content);
+                writeFileToDisk(path, content);
                 return matcher.expect([{type: 'unexpectedError'}]);
             });
 
@@ -186,68 +141,36 @@ describe(`the local filesystem implementation`, () => {
 
         });
 
-        describe('Handling feedback', function () {
+        describe('events noise', function () {
+            fileSystemEventNames.forEach(type => {
+                it(`de-dupe events of type ${type}`, async () => {
+                    const ev1 = {type, fullPath: 'foo'};
+                    const ev2 = {type, fullPath: 'foo'};
+                     (fs as any).eventsManager.emit(ev1);
+                    await matcher.expect([ev1]);
+                    (fs as any).eventsManager.emit(ev2);
+                    await matcher.expect([]);
+                });
+            });
             it('should dispatch events for empty files', async () => {
                 const path = join(testPath, fileName);
-                writeFileSync(path, content);
+                writeFileToDisk(path, content);
                 await matcher.expect([{type: 'fileCreated', fullPath: fileName, newContent: content}]);
 
-                writeFileSync(path, '');
+                writeFileToDisk(path, '');
                 await matcher.expect([{type: 'fileChanged', fullPath: fileName, newContent: ''}]);
             });
             it('should not dispatch events for empty files if another change is detected within buffer time', async () => {
                 const path = join(testPath, fileName);
-                writeFileSync(path, content);
+                writeFileToDisk(path, content);
                 await matcher.expect([{type: 'fileCreated', fullPath: fileName, newContent: content}]);
 
-                writeFileSync(path, '');
-                await delayedPromise(1);
-                writeFileSync(path, 'gaga');
+                writeFileToDisk(path, '');
+                await matcher.expect([]);
+                writeFileToDisk(path, 'gaga');
                 await matcher.expect([{type: 'fileChanged', fullPath: fileName, newContent: 'gaga'}]);
 
             });
-            it('should not provide feedback when bombarding changes (stress test with nofeedbackFS)', async () => {
-                const path = join(testPath, fileName);
-                const expectedChangeEvents: Array<Events['fileChanged']> = [];
-                writeFileSync(path, content);
-                await matcher.expect([{type: 'fileCreated', fullPath: fileName, newContent: content}]);
-
-                // this is a magical fix for test flakyness. let the underlying FS calm before bombarding with changes.
-                await delayedPromise(100);
-
-                const noFeed = new NoFeedbackEventsFileSystem(fs, {delayEvents: 1, correlationWindow: 10000});
-                const nofeedMatcher = new EventsMatcher({
-                    alwaysExpectEmpty: true,
-                    noExtraEventsGrace: 1000,
-                    interval: 100,
-                    retries: 40,
-                    timeout: 1000
-                });
-                nofeedMatcher.track(noFeed.events, ...fileSystemEventNames);
-
-                for (let i = 1; i < 200; i++) {
-                    await delayedPromise(1);
-                    noFeed.saveFile(fileName, 'content:' + i, '' + i);
-                    expectedChangeEvents.push({
-                        type: 'fileChanged',
-                        fullPath: fileName,
-                        newContent: 'content:' + i,
-                        correlation: '' + i
-                    })
-                }
-                try {
-                    await nofeedMatcher.expect([]);
-                } catch (e) {
-                    console.error('nofeedMatcher failed. printing underlying events');
-                    try {
-                        await matcher.expect(expectedChangeEvents);
-                    } catch (e2) {
-                        console.error(e2);
-                    }
-                    throw e;
-                }
-            });
-
         });
     });
 });

@@ -1,4 +1,4 @@
-import {assertFileSystemContract, assertFileSystemSyncContract, ignoredDir, ignoredFile} from './implementation-suite'
+import {assertFileSystemContract, assertFileSystemSyncContract} from './implementation-suite'
 import {Directory, MemoryFileSystem} from "../src/universal";
 import {expect} from "chai";
 
@@ -22,11 +22,11 @@ function assertContent(fs: MemoryFileSystem) {
 
 describe(`the in-memory implementation`, function () {
     assertFileSystemContract(
-        () => Promise.resolve(new MemoryFileSystem(undefined, {ignore: [ignoredDir, ignoredFile]})),
+        () => Promise.resolve(new MemoryFileSystem()),
         {retries: 15, interval: 2, timeout: 40, noExtraEventsGrace: 10}
     );
     assertFileSystemSyncContract(
-        () => Promise.resolve(new MemoryFileSystem(undefined, {ignore: [ignoredDir, ignoredFile]})),
+        () => Promise.resolve(new MemoryFileSystem()),
         {retries: 15, interval: 2, timeout: 40, noExtraEventsGrace: 10}
     );
 

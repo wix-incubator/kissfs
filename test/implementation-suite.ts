@@ -1,20 +1,15 @@
 import {expect} from "chai";
 import {
-    Correlation,
     Directory,
     DirectoryContent,
     FileSystem,
     fileSystemEventNames,
     FileSystemReadSync,
-    pathSeparator
 } from '../src/universal';
 import {EventsMatcher} from './events-matcher';
-
 export const dirName = 'foo';
 export const fileName = 'bar.txt';
 export const content = 'content';
-export const ignoredDir = 'ignored';
-export const ignoredFile = `${dirName}${pathSeparator}ignored.txt`;
 const testCorrelation = 'test-correlation';
 
 export function assertFileSystemContract(fsProvider: () => Promise<FileSystem>, options: EventsMatcher.Options) {
@@ -334,31 +329,6 @@ export function assertFileSystemContract(fsProvider: () => Promise<FileSystem>, 
                 .then(() => matcher.expect([]));
         });
 
-        it(`deleting ignored file succeeds`, function () {
-            return fs.deleteFile(ignoredFile)
-                .then(() => matcher.expect([]))
-                .then(() => expect(fs.loadDirectoryTree()).to.eventually.have.property('children').eql([]));
-        });
-
-        it(`deleting ignored directory succeeds`, function () {
-            return fs.deleteDirectory(ignoredDir)
-                .then(() => matcher.expect([]))
-                .then(() => expect(fs.loadDirectoryTree()).to.eventually.have.property('children').eql([]));
-        });
-
-        it(`saving ignored file - fails`, function () {
-            return expect(fs.saveFile(ignoredFile, 'foo')).to.be.rejectedWith(Error);
-        });
-
-        it(`saving ignored dir - fails`, function () {
-            return expect(fs.ensureDirectory(ignoredDir)).to.be.rejectedWith(Error);
-        });
-
-        it(`loading existed ignored file - fails`, function () {
-            return fs.ensureDirectory(dirName)
-                .then(() => expect(fs.loadTextFile(ignoredFile)).to.be.rejectedWith(Error));
-        });
-
         it(`loadDirectoryTree`, function () {
             const expected = {
                 fullPath: ``, name: '', type: 'dir', children: [
@@ -553,11 +523,6 @@ export function assertFileSystemSyncContract(fsProvider: () => Promise<FileSyste
                 })
                 .then(() => expect(() => fs.loadTextFileSync(dirName)).to.throw(Error))
                 .then(() => matcher.expect([]));
-        });
-
-        it(`loading existed ignored file - fails`, function () {
-            return fs.ensureDirectory(dirName)
-                .then(() => expect(() => fs.loadTextFileSync(ignoredFile)).to.throw(Error));
         });
 
         it(`loadDirectoryTreeSync`, function () {
