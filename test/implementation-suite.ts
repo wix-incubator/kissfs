@@ -42,6 +42,26 @@ export function assertFileSystemContract(fsProvider: () => Promise<FileSystem>, 
                 .then(() => matcher.expect([]));
         });
 
+        it(`stat a directory`, async function () {
+            await fs.ensureDirectory(dirName);
+
+            const {type} = await fs.stat(dirName);
+
+            expect(type).to.equal('dir');
+        });
+
+        it(`stat a file`, async function () {
+            await fs.saveFile(fileName, content);
+
+            const {type} = await fs.stat(fileName);
+
+            expect(type).to.equal('file');
+        });
+
+        it(`stat a non-existing file/folder - fails`, function () {
+            return expect(fs.stat(fileName)).to.be.rejectedWith(Error);
+        });
+
         it(`saving an illegal file name - fails`, function () {
             return expect(fs.saveFile('', content)).to.be.rejectedWith(Error)
                 .then(() => {
@@ -523,6 +543,26 @@ export function assertFileSystemSyncContract(fsProvider: () => Promise<FileSyste
                 })
                 .then(() => expect(() => fs.loadTextFileSync(dirName)).to.throw(Error))
                 .then(() => matcher.expect([]));
+        });
+
+        it(`statSync an existing directory`, async function() {
+            await fs.ensureDirectory(dirName);
+
+            const {type} = fs.statSync(dirName);
+
+            expect(type).to.equal('dir');
+        });
+
+        it(`statSync an existing file`, async function() {
+            await fs.saveFile(fileName, content);
+
+            const {type} = fs.statSync(fileName);
+
+            expect(type).to.equal('file');
+        });
+
+        it(`statSync a non-existing file - fails`, function () {
+            return expect(() => fs.statSync(fileName)).to.throw(Error);
         });
 
         it(`loadDirectoryTreeSync`, function () {

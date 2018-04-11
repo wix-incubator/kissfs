@@ -1,4 +1,4 @@
-import {Directory, File, ShallowDirectory} from './model';
+import {Directory, File, ShallowDirectory, SimpleStats} from './model';
 import {Correlation, EventEmitter, FileSystem, isDisposable} from './api';
 import {timeoutPromise} from './promise-utils';
 
@@ -36,6 +36,10 @@ export class TimeoutFileSystem implements FileSystem {
 
     loadDirectoryChildren(fullPath: string): Promise<(File | ShallowDirectory)[]> {
         return timeoutPromise(this.fs.loadDirectoryChildren(fullPath), this.timeout);
+    }
+
+    stat(fullPath: string): Promise<SimpleStats> {
+        return timeoutPromise(this.fs.stat(fullPath), this.timeout);
     }
 
     ensureDirectory(fullPath: string, correlation?: Correlation): Promise<Correlation> {

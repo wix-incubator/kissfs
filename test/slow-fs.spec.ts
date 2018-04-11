@@ -25,15 +25,17 @@ describe('the slow (delayed) file system implementation', () => {
         it(`delay the dir creation, reading tree and deleting`, () => {
             return fs.ensureDirectory(dirName)
                 .then(() => fs.loadDirectoryTree())
+                .then(() => fs.stat(dirName))
                 .then(() => fs.deleteDirectory(dirName))
-                .then(() => expect(Date.now() - startTimestamp).to.be.at.least(delay * 3 * accuracyFactor))
+                .then(() => expect(Date.now() - startTimestamp).to.be.at.least(delay * 4 * accuracyFactor));
         });
 
         it(`delay the file saving, reading and deleting`, () => {
             return fs.saveFile(fileName, content)
                 .then(() => fs.loadTextFile(fileName))
+                .then(() => fs.stat(fileName))
                 .then(() => fs.deleteFile(fileName))
-                .then(() => expect(Date.now() - startTimestamp).to.be.at.least(delay * 3 * accuracyFactor))
+                .then(() => expect(Date.now() - startTimestamp).to.be.at.least(delay * 4 * accuracyFactor));
         });
     });
 });

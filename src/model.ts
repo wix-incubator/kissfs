@@ -2,12 +2,13 @@ import {endsWith, getPathNodes, normalizePathNodes} from "./utils";
 
 export const pathSeparator = '/';
 
-
 export type DirectoryContent = { [key: string]: string | DirectoryContent }
 
-
-export interface FileSystemNode {
+export interface SimpleStats {
     type: 'dir' | 'file';
+}
+
+export interface FileSystemNode extends SimpleStats {
     name: string,
     fullPath: string,
 }
@@ -16,7 +17,7 @@ export class ShallowDirectory implements FileSystemNode {
     public type: 'dir' = 'dir';
 
     constructor(public name: string,
-                public fullPath: string,) {
+                public fullPath: string) {
     }
 }
 

@@ -2,7 +2,7 @@ import * as path from 'path';
 import {FSWatcher, watch} from 'chokidar';
 import {retryPromise, RetryPromiseOptions} from './promise-utils';
 import {Correlation, EventEmitter, Events, FileSystem, FileSystemEvent, fileSystemEventNames} from './api';
-import {Directory, File, pathSeparator, ShallowDirectory} from './model';
+import {Directory, File, pathSeparator, ShallowDirectory, SimpleStats} from './model';
 import {LocalFileSystemCrudOnly} from './local-fs-crud-only';
 import {makeCorrelationId} from "./utils";
 import {EventHandler, EventsManager} from "./events-manager";
@@ -194,6 +194,10 @@ export class LocalFileSystem implements FileSystem {
 
     loadDirectoryChildren(fullPath: string): Promise<(File | ShallowDirectory)[]> {
         return this.crud.loadDirectoryChildren(fullPath);
+    }
+
+    stat(fullPath: string): Promise<SimpleStats> {
+        return this.crud.stat(fullPath);
     }
 
     private registerCorrelationForPathsInDir(fullPath: string, correlation: Correlation) {

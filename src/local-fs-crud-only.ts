@@ -1,7 +1,7 @@
 import {access, ensureDir, readdir, readFile, remove, rmdir, stat, writeFile} from 'fs-extra';
 import * as walk from 'klaw';
 import * as path from 'path';
-import {Directory, File, pathSeparator, ShallowDirectory} from './model';
+import {Directory, File, pathSeparator, ShallowDirectory, SimpleStats} from './model';
 import {getPathNodes} from './utils';
 import {MemoryFileSystem} from './memory-fs';
 
@@ -68,7 +68,6 @@ export class LocalFileSystemCrudOnly {
     }
 
     async loadDirectoryChildren(fullPath: string): Promise<(File | ShallowDirectory)[]> {
-
         let rootPath = path.join(this.baseUrl, fullPath);
         let pathPrefix = fullPath ? (fullPath + pathSeparator) : fullPath;
         const directoryChildren = await readdir(rootPath);
@@ -91,7 +90,6 @@ export class LocalFileSystemCrudOnly {
     }
 
     async loadDirectoryTree(fullPath?: string): Promise<Directory> {
-
         // using an in-memory instance to build the result
         // if fullPath is not empty, memfs will contain a sub-tree of the real FS but the root is the same
         const memFs = new MemoryFileSystem();
@@ -121,6 +119,17 @@ export class LocalFileSystemCrudOnly {
         });
     }
 
+    async stat(fullPath: string): Promise<SimpleStats> {
+        const nodeStat = await stat(path.join(this.baseUrl, fullPath));
+        if (nodeStat.isDirectory()) {
+            return { type: 'dir' };
+        } else if (nodeStat.isFile()) {
+            return { type: 'file'};
+        }
+
+        throw new Error(`Unsupported type ${fullPath}`);
+    }
+
     async ensureDirectory(relPath: string): Promise<void> {
 
         const pathArr = getPathNodes(relPath);
@@ -134,5 +143,4 @@ export class LocalFileSystemCrudOnly {
         const fullPath = path.join(this.baseUrl, ...pathArr);
         return {fullPath, name}
     }
-
 }

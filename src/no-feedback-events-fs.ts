@@ -1,4 +1,4 @@
-import {Directory, DirectoryContent, File, ShallowDirectory} from "./model";
+import {Directory, DirectoryContent, File, ShallowDirectory, SimpleStats} from "./model";
 import {Correlation, EventEmitter, FileSystem, fileSystemEventNames, FileSystemReadSync} from "./api";
 import {EventsManager} from "./events-manager";
 import {makeCorrelationId} from "./utils";
@@ -61,6 +61,10 @@ export class NoFeedbackEventsFileSystem implements FileSystem {
         return this.fs.loadDirectoryChildren(fullPath);
     }
 
+    stat(fullPath: string): Promise<SimpleStats> {
+        return this.fs.stat(fullPath);
+    }
+
     protected registerCorrelation(correlation: Correlation, once: boolean) {
         const targetSet = once ? this.correlateOnce : this.correlateByWindow;
         targetSet.add(correlation);
@@ -89,5 +93,9 @@ export class NoFeedbackEventsFileSystemSync extends NoFeedbackEventsFileSystem i
 
     loadDirectoryContentSync(fullPath: string = ''): DirectoryContent {
         return this.syncFs.loadDirectoryContentSync(fullPath);
+    }
+
+    statSync(fullPath: string): SimpleStats {
+        return this.syncFs.statSync(fullPath);
     }
 }

@@ -11,7 +11,6 @@ const msg = 'foo';
 const fakeArgs = ['foo', 'bar'];
 
 describe(`the wamp client filesystem proxy`, () => {
-
     let wampServer: WampServer;
     let underlyingFs: MemoryFileSystem;
 
@@ -68,5 +67,4 @@ describe(`the wamp client filesystem proxy`, () => {
     });
 
     assertFileSystemContract(getInitedFS, eventMatcherOptions);
-
 });
