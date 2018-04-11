@@ -8,6 +8,7 @@ import {FileSystem, fileSystemEventNames, LocalFileSystem} from '../src/nodejs';
 import {NoFeedbackEventsFileSystem} from '../src/no-feedback-events-fs';
 import {delayedPromise} from '../src/promise-utils';
 import {Events} from "../src/api";
+import {Options} from "../src/local-fs";
 
 describe(`the local filesystem implementation`, () => {
     let dirCleanup: () => void;
@@ -39,7 +40,7 @@ describe(`the local filesystem implementation`, () => {
     function getFS() {
         testPath = join(rootPath, 'fs_' + (counter++));
         mkdirSync(testPath);
-        disposableFileSystem = new LocalFileSystem(testPath);
+        disposableFileSystem = new LocalFileSystem(testPath, fileSystemOptions);
         return disposableFileSystem.init();
     }
 
@@ -48,6 +49,13 @@ describe(`the local filesystem implementation`, () => {
         interval: 25,
         timeout: 1000,
         noExtraEventsGrace: 150
+    };
+
+    let fileSystemOptions : Options= {
+        interval: 100,
+        retries: 3,
+        correlationWindow: 200,
+        noiseReduceWindow: eventMatcherOptions.noExtraEventsGrace / 2
     };
     assertFileSystemContract(getFS, eventMatcherOptions);
     describe(`Local fs tests`, () => {
