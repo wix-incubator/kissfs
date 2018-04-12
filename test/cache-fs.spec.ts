@@ -13,7 +13,7 @@ import {
     fileName,
 } from './implementation-suite';
 
-describe(`the cache file system proxy`, () => {
+describe.only(`the cache file system proxy`, () => {
     const eventMatcherOptions: EventsMatcher.Options = {retries: 15, interval: 2, timeout: 40, noExtraEventsGrace: 10};
 
     assertFileSystemContract(
@@ -42,40 +42,40 @@ describe(`the cache file system proxy`, () => {
             matcher.track(fs.events, ...fileSystemEventNames);
         });
 
-        it('loads file faster after it has been saved', () => {
-            return fs.saveFile(fileName, content)
-                .then(() => fs.loadTextFile(fileName))
-                .then(() => expect(Date.now() - startTimestamp).to.be.lessThan(timeout * 2));
+        it('loads file faster after it has been saved', async () => {
+            await fs.saveFile(fileName, content);
+            await fs.loadTextFile(fileName);
+            await expect(Date.now() - startTimestamp).to.be.lessThan(timeout * 2);
         });
 
-        it('loads file faster after it has been saved from outside', () => {
+        it('loads file faster after it has been saved from outside', async () => {
             const onFileCreated = new Promise(resolve => {
-                fs.events.once('fileCreated', () => {
-                    fs.loadTextFile(fileName)
-                        .then(() => resolve(Date.now() - startTimestamp));
-                })
-            })
+                fs.events.once('fileCreated', async () => {
+                    await fs.loadTextFile(fileName);
+                    resolve(Date.now() - startTimestamp);
+                });
+            });
 
             slow.saveFile(fileName, content);
-            return expect(onFileCreated).to.be.eventually.lessThan(timeout * 2);
+            return expect(await onFileCreated).to.be.lessThan(timeout * 2);
         });
 
-        it('loads tree faster after it has been loaded before', () => {
-            return fs.loadDirectoryTree()
-                .then(() => fs.loadDirectoryTree())
-                .then(() => expect(Date.now() - startTimestamp).to.be.lessThan(timeout * 2));
+        it('loads tree faster after it has been loaded before', async () => {
+            await fs.loadDirectoryTree();
+            await fs.loadDirectoryTree();
+            await expect(Date.now() - startTimestamp).to.be.lessThan(timeout * 2);
         });
 
-        it('stat directory faster after it has been cached before', () => {
-            return fs.ensureDirectory(dirName)
-                .then(() => fs.stat(dirName))
-                .then(() => expect(Date.now() - startTimestamp).to.be.lessThan(timeout * 2));
+        it('stat directory faster after it has been cached before', async () => {
+            await fs.ensureDirectory(dirName);
+            await fs.stat(dirName);
+            await expect(Date.now() - startTimestamp).to.be.lessThan(timeout * 2);
         });
 
-        it('stat file faster after stat has run on it before', () => {
-            return fs.saveFile(fileName, content)
-                .then(() => fs.stat(fileName))
-                .then(() => expect(Date.now() - startTimestamp).to.be.lessThan(timeout * 2));
+        it('stat file faster after stat has run on it before', async () => {
+            await fs.saveFile(fileName, content);
+            await fs.stat(fileName);
+            await expect(Date.now() - startTimestamp).to.be.lessThan(timeout * 2);
         });
     });
 
@@ -96,41 +96,39 @@ describe(`the cache file system proxy`, () => {
             matcher.track(fs.events, ...fileSystemEventNames);
         });
 
-        it('emits `fileCreated` if there is not cached file after error', () => {
-            original.events.removeAllListeners('fileCreated')
-            return original.saveFile(fileName, content)
-                .then(() => matcher.expect([]))
-                .then(() => (original.events as InternalEventsEmitter).emit('unexpectedError', {type: 'unexpectedError'}))
-                .then(() => matcher.expect([{type: 'fileCreated', fullPath: fileName, newContent: content}]));
-        })
+        it('emits `fileCreated` if there is not cached file after error', async () => {
+            original.events.removeAllListeners('fileCreated');
+            await original.saveFile(fileName, content);
+            await matcher.expect([]);
+            (original.events as InternalEventsEmitter).emit('unexpectedError', {type: 'unexpectedError'});
+            await matcher.expect([{type: 'fileCreated', fullPath: fileName, newContent: content}]);
+        });
 
-        it('emits `directoryCreated` if there is not cached dir after error', () => {
+        it('emits `directoryCreated` if there is not cached dir after error', async () => {
             original.events.removeAllListeners('directoryCreated');
-            return original.ensureDirectory(dirName)
-                .then(() => matcher.expect([]))
-                .then(() => (original.events as InternalEventsEmitter).emit('unexpectedError', {type: 'unexpectedError'}))
-                .then(() => matcher.expect([{type: 'directoryCreated', fullPath: dirName}]));
-        })
+            await original.ensureDirectory(dirName);
+            await matcher.expect([]);
+            await (original.events as InternalEventsEmitter).emit('unexpectedError', {type: 'unexpectedError'});
+            await matcher.expect([{type: 'directoryCreated', fullPath: dirName}]);
+        });
 
-        it('emits `fileDeleted` if there is cached file and no real file after error', () => {
-            return fs.saveFile(fileName, content).then(() => {
-                original.events.removeAllListeners('fileDeleted');
-                return original.deleteFile(fileName)
-                    .then(() => matcher.expect([{type: 'fileCreated', fullPath: fileName}]))
-                    .then(() => (original.events as InternalEventsEmitter).emit('unexpectedError', {type: 'unexpectedError'}))
-                    .then(() => matcher.expect([{type: 'fileDeleted', fullPath: fileName}]));
-            })
-        })
+        it('emits `fileDeleted` if there is cached file and no real file after error', async () => {
+            await fs.saveFile(fileName, content);
+            original.events.removeAllListeners('fileDeleted');
+            await original.deleteFile(fileName);
+            await matcher.expect([{type: 'fileCreated', fullPath: fileName}]);
+            await (original.events as InternalEventsEmitter).emit('unexpectedError', {type: 'unexpectedError'});
+            await matcher.expect([{type: 'fileDeleted', fullPath: fileName}]);
+        });
 
-        it('emits `directoryDeleted` if there is cached dir and no real dir after error', () => {
-            return fs.ensureDirectory(dirName).then(() => {
-                original.events.removeAllListeners('directoryDeleted');
-                return original.deleteDirectory(dirName)
-                    .then(() => matcher.expect([{type: 'directoryCreated', fullPath: dirName}]))
-                    .then(() => (original.events as InternalEventsEmitter).emit('unexpectedError', {type: 'unexpectedError'}))
-                    .then(() => matcher.expect([{type: 'directoryDeleted', fullPath: dirName}]));
-            })
-        })
+        it('emits `directoryDeleted` if there is cached dir and no real dir after error', async () => {
+            await fs.ensureDirectory(dirName);
+            original.events.removeAllListeners('directoryDeleted');
+            await original.deleteDirectory(dirName);
+            await matcher.expect([{type: 'directoryCreated', fullPath: dirName}]);
+            await (original.events as InternalEventsEmitter).emit('unexpectedError', {type: 'unexpectedError'});
+            await matcher.expect([{type: 'directoryDeleted', fullPath: dirName}]);
+        });
 
         it('emits `unexpectedError` if cache created with `rescanOnError = false` flag', () => {
             const fs = new CacheFileSystem(original, false);
@@ -138,6 +136,7 @@ describe(`the cache file system proxy`, () => {
             matcher.track(fs.events, ...fileSystemEventNames);
             (original.events as InternalEventsEmitter).emit('unexpectedError', {type: 'unexpectedError'});
             return matcher.expect([{type: 'unexpectedError'}]);
-        })
+        });
     });
-});
+})
+;
