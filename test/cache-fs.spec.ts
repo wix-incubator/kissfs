@@ -12,6 +12,7 @@ import {
     dirName,
     fileName,
 } from './implementation-suite';
+import {spy} from 'sinon';
 
 describe.only(`the cache file system proxy`, () => {
     const eventMatcherOptions: EventsMatcher.Options = {retries: 15, interval: 2, timeout: 40, noExtraEventsGrace: 10};
@@ -138,5 +139,36 @@ describe.only(`the cache file system proxy`, () => {
             return matcher.expect([{type: 'unexpectedError'}]);
         });
     });
-})
-;
+
+    describe(`lazyness`, () => {
+        let fs: FileSystem;
+        let original: FileSystem;
+        let matcher: EventsMatcher;
+
+        beforeEach(() => {
+            original = new MemoryFileSystem('', {content:{
+                foo:{}
+            }});
+            fs = new CacheFileSystem(original);
+            matcher = new EventsMatcher({
+                retries: 30,
+                interval: 5,
+                noExtraEventsGrace: 150,
+                timeout: 300
+            });
+            matcher.track(fs.events, ...fileSystemEventNames);
+        });
+
+        it('does not load underlying fs tree more than needs to', async () => {
+            spy(original, 'loadDirectoryTree');
+            await fs.loadDirectoryTree('foo');
+            expect(original.loadDirectoryTree).to.have.been.calledWithExactly('foo');
+        });
+
+        it('does not load underlying fs tree more than needs to', async () => {
+            spy(original, 'loadDirectoryChildren');
+            await fs.loadDirectoryChildren('foo');
+            expect(original.loadDirectoryChildren).to.have.been.calledWithExactly('foo');
+        });
+    });
+});
