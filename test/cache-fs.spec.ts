@@ -14,7 +14,7 @@ import {
 } from './implementation-suite';
 import {spy} from 'sinon';
 
-describe.only(`the cache file system proxy`, () => {
+describe(`the cache file system proxy`, () => {
     const eventMatcherOptions: EventsMatcher.Options = {retries: 15, interval: 2, timeout: 40, noExtraEventsGrace: 10};
 
     assertFileSystemContract(
@@ -29,9 +29,8 @@ describe.only(`the cache file system proxy`, () => {
 
     describe(`using slow FileSystem`, () => {
         const timeout = 200;
-
-        let fs: FileSystem;
-        let slow: FileSystem;
+        let fs: CacheFileSystem;
+        let slow: SlowFs;
         let startTimestamp: number;
         let matcher: EventsMatcher;
 
@@ -97,16 +96,28 @@ describe.only(`the cache file system proxy`, () => {
             matcher.track(fs.events, ...fileSystemEventNames);
         });
 
-        it('emits `fileCreated` if there is not cached file after error', async () => {
-            original.events.removeAllListeners('fileCreated');
-            await original.saveFile(fileName, content);
-            await matcher.expect([]);
-            (original.events as InternalEventsEmitter).emit('unexpectedError', {type: 'unexpectedError'});
-            await matcher.expect([{type: 'fileCreated', fullPath: fileName, newContent: content}]);
+        describe('when a file was created/changed silently, followed by an error', () => {
+            it('does not emit `fileCreated` if the file was never cached', async () => {
+                (original as any).emit = () => false;
+                await original.saveFile(fileName, content);
+                await matcher.expect([]);
+                (original.events as InternalEventsEmitter).emit('unexpectedError', {type: 'unexpectedError'});
+                await matcher.expect([]);
+            });
+
+            it('emits `fileCreated` if the file was previously cached', async () => {
+                await fs.saveFile(fileName, 'foo');
+                await matcher.expect([{type: 'fileCreated', fullPath: fileName, newContent: 'foo'}]);
+                (original as any).emit = () => false;
+                await original.saveFile(fileName, content);
+                await matcher.expect([]);
+                (original.events as InternalEventsEmitter).emit('unexpectedError', {type: 'unexpectedError'});
+                await matcher.expect([{type: 'fileChanged', fullPath: fileName, newContent: content}]);
+            });
         });
 
         it('emits `directoryCreated` if there is not cached dir after error', async () => {
-            original.events.removeAllListeners('directoryCreated');
+            (original as any).emit = () => false;
             await original.ensureDirectory(dirName);
             await matcher.expect([]);
             await (original.events as InternalEventsEmitter).emit('unexpectedError', {type: 'unexpectedError'});
@@ -115,7 +126,7 @@ describe.only(`the cache file system proxy`, () => {
 
         it('emits `fileDeleted` if there is cached file and no real file after error', async () => {
             await fs.saveFile(fileName, content);
-            original.events.removeAllListeners('fileDeleted');
+            (original as any).emit = () => false;
             await original.deleteFile(fileName);
             await matcher.expect([{type: 'fileCreated', fullPath: fileName}]);
             await (original.events as InternalEventsEmitter).emit('unexpectedError', {type: 'unexpectedError'});
@@ -124,6 +135,7 @@ describe.only(`the cache file system proxy`, () => {
 
         it('emits `directoryDeleted` if there is cached dir and no real dir after error', async () => {
             await fs.ensureDirectory(dirName);
+            (original as any).emit = () => false;
             original.events.removeAllListeners('directoryDeleted');
             await original.deleteDirectory(dirName);
             await matcher.expect([{type: 'directoryCreated', fullPath: dirName}]);
@@ -146,9 +158,11 @@ describe.only(`the cache file system proxy`, () => {
         let matcher: EventsMatcher;
 
         beforeEach(() => {
-            original = new MemoryFileSystem('', {content:{
-                foo:{}
-            }});
+            original = new MemoryFileSystem('', {
+                content: {
+                    foo: {}
+                }
+            });
             fs = new CacheFileSystem(original);
             matcher = new EventsMatcher({
                 retries: 30,
@@ -161,13 +175,15 @@ describe.only(`the cache file system proxy`, () => {
 
         it('does not load underlying fs tree more than needs to', async () => {
             spy(original, 'loadDirectoryTree');
-            await fs.loadDirectoryTree('foo');
+            fs.loadDirectoryTree('foo');
+            expect(original.loadDirectoryTree).to.have.callCount(1);
             expect(original.loadDirectoryTree).to.have.been.calledWithExactly('foo');
         });
 
         it('does not load underlying fs tree more than needs to', async () => {
             spy(original, 'loadDirectoryChildren');
-            await fs.loadDirectoryChildren('foo');
+            fs.loadDirectoryChildren('foo');
+            expect(original.loadDirectoryChildren).to.have.callCount(1);
             expect(original.loadDirectoryChildren).to.have.been.calledWithExactly('foo');
         });
     });
