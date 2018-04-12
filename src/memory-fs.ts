@@ -1,13 +1,7 @@
-import {Correlation, FileSystem, FileSystemReadSync} from "./api";
+import {Correlation, Events, FileSystem, FileSystemReadSync} from "./api";
 import {Directory, DirectoryContent, File, isDir, isFile, pathSeparator, ShallowDirectory, SimpleStats} from "./model";
 
-import {
-    getPathNodes,
-    InternalEventsEmitter,
-    makeCorrelationId,
-    makeEventsEmitter,
-    normalizePathNodes
-} from "./utils";
+import {getPathNodes, InternalEventsEmitter, makeCorrelationId, makeEventsEmitter, normalizePathNodes} from "./utils";
 
 let id = 0;
 
@@ -31,7 +25,7 @@ export class MemoryFileSystem implements FileSystemReadSync, FileSystem {
     }
 
     public readonly events: InternalEventsEmitter = makeEventsEmitter();
-    private readonly root: Directory;
+    protected readonly root: Directory;
 
     constructor(public baseUrl = `memory-${id++}`, options?: MemoryFileSystemOptions) {
         this.baseUrl += '/';
@@ -43,6 +37,10 @@ export class MemoryFileSystem implements FileSystemReadSync, FileSystem {
         } else {
             this.root = Directory.fromContent({});
         }
+    }
+
+    protected emit<S extends keyof Events>(type: S, event: Events[S]) {
+        this.events.emit(type, event);
     }
 
     async saveFile(fullPath: string, newContent: string, correlation?: Correlation): Promise<Correlation> {
@@ -100,12 +98,12 @@ export class MemoryFileSystem implements FileSystemReadSync, FileSystem {
             if (existingChild.content !== newContent) {
                 existingChild.content = newContent
                 const type = 'fileChanged';
-                this.events.emit(type, {type, fullPath, newContent, correlation});
+                this.emit(type, {type, fullPath, newContent, correlation});
             }
         } else {
             const type = 'fileCreated';
             parent.children.push(new File(fileName, fullPath, newContent));
-            this.events.emit(type, {type, fullPath, newContent, correlation});
+            this.emit(type, {type, fullPath, newContent, correlation});
         }
         return correlation;
     }
@@ -117,7 +115,7 @@ export class MemoryFileSystem implements FileSystemReadSync, FileSystem {
             const node = parent.children.find(({name}) => name === pathArr[pathArr.length - 1]);
             if (isFile(node)) {
                 parent.children = parent.children.filter(({name}) => name !== node.name);
-                this.events.emit('fileDeleted', {type: 'fileDeleted', fullPath, correlation});
+                this.emit('fileDeleted', {type: 'fileDeleted', fullPath, correlation});
             } else if (isDir(node)) {
                 throw new Error(`Directory is not a file '${fullPath}'`);
             }
@@ -151,7 +149,8 @@ export class MemoryFileSystem implements FileSystemReadSync, FileSystem {
         return this._ensureDirectorySync(fullPath, correlation);
     }
 
-    private findNode(fullPath: string): Directory | File {
+
+    protected findNode(fullPath: string): Directory | File {
         const pathArr = getPathNodes(fullPath);
         const parent = pathArr.length ? Directory.getSubDir(this.root, pathArr.slice(0, pathArr.length - 1)) : null;
         if (isDir(parent)) {
@@ -163,7 +162,7 @@ export class MemoryFileSystem implements FileSystemReadSync, FileSystem {
         throw new Error(`Cannot find ${fullPath}`);
     }
 
-    private getDir(fullPath: string) {
+    protected getDir(fullPath: string) {
         const dir = Directory.getSubDir(this.root, fullPath);
         if (!dir) {
             throw new Error(`Unable to read folder in path: '${fullPath}'`);
@@ -195,8 +194,8 @@ export class MemoryFileSystem implements FileSystemReadSync, FileSystem {
     statSync(fullPath: string): SimpleStats {
         const node = this.findNode(fullPath);
         return isFile(node) ?
-            { type: 'file' } :
-            { type: 'dir' };
+            {type: 'file'} :
+            {type: 'dir'};
     }
 
     private _ensureDirectorySync(fullPath: string, correlation: Correlation): Correlation {
@@ -213,7 +212,7 @@ export class MemoryFileSystem implements FileSystemReadSync, FileSystem {
                 current.fullPath ? [current.fullPath, nodeName].join(pathSeparator) : nodeName,
             );
             current.children.push(newDir);
-            this.events.emit('directoryCreated', {
+            this.emit('directoryCreated', {
                 type: 'directoryCreated',
                 fullPath: newDir.fullPath,
                 correlation
@@ -224,10 +223,10 @@ export class MemoryFileSystem implements FileSystemReadSync, FileSystem {
     }
 
     private recursiveEmitDeletion(node: Directory, correlation: Correlation) {
-        this.events.emit('directoryDeleted', {type: 'directoryDeleted', fullPath: node.fullPath, correlation});
+        this.emit('directoryDeleted', {type: 'directoryDeleted', fullPath: node.fullPath, correlation});
         node.children.forEach(child => {
             if (isDir(child)) this.recursiveEmitDeletion(child, correlation)
-            this.events.emit('fileDeleted', {type: 'fileDeleted', fullPath: child.fullPath, correlation});
+            this.emit('fileDeleted', {type: 'fileDeleted', fullPath: child.fullPath, correlation});
         })
     }
 }

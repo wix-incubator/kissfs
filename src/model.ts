@@ -29,6 +29,25 @@ export class Directory implements FileSystemNode {
                 public children: Array<File | Directory> = []) {
     }
 
+    static walk(directory: Directory, path: string | string[]): Directory | null {
+        const pathArr = typeof path === 'string' ? getPathNodes(path) : path;
+        while (pathArr.length) {
+            const targetName = pathArr.shift();
+            if (targetName && directory.children) {
+                const node = directory.children.find(({name}) => name === targetName);
+                if (isDir(node)) {
+                    directory = node;
+                } else {
+                    return null;
+                }
+            } else {
+                return null;
+            }
+        }
+        return directory;
+    }
+
+
     static getSubDir(directory: Directory, path: string | string[]): Directory | null {
         const pathArr = typeof path === 'string' ? getPathNodes(path) : path;
         while (pathArr.length) {
