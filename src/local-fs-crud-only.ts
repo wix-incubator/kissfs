@@ -20,22 +20,21 @@ export class LocalFileSystemCrudOnly {
         if (!relPath) {
             throw new Error(`Can't delete root directory`);
         }
+        const fullPath = path.join(this.baseUrl, ...getPathNodes(relPath));
+        let stats;
+        try {
+            await access(fullPath);
+            stats = await stat(fullPath);
+        } catch (e) {
+        }
 
-            const fullPath = path.join(this.baseUrl, ...getPathNodes(relPath));
-            let stats;
-            try {
-                await access(fullPath);
-                stats = await stat(fullPath);
-            } catch (e) {
+        if (stats) {
+            if (stats.isFile()) {
+                await remove(fullPath);
+            } else {
+                throw new Error(`not a file: ${relPath}`);
             }
-
-            if (stats) {
-                if (stats.isFile()) {
-                    await remove(fullPath);
-                } else {
-                    throw new Error(`not a file: ${relPath}`);
-                }
-            }
+        }
     }
 
     async deleteDirectory(relPath: string, recursive?: boolean): Promise<void> {
@@ -43,23 +42,21 @@ export class LocalFileSystemCrudOnly {
         if (pathArr.length === 0) {
             throw new Error(`Can't delete root directory`);
         }
+        const fullPath = path.join(this.baseUrl, ...pathArr);
+        let stats;
+        try {
+            await access(fullPath);
+            stats = await stat(fullPath);
+        } catch (e) {
+        }
 
-
-            const fullPath = path.join(this.baseUrl, ...pathArr);
-            let stats;
-            try {
-                await access(fullPath);
-                stats = await stat(fullPath);
-            } catch (e) {
+        if (stats) {
+            if (stats.isDirectory()) {
+                await (recursive ? remove(fullPath) : rmdir(fullPath));
+            } else {
+                throw new Error(`not a directory: ${relPath}`);
             }
-
-            if (stats) {
-                if (stats.isDirectory()) {
-                    await (recursive ? remove(fullPath) : rmdir(fullPath));
-                } else {
-                    throw new Error(`not a directory: ${relPath}`);
-                }
-            }
+        }
 
     }
 
@@ -122,9 +119,9 @@ export class LocalFileSystemCrudOnly {
     async stat(fullPath: string): Promise<SimpleStats> {
         const nodeStat = await stat(path.join(this.baseUrl, fullPath));
         if (nodeStat.isDirectory()) {
-            return { type: 'dir' };
+            return {type: 'dir'};
         } else if (nodeStat.isFile()) {
-            return { type: 'file'};
+            return {type: 'file'};
         }
 
         throw new Error(`Unsupported type ${fullPath}`);

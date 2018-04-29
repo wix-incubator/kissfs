@@ -19,6 +19,7 @@ export function splitPathToDirAndFile(targetPath: string): { parentPath: string,
         name: targetPath.substr(nameParentSeparator + 1)
     };
 }
+
 export function checkExistsInDir(expectedType: 'file' | 'dir', dirContent: Array<ShallowDirectory | File>, name: string) {
     for (let node of dirContent) {
         if (node.type === expectedType && node.name === name) {

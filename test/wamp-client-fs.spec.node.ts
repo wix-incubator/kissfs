@@ -7,6 +7,7 @@ import {EventsMatcher} from './events-matcher';
 import {assertFileSystemContract} from './implementation-suite'
 import {fileSystemAsyncMethods} from "../src/api";
 import {spy} from 'sinon';
+
 const msg = 'foo';
 const fakeArgs = ['foo', 'bar'];
 
@@ -46,13 +47,13 @@ describe(`the wamp client filesystem proxy`, () => {
     });
 
     fileSystemAsyncMethods.forEach(asyncMethodName => {
-        describe(`${asyncMethodName} method`, ()=>{
+        describe(`${asyncMethodName} method`, () => {
             it(`fails when not inited`, () => {
                 return expect(getFS().then(fs => (fs[asyncMethodName] as Function)(...fakeArgs))).to.eventually.be.rejectedWith(noConnectionError);
             });
             it(`passes arguments and results correctly`, async () => {
                 const fs = await getInitedFS();
-                let methodImpl = spy(async ()=> msg);
+                let methodImpl = spy(async () => msg);
                 (underlyingFs as any)[asyncMethodName] = methodImpl;
                 const res = await (fs[asyncMethodName] as Function)(...fakeArgs);
                 expect(res).to.eql(msg);
@@ -60,7 +61,9 @@ describe(`the wamp client filesystem proxy`, () => {
             });
             it(`reports original error messages`, async () => {
                 const fs = await getInitedFS();
-                (underlyingFs as any)[asyncMethodName] = async () => {throw new Error(msg)};
+                (underlyingFs as any)[asyncMethodName] = async () => {
+                    throw new Error(msg)
+                };
                 await expect((fs[asyncMethodName] as Function)(...fakeArgs)).to.eventually.be.rejectedWith(msg);
             });
         });

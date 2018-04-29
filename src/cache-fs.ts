@@ -147,6 +147,12 @@ class MemFsForCache extends MemoryFileSystem {
     }
 }
 
+export namespace CacheFileSystem {
+    export interface Options {
+        shouldRescanOnError?: boolean
+    }
+}
+
 export class CacheFileSystem implements FileSystemReadSync, FileSystem {
 
     public baseUrl: string;
@@ -154,12 +160,12 @@ export class CacheFileSystem implements FileSystemReadSync, FileSystem {
     public readonly events: InternalEventsEmitter = this.cache.events;
     private pathsInCache: PathInCache = {};
     private onFsError = ({stack}: Error | UnexpectedErrorEvent) => {
-        this.shouldRescanOnError ?
+        this.options.shouldRescanOnError ?
             this.rescanOnError() :
             this.emit('unexpectedError', {stack});
     };
 
-    constructor(private fs: FileSystem, private shouldRescanOnError: boolean = true) {
+    constructor(private fs: FileSystem, private options: CacheFileSystem.Options = {}) {
         this.baseUrl = fs.baseUrl;
 
         this.fs.events.on('unexpectedError', this.onFsError);
@@ -208,7 +214,7 @@ export class CacheFileSystem implements FileSystemReadSync, FileSystem {
             const {fullPath, correlation} = event;
             try {
                 Object.keys(this.pathsInCache).forEach(p => {
-                    if (p.startsWith(fullPath)){
+                    if (p.startsWith(fullPath)) {
                         this.pathsInCache[p] = Cached.GONE;
                     }
                 });

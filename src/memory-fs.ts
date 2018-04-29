@@ -5,9 +5,11 @@ import {getPathNodes, InternalEventsEmitter, makeCorrelationId, makeEventsEmitte
 
 let id = 0;
 
-export interface MemoryFileSystemOptions {
-    content?: DirectoryContent;
-    model?: Directory;
+export namespace MemoryFileSystem {
+    export interface Options {
+        content?: DirectoryContent;
+        model?: Directory;
+    }
 }
 
 export class MemoryFileSystem implements FileSystemReadSync, FileSystem {
@@ -27,7 +29,7 @@ export class MemoryFileSystem implements FileSystemReadSync, FileSystem {
     public readonly events: InternalEventsEmitter = makeEventsEmitter();
     protected readonly root: Directory;
 
-    constructor(public baseUrl = `memory-${id++}`, options?: MemoryFileSystemOptions) {
+    constructor(public baseUrl = `memory-${id++}`, options?: MemoryFileSystem.Options) {
         this.baseUrl += '/';
         if (options) {
             if (options.model && options.content) {

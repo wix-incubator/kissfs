@@ -14,11 +14,17 @@ interface RegisteredEventHandler extends EventHandler<any> {
     timer: NodeJS.Timer;
 }
 
+export namespace EventsManager {
+    export interface Options {
+        delay?: number
+    }
+}
+
 export class EventsManager {
     public readonly events: EventEmitter = makeEventsEmitter();
     private eventHandlers = new Set<RegisteredEventHandler>();
 
-    constructor(private options: { delay?: number } = {}) {
+    constructor(private options: EventsManager.Options = {}) {
 
     }
 

@@ -1,6 +1,6 @@
 import {Connection, Session} from 'autobahn';
 import {Correlation, FileSystem, fileSystemEventNames} from './api';
-import {InternalEventsEmitter, makeCorrelationId, makeEventsEmitter} from "./utils";
+import {InternalEventsEmitter, makeEventsEmitter} from "./utils";
 import {timeoutPromise} from './promise-utils';
 import {Directory, File, ShallowDirectory, SimpleStats} from "./model";
 
@@ -95,7 +95,7 @@ export class WampClientFileSystem implements FileSystem {
         }
     }
 
-    async loadDirectoryTree(fullPath?: string ): Promise<Directory>;
+    async loadDirectoryTree(fullPath?: string): Promise<Directory>;
     async loadDirectoryTree(...args: any[]): Promise<Directory> {
         if (!this.session || !this.session.isOpen) {
             throw new Error(noConnectionError);
