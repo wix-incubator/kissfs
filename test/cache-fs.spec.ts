@@ -96,59 +96,68 @@ describe(`the cache file system proxy`, () => {
             matcher.track(fs.events, ...fileSystemEventNames);
         });
 
-        describe('when a file was created/changed silently, followed by an error', () => {
-            it('does not emit `fileCreated` if the file was never cached', async () => {
-                (original as any).emit = () => false;
-                await original.saveFile(fileName, content);
-                await matcher.expect([]);
-                (original.events as InternalEventsEmitter).emit('unexpectedError', {type: 'unexpectedError'});
-                await matcher.expect([]);
-            });
-
-            it('emits `fileCreated` if the file was previously cached', async () => {
-                await fs.saveFile(fileName, 'foo');
-                await matcher.expect([{type: 'fileCreated', fullPath: fileName, newContent: 'foo'}]);
-                (original as any).emit = () => false;
-                await original.saveFile(fileName, content);
-                await matcher.expect([]);
-                (original.events as InternalEventsEmitter).emit('unexpectedError', {type: 'unexpectedError'});
-                await matcher.expect([{type: 'fileChanged', fullPath: fileName, newContent: content}]);
-            });
-        });
-
-        it('emits `directoryCreated` if there is not cached dir after error', async () => {
-            (original as any).emit = () => false;
-            await original.ensureDirectory(dirName);
-            await matcher.expect([]);
-            await (original.events as InternalEventsEmitter).emit('unexpectedError', {type: 'unexpectedError'});
-            await matcher.expect([{type: 'directoryCreated', fullPath: dirName}]);
-        });
-
-        it('emits `fileDeleted` if there is cached file and no real file after error', async () => {
-            await fs.saveFile(fileName, content);
-            (original as any).emit = () => false;
-            await original.deleteFile(fileName);
-            await matcher.expect([{type: 'fileCreated', fullPath: fileName}]);
-            await (original.events as InternalEventsEmitter).emit('unexpectedError', {type: 'unexpectedError'});
-            await matcher.expect([{type: 'fileDeleted', fullPath: fileName}]);
-        });
-
-        it('emits `directoryDeleted` if there is cached dir and no real dir after error', async () => {
-            await fs.ensureDirectory(dirName);
-            (original as any).emit = () => false;
-            original.events.removeAllListeners('directoryDeleted');
-            await original.deleteDirectory(dirName);
-            await matcher.expect([{type: 'directoryCreated', fullPath: dirName}]);
-            await (original.events as InternalEventsEmitter).emit('unexpectedError', {type: 'unexpectedError'});
-            await matcher.expect([{type: 'directoryDeleted', fullPath: dirName}]);
-        });
-
-        it('emits `unexpectedError` if cache created with `rescanOnError = false` flag', () => {
-            const fs = new CacheFileSystem(original, {shouldRescanOnError: false});
+        it('emits `unexpectedError` when reSyncOnError option is false', () => {
+            const fs = new CacheFileSystem(original, {reSyncOnError: false});
             const matcher = new EventsMatcher(eventMatcherOptions);
             matcher.track(fs.events, ...fileSystemEventNames);
             (original.events as InternalEventsEmitter).emit('unexpectedError', {type: 'unexpectedError'});
             return matcher.expect([{type: 'unexpectedError'}]);
+        });
+
+        describe('recovering from missed changes in underlying filesystem', () => {
+            const existingFileName = 'existing_' + fileName;
+            const existingDirName = 'existing_' + dirName;
+
+            beforeEach('turn off notifications from underlying fs and set up cache', async () => {
+                (original as any).emit = () => false;
+                await fs.ensureDirectory(existingDirName);
+                await fs.loadDirectoryChildren(existingDirName);
+                await fs.saveFile(existingFileName, 'foo');
+                await matcher.expect([
+                    {type: 'directoryCreated', fullPath: existingDirName},
+                    {type: 'fileCreated', fullPath: existingFileName, newContent: 'foo'}
+                ]);
+            });
+
+            function emitErrorFromUnderlyingFs() {
+                (original.events as InternalEventsEmitter).emit('unexpectedError', {type: 'unexpectedError'});
+            }
+
+            it('does not emit `fileCreated` if the file was never cached', async () => {
+                await original.saveFile(fileName, content);
+                await matcher.expect([]);
+                emitErrorFromUnderlyingFs();
+                await matcher.expect([]);
+            });
+
+            it('emits `fileChanged` if the file was previously cached', async () => {
+                await original.saveFile(existingFileName, content);
+                await matcher.expect([]);
+                emitErrorFromUnderlyingFs();
+                await matcher.expect([{type: 'fileChanged', fullPath: existingFileName, newContent: content}]);
+            });
+
+            it('emits `fileDeleted` if there is cached file and no real file after error', async () => {
+                await original.deleteFile(existingFileName);
+                await matcher.expect([]);
+                emitErrorFromUnderlyingFs();
+                await matcher.expect([{type: 'fileDeleted', fullPath: existingFileName}]);
+            });
+
+            it('emits `directoryCreated` if there is not cached dir after error', async () => {
+                await original.ensureDirectory(existingDirName +'/'+dirName);
+                await matcher.expect([]);
+                emitErrorFromUnderlyingFs();
+                await matcher.expect([{type: 'directoryCreated', fullPath: existingDirName +'/'+dirName}]);
+            });
+
+            it('emits `directoryDeleted` if there is cached dir and no real dir after error', async () => {
+                await original.deleteDirectory(existingDirName );
+                await matcher.expect([]);
+                emitErrorFromUnderlyingFs();
+                await matcher.expect([{type: 'directoryDeleted', fullPath: existingDirName }]);
+            });
+
         });
     });
 

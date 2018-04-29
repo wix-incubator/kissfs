@@ -151,7 +151,6 @@ export class MemoryFileSystem implements FileSystemReadSync, FileSystem {
         return this._ensureDirectorySync(fullPath, correlation);
     }
 
-
     protected findNode(fullPath: string): Directory | File {
         const pathArr = getPathNodes(fullPath);
         const parent = pathArr.length ? Directory.getSubDir(this.root, pathArr.slice(0, pathArr.length - 1)) : null;
