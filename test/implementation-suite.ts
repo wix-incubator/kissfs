@@ -1,12 +1,7 @@
 import {expect} from "chai";
-import {
-    Directory,
-    DirectoryContent,
-    FileSystem,
-    fileSystemEventNames,
-    FileSystemReadSync,
-} from '../src/universal';
+import {Directory, DirectoryContent, FileSystem, fileSystemEventNames, FileSystemReadSync,} from '../src/universal';
 import {EventsMatcher} from './events-matcher';
+
 export const dirName = 'foo';
 export const fileName = 'bar.txt';
 export const content = 'content';
@@ -414,7 +409,7 @@ export function assertFileSystemContract(fsProvider: () => Promise<FileSystem>, 
                     type: 'fileChanged',
                     fullPath: `${dirName}/${fileName}`,
                     newContent: '',
-                    correlation : correlation2
+                    correlation: correlation2
                 }]);
             });
 
@@ -445,7 +440,7 @@ export function assertFileSystemContract(fsProvider: () => Promise<FileSystem>, 
                     type: 'directoryDeleted',
                     fullPath: dirName,
                     correlation
-                },{
+                }, {
                     type: 'directoryDeleted',
                     fullPath: `${dirName}/${dirName}`,
                     correlation
@@ -459,7 +454,7 @@ export function assertFileSystemContract(fsProvider: () => Promise<FileSystem>, 
                     type: 'directoryCreated',
                     fullPath: dirName,
                     correlation
-                },{
+                }, {
                     type: 'directoryCreated',
                     fullPath: `${dirName}/${dirName}`,
                     correlation
@@ -545,7 +540,7 @@ export function assertFileSystemSyncContract(fsProvider: () => Promise<FileSyste
                 .then(() => matcher.expect([]));
         });
 
-        it(`statSync an existing directory`, async function() {
+        it(`statSync an existing directory`, async function () {
             await fs.ensureDirectory(dirName);
 
             const {type} = fs.statSync(dirName);
@@ -553,7 +548,7 @@ export function assertFileSystemSyncContract(fsProvider: () => Promise<FileSyste
             expect(type).to.equal('dir');
         });
 
-        it(`statSync an existing file`, async function() {
+        it(`statSync an existing file`, async function () {
             await fs.saveFile(fileName, content);
 
             const {type} = fs.statSync(fileName);

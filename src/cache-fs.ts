@@ -2,7 +2,7 @@ import {Correlation, FileSystem, FileSystemReadSync, isDisposable, UnexpectedErr
 import {Directory, DirectoryContent, File, FileSystemNode, isDir, isFile, ShallowDirectory, SimpleStats} from "./model";
 
 import {MemoryFileSystem} from './memory-fs';
-import {getPathNodes, InternalEventsEmitter} from './utils';
+import {getPathNodes, InternalEventsEmitter, splitPathToDirAndFile} from './utils';
 
 enum Cached {
     FILE_FULL,
@@ -147,6 +147,16 @@ class MemFsForCache extends MemoryFileSystem {
     }
 }
 
+export namespace CacheFileSystem {
+    export interface Options {
+        /**
+         * should the cache re-sync when an error is reported from the underlying FS
+         * default : true
+         */
+        reSyncOnError?: boolean
+    }
+}
+
 export class CacheFileSystem implements FileSystemReadSync, FileSystem {
 
     public baseUrl: string;
@@ -154,12 +164,15 @@ export class CacheFileSystem implements FileSystemReadSync, FileSystem {
     public readonly events: InternalEventsEmitter = this.cache.events;
     private pathsInCache: PathInCache = {};
     private onFsError = ({stack}: Error | UnexpectedErrorEvent) => {
-        this.shouldRescanOnError ?
-            this.rescanOnError() :
+        this.options.reSyncOnError ?
+            this.reSyncOnError() :
             this.emit('unexpectedError', {stack});
     };
 
-    constructor(private fs: FileSystem, private shouldRescanOnError: boolean = true) {
+    constructor(private fs: FileSystem, private options: CacheFileSystem.Options = {}) {
+        if (this.options.reSyncOnError === undefined){
+            this.options.reSyncOnError = true;
+        }
         this.baseUrl = fs.baseUrl;
 
         this.fs.events.on('unexpectedError', this.onFsError);
@@ -208,7 +221,7 @@ export class CacheFileSystem implements FileSystemReadSync, FileSystem {
             const {fullPath, correlation} = event;
             try {
                 Object.keys(this.pathsInCache).forEach(p => {
-                    if (p.startsWith(fullPath)){
+                    if (p.startsWith(fullPath)) {
                         this.pathsInCache[p] = Cached.GONE;
                     }
                 });
@@ -236,6 +249,15 @@ export class CacheFileSystem implements FileSystemReadSync, FileSystem {
 
     async deleteDirectory(fullPath: string, recursive: boolean = false, correlation?: Correlation): Promise<Correlation> {
         correlation = await this.fs.deleteDirectory(fullPath, recursive, correlation);
+        if (recursive){
+            Object.keys(this.pathsInCache).forEach(p => {
+                if (p.startsWith(fullPath)){
+                    this.pathsInCache[p] = Cached.GONE;
+                }
+            });
+        } else {
+            this.pathsInCache[fullPath] = Cached.GONE;
+        }
         this.cache.deleteDirectorySync(fullPath, recursive);
         return correlation;
     }
@@ -314,25 +336,21 @@ export class CacheFileSystem implements FileSystemReadSync, FileSystem {
         if (isDisposable(this.fs)) this.fs.dispose();
     }
 
-    private async rescanOnError() {
+    private async reSyncOnError() {
         let oldPathsInCache = this.pathsInCache;
         this.pathsInCache = {};
         Object.keys(oldPathsInCache).forEach(p => {
             if (oldPathsInCache[p] === Cached.FILE_FULL) {
                 this.loadTextFile(p);
+                this.loadDirectoryChildren(splitPathToDirAndFile(p).parentPath);
             } else if (oldPathsInCache[p] === Cached.DIR_SHALLOW) {
                 this.loadDirectoryChildren(p);
+                this.loadDirectoryChildren(splitPathToDirAndFile(p).parentPath);
             } else if (oldPathsInCache[p] === Cached.DIR_DEEP) {
                 this.loadDirectoryTree(p);
+                this.loadDirectoryChildren(splitPathToDirAndFile(p).parentPath);
             }
         });
-        await this.rescan('');
-    }
-
-    private async rescan(fullPath: string) {
-        const realTree = await this.fs.loadDirectoryTree(fullPath);
-        this.pathsInCache[fullPath] = Cached.DIR_DEEP;
-        this.cache.replaceDirSync(fullPath, realTree);
     }
 
     private emit(type: string, data: object) {

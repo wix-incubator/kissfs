@@ -7,10 +7,12 @@ import {LocalFileSystemCrudOnly} from './local-fs-crud-only';
 import {makeCorrelationId} from "./utils";
 import {EventHandler, EventsManager} from "./events-manager";
 
-export type Options = RetryPromiseOptions & {
-    correlationWindow: number;
-    noiseReduceWindow: number;
-};
+export namespace LocalFileSystem {
+    export type Options = RetryPromiseOptions & {
+        correlationWindow: number;
+        noiseReduceWindow: number;
+    };
+}
 
 const notNoise = new WeakSet<FileSystemEvent>();
 
@@ -24,7 +26,7 @@ export class LocalFileSystem implements FileSystem {
     private lastEvents: { [filePath: string]: Events[keyof Events] } = {};
 
     constructor(public baseUrl: string,
-                private options: Options = {
+                private options: LocalFileSystem.Options = {
                     interval: 100,
                     retries: 3,
                     correlationWindow: 200,

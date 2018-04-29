@@ -5,7 +5,6 @@ import {expect} from 'chai';
 import {assertFileSystemContract, content, dirName, fileName} from './implementation-suite'
 import {EventsMatcher} from './events-matcher';
 import {FileSystem, fileSystemEventNames, LocalFileSystem} from '../src/nodejs';
-import {Options} from "../src/local-fs";
 
 const eventMatcherOptions = {
     retries: 20,
@@ -14,7 +13,7 @@ const eventMatcherOptions = {
     noExtraEventsGrace: 150
 };
 
-const fileSystemOptions: Options = {
+const fileSystemOptions: LocalFileSystem.Options = {
     interval: 100,
     retries: 3,
     correlationWindow: eventMatcherOptions.noExtraEventsGrace * 3,
@@ -146,7 +145,7 @@ describe(`the local filesystem implementation`, () => {
                 it(`de-dupe events of type ${type}`, async () => {
                     const ev1 = {type, fullPath: 'foo'};
                     const ev2 = {type, fullPath: 'foo'};
-                     (fs as any).eventsManager.emit(ev1);
+                    (fs as any).eventsManager.emit(ev1);
                     await matcher.expect([ev1]);
                     (fs as any).eventsManager.emit(ev2);
                     await matcher.expect([]);

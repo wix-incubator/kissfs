@@ -3,10 +3,12 @@ import {Correlation, EventEmitter, FileSystem, fileSystemEventNames, FileSystemR
 import {EventsManager} from "./events-manager";
 import {makeCorrelationId} from "./utils";
 
-export type Options = {
-    delayEvents: number;
-    correlationWindow: number;
-};
+export namespace NoFeedbackEventsFileSystem {
+    export type Options = {
+        delayEvents: number;
+        correlationWindow: number;
+    };
+}
 
 export class NoFeedbackEventsFileSystem implements FileSystem {
     public baseUrl: string;
@@ -15,7 +17,10 @@ export class NoFeedbackEventsFileSystem implements FileSystem {
     private readonly correlateOnce = new Set<Correlation>();
     private readonly correlateByWindow = new Set<Correlation>();
 
-    constructor(private fs: FileSystem, private options: Options = {delayEvents: 1, correlationWindow: 10000}) {
+    constructor(private fs: FileSystem, private options: NoFeedbackEventsFileSystem.Options = {
+        delayEvents: 1,
+        correlationWindow: 10000
+    }) {
         this.baseUrl = fs.baseUrl;
         this.eventsManager.addEventHandler({
             types: fileSystemEventNames,
