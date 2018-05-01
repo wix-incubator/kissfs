@@ -340,6 +340,7 @@ export class CacheFileSystem implements FileSystemReadSync, FileSystem {
 
         const realTree = await this.fs.loadDirectoryTree(fullPath);
         this.pathsInCache[fullPath] = Cached.DIR_DEEP;
+        this.cache.ensureDirectorySync(fullPath);
         this.cache.replaceDirSync(fullPath, realTree);
 
         return this.cache.loadDirectoryTreeSync(fullPath);
@@ -349,6 +350,7 @@ export class CacheFileSystem implements FileSystemReadSync, FileSystem {
         if (this.isPropagateSyncRead() && !isCachedDirDeep(this.pathsInCache[fullPath])) {
             const realTree = this.fs.loadDirectoryTreeSync(fullPath);
             this.pathsInCache[fullPath] = Cached.DIR_DEEP;
+            this.cache.ensureDirectorySync(fullPath);
             this.cache.replaceDirSync(fullPath, realTree);
         }
         return this.cache.loadDirectoryTreeSync(fullPath);
@@ -358,6 +360,7 @@ export class CacheFileSystem implements FileSystemReadSync, FileSystem {
         if (this.isPropagateSyncRead() && !isCachedDirContent(this.pathsInCache[fullPath])) {
             const content = this.fs.loadDirectoryContentSync(fullPath);
             this.pathsInCache[fullPath] = Cached.DIR_CONTENT;
+            this.cache.ensureDirectorySync(fullPath);
             this.cache.replaceDirSync(fullPath, Directory.fromContent(content));
         }
         return this.cache.loadDirectoryContentSync(fullPath);
@@ -376,6 +379,7 @@ export class CacheFileSystem implements FileSystemReadSync, FileSystem {
             }
         });
         this.pathsInCache[fullPath] = Cached.DIR_SHALLOW;
+        this.cache.ensureDirectorySync(fullPath);
         this.cache.replaceChildrenSync(fullPath, realChildren as (File | Directory)[]);
 
         return this.cache.loadDirectoryChildrenSync(fullPath);
@@ -390,6 +394,7 @@ export class CacheFileSystem implements FileSystemReadSync, FileSystem {
                 }
             });
             this.pathsInCache[fullPath] = Cached.DIR_SHALLOW;
+            this.cache.ensureDirectorySync(fullPath);
             this.cache.replaceChildrenSync(fullPath, realChildren as (File | Directory)[]);
         }
         return this.cache.loadDirectoryChildrenSync(fullPath);
