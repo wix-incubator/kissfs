@@ -18,6 +18,27 @@ import {FileSystemReadSync} from "../src/api";
 const existingFileName = 'existing_' + fileName;
 const existingDirName = 'existing_' + dirName;
 
+function testCacheReadMethod(options: CacheFileSystem.Options, methodName: Exclude<keyof FileSystemReadSync, 'events' | 'baseUrl'>, args: any[]) {
+    it(`${methodName}(${args.map(a => JSON.stringify(a)).join(', ')}) reflects underlying fs and uses cache on second call`, async () => {
+        const original = new MemoryFileSystem('', {
+            content: {
+                [existingDirName]: {},
+                [existingFileName]: 'foo',
+            }
+        });
+        const fs = new CacheFileSystem(original, options);
+        const originalMethod: Function = original[methodName].bind(original);
+        const cacheMethod: Function = fs[methodName].bind(fs);
+        const spyMethod = spy(originalMethod);
+        original[methodName] = spyMethod;
+        expect(await cacheMethod(...args)).to.eql(await originalMethod(...args));
+        expect(spyMethod).to.have.callCount(1);
+        spyMethod.resetHistory();
+        expect(await cacheMethod(...args)).to.eql(await originalMethod(...args));
+        expect(spyMethod).to.have.callCount(0);
+    });
+}
+
 describe(`the cache file system proxy`, () => {
     const eventMatcherOptions: EventsMatcher.Options = {retries: 15, interval: 2, timeout: 40, noExtraEventsGrace: 10};
 
@@ -31,7 +52,7 @@ describe(`the cache file system proxy`, () => {
         eventMatcherOptions
     );
 
-    describe(`using slow FileSystem`, () => {
+    describe(`using slow FileSystem (performance acceptance test)`, () => {
         const timeout = 200;
         let fs: CacheFileSystem;
         let slow: SlowFs;
@@ -83,7 +104,32 @@ describe(`the cache file system proxy`, () => {
         });
     });
 
-    describe(`unexpected error behaviour`, () => {
+    testCacheReadMethod({}, 'loadTextFile', [existingFileName]);
+    testCacheReadMethod({}, 'loadDirectoryChildren', ['']);
+    testCacheReadMethod({}, 'loadDirectoryChildren', [existingDirName]);
+    testCacheReadMethod({}, 'loadDirectoryTree', []);
+    testCacheReadMethod({}, 'loadDirectoryTree', [existingDirName]);
+    testCacheReadMethod({}, 'stat', [existingFileName]);
+    testCacheReadMethod({}, 'stat', [existingDirName]);
+
+    describe(`with propagateSyncRead = true`, () => {
+        const options = {propagateSyncRead: true};
+        it('breaks if not provided with sync file system', async () => {
+            const nonSyncFs: FileSystem = new SlowFs(1);
+            expect(() => new CacheFileSystem(nonSyncFs, options)).to.throw(Error)
+        });
+        testCacheReadMethod(options, 'loadTextFileSync', [existingFileName]);
+        testCacheReadMethod(options, 'loadDirectoryChildrenSync', ['']);
+        testCacheReadMethod(options, 'loadDirectoryChildrenSync', [existingDirName]);
+        testCacheReadMethod(options, 'loadDirectoryTreeSync', []);
+        testCacheReadMethod(options, 'loadDirectoryTreeSync', [existingDirName]);
+        testCacheReadMethod(options, 'statSync', [existingFileName]);
+        testCacheReadMethod(options, 'statSync', [existingDirName]);
+        testCacheReadMethod(options, 'loadDirectoryContentSync', []);
+        testCacheReadMethod(options, 'loadDirectoryContentSync', [existingDirName]);
+    });
+
+    describe(`unexpected error behavior`, () => {
         let fs: FileSystem;
         let original: FileSystem;
         let matcher: EventsMatcher;
@@ -198,65 +244,4 @@ describe(`the cache file system proxy`, () => {
             expect(original.loadDirectoryChildren).to.have.been.calledWithExactly('foo');
         });
     });
-
-    describe(`with propagateSyncRead = true`, () => {
-        let fs: CacheFileSystem;
-        let original: MemoryFileSystem;
-        let matcher: EventsMatcher;
-
-        beforeEach(async () => {
-            original = new MemoryFileSystem('', {
-                content: {
-                    [existingDirName]: {},
-                    [existingFileName]: 'foo',
-                }
-            });
-            fs = new CacheFileSystem(original, {propagateSyncRead: true});
-            matcher = new EventsMatcher({
-                retries: 30,
-                interval: 5,
-                noExtraEventsGrace: 150,
-                timeout: 300
-            });
-            matcher.track(fs.events, ...fileSystemEventNames);
-        });
-
-        it('breaks if not provided with non-sync file system', async () => {
-            const nonSyncFs : FileSystem = new SlowFs(1);
-            expect(() => new CacheFileSystem(nonSyncFs, {propagateSyncRead: true})).to.throw(Error)
-        });
-
-        function testCacheReadSyncMethod(methodName : Exclude<keyof FileSystemReadSync, keyof FileSystem>, args: any[]){
-            const originalMethod : Function = original[methodName].bind(original);
-            const cacheMethod : Function = fs[methodName].bind(fs);
-            const spyMethod = spy(originalMethod);
-            original[methodName] = spyMethod;
-            expect(cacheMethod(...args)).to.eql(originalMethod(...args));
-            expect(spyMethod).to.have.callCount(1);
-            spyMethod.resetHistory();
-            expect(cacheMethod(...args)).to.eql(originalMethod(...args));
-            expect(spyMethod).to.have.callCount(0);
-        }
-
-        it('loadTextFileSync', () => {
-            testCacheReadSyncMethod('loadTextFileSync', [existingFileName]);
-        });
-
-        it('loadDirectoryChildrenSync', () => {
-            testCacheReadSyncMethod('loadDirectoryChildrenSync', ['']);
-        });
-
-        it('loadDirectoryTreeSync', () => {
-            testCacheReadSyncMethod('loadDirectoryTreeSync', []);
-        });
-
-        it('statSync', () => {
-            testCacheReadSyncMethod('statSync', [existingFileName]);
-        });
-
-        it('loadDirectoryContentSync', () => {
-            testCacheReadSyncMethod('loadDirectoryContentSync', []);
-        });
-    });
-
 });

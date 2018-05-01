@@ -226,7 +226,7 @@ export class MemoryFileSystem implements FileSystemReadSync, FileSystem {
     private recursiveEmitDeletion(node: Directory, correlation: Correlation) {
         this.emit('directoryDeleted', {type: 'directoryDeleted', fullPath: node.fullPath, correlation});
         node.children.forEach(child => {
-            if (isDir(child)) this.recursiveEmitDeletion(child, correlation)
+            if (isDir(child)) this.recursiveEmitDeletion(child, correlation);
             this.emit('fileDeleted', {type: 'fileDeleted', fullPath: child.fullPath, correlation});
         })
     }
