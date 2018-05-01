@@ -114,7 +114,7 @@ describe(`the cache file system proxy`, () => {
 
     describe(`with propagateSyncRead = true`, () => {
         const options = {propagateSyncRead: true};
-        it('breaks if not provided with non-sync file system', async () => {
+        it('breaks if not provided with sync file system', async () => {
             const nonSyncFs: FileSystem = new SlowFs(1);
             expect(() => new CacheFileSystem(nonSyncFs, options)).to.throw(Error)
         });
