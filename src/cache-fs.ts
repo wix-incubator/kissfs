@@ -1,4 +1,11 @@
-import {Correlation, FileSystem, FileSystemReadSync, isDisposable, UnexpectedErrorEvent} from './api';
+import {
+    Correlation,
+    FileSystem,
+    FileSystemReadSync,
+    isDisposable,
+    isFileSystemReadSync,
+    UnexpectedErrorEvent
+} from './api';
 import {Directory, DirectoryContent, File, FileSystemNode, isDir, isFile, ShallowDirectory, SimpleStats} from "./model";
 
 import {MemoryFileSystem} from './memory-fs';
@@ -8,7 +15,25 @@ enum Cached {
     FILE_FULL,
     DIR_SHALLOW,
     DIR_DEEP,
+    DIR_CONTENT,
+    STATS,
     GONE
+}
+
+function isCachedFile(cached: Cached | undefined) {
+    return cached === Cached.FILE_FULL || cached === Cached.GONE;
+}
+
+function isCachedDir(cached: Cached | undefined) {
+    return cached === Cached.DIR_CONTENT || cached === Cached.DIR_DEEP || cached === Cached.DIR_SHALLOW || cached === Cached.GONE;
+}
+
+function isCachedDirDeep(cached: Cached | undefined) {
+    return cached === Cached.DIR_CONTENT || cached === Cached.DIR_DEEP || cached === Cached.GONE;
+}
+
+function isCachedDirContent(cached: Cached | undefined) {
+    return cached === Cached.DIR_CONTENT || cached === Cached.GONE;
 }
 
 type PathInCache = {
@@ -28,7 +53,9 @@ interface TreesDiff {
 function nodesToMap(tree: FileSystemNode[] | undefined, accumulator: FileSystemNodesMap = {}): FileSystemNodesMap {
     if (tree) {
         tree.forEach(node => {
-            if (isDir(node)) nodesToMap(node.children, accumulator);
+            if (isDir(node)) {
+                nodesToMap(node.children, accumulator);
+            }
             accumulator[node.fullPath] = node;
         });
     }
@@ -153,13 +180,23 @@ export namespace CacheFileSystem {
          * should the cache re-sync when an error is reported from the underlying FS
          * default : true
          */
-        reSyncOnError?: boolean
+        reSyncOnError?: boolean;
+        /**
+         * should sync read methods propagate to underlying FS
+         * default : false
+         */
+        propagateSyncRead?: boolean;
     }
+}
+
+interface HasInnerFileSystemReadSync {
+    fs: FileSystemReadSync;
 }
 
 export class CacheFileSystem implements FileSystemReadSync, FileSystem {
 
     public baseUrl: string;
+    fs: FileSystem;
     private cache: MemFsForCache = new MemFsForCache();
     public readonly events: InternalEventsEmitter = this.cache.events;
     private pathsInCache: PathInCache = {};
@@ -169,9 +206,13 @@ export class CacheFileSystem implements FileSystemReadSync, FileSystem {
             this.emit('unexpectedError', {stack});
     };
 
-    constructor(private fs: FileSystem, private options: CacheFileSystem.Options = {}) {
-        if (this.options.reSyncOnError === undefined){
+    constructor(fs: FileSystem, private options: CacheFileSystem.Options = {}) {
+        this.fs = fs;
+        if (this.options.reSyncOnError === undefined) {
             this.options.reSyncOnError = true;
+        }
+        if (this.options.propagateSyncRead && !isFileSystemReadSync(fs)) {
+            throw new Error('propagateSyncRead option set to true but file system is not FileSystemReadSync')
         }
         this.baseUrl = fs.baseUrl;
 
@@ -233,6 +274,10 @@ export class CacheFileSystem implements FileSystemReadSync, FileSystem {
         });
     }
 
+    private isPropagateSyncRead(): this is HasInnerFileSystemReadSync {
+        return this.options.propagateSyncRead || false;
+    }
+
     async saveFile(fullPath: string, newContent: string, correlation?: Correlation): Promise<Correlation> {
         correlation = await this.fs.saveFile(fullPath, newContent, correlation);
         this.pathsInCache[fullPath] = Cached.FILE_FULL;
@@ -249,9 +294,9 @@ export class CacheFileSystem implements FileSystemReadSync, FileSystem {
 
     async deleteDirectory(fullPath: string, recursive: boolean = false, correlation?: Correlation): Promise<Correlation> {
         correlation = await this.fs.deleteDirectory(fullPath, recursive, correlation);
-        if (recursive){
+        if (recursive) {
             Object.keys(this.pathsInCache).forEach(p => {
-                if (p.startsWith(fullPath)){
+                if (p.startsWith(fullPath)) {
                     this.pathsInCache[p] = Cached.GONE;
                 }
             });
@@ -264,21 +309,27 @@ export class CacheFileSystem implements FileSystemReadSync, FileSystem {
 
     async ensureDirectory(fullPath: string, correlation?: Correlation): Promise<Correlation> {
         correlation = await this.fs.ensureDirectory(fullPath, correlation);
+        this.pathsInCache[fullPath] = Cached.STATS;
         this.cache.ensureDirectorySync(fullPath, correlation);
         return correlation;
     }
 
     async loadTextFile(fullPath: string): Promise<string> {
-        if (this.pathsInCache[fullPath] === Cached.FILE_FULL || this.pathsInCache[fullPath] === Cached.GONE) {
+        if (isCachedFile(this.pathsInCache[fullPath])) {
             return this.cache.loadTextFileSync(fullPath);
         }
-
         const file = await this.fs.loadTextFile(fullPath);
+        this.pathsInCache[fullPath] = Cached.FILE_FULL;
         this.cache.saveFileSync(fullPath, file);
         return this.cache.loadTextFileSync(fullPath);
     }
 
     loadTextFileSync(fullPath: string): string {
+        if (this.isPropagateSyncRead() && !isCachedFile(this.pathsInCache[fullPath])) {
+            const file = this.fs.loadTextFileSync(fullPath);
+            this.pathsInCache[fullPath] = Cached.FILE_FULL;
+            this.cache.saveFileSync(fullPath, file);
+        }
         return this.cache.loadTextFileSync(fullPath);
     }
 
@@ -294,11 +345,21 @@ export class CacheFileSystem implements FileSystemReadSync, FileSystem {
         return this.cache.loadDirectoryTreeSync(fullPath);
     }
 
-    loadDirectoryTreeSync(fullPath: string): Directory {
+    loadDirectoryTreeSync(fullPath: string = ''): Directory {
+        if (this.isPropagateSyncRead() && !isCachedDirDeep(this.pathsInCache[fullPath])) {
+            const realTree = this.fs.loadDirectoryTreeSync(fullPath);
+            this.pathsInCache[fullPath] = Cached.DIR_DEEP;
+            this.cache.replaceDirSync(fullPath, realTree);
+        }
         return this.cache.loadDirectoryTreeSync(fullPath);
     }
 
     loadDirectoryContentSync(fullPath: string = ''): DirectoryContent {
+        if (this.isPropagateSyncRead() && !isCachedDirContent(this.pathsInCache[fullPath])) {
+            const content = this.fs.loadDirectoryContentSync(fullPath);
+            this.pathsInCache[fullPath] = Cached.DIR_CONTENT;
+            this.cache.replaceDirSync(fullPath, Directory.fromContent(content));
+        }
         return this.cache.loadDirectoryContentSync(fullPath);
     }
 
@@ -321,14 +382,42 @@ export class CacheFileSystem implements FileSystemReadSync, FileSystem {
     }
 
     loadDirectoryChildrenSync(fullPath: string): Array<File | ShallowDirectory> {
+        if (this.isPropagateSyncRead() && !isCachedDir(this.pathsInCache[fullPath])) {
+            const realChildren = this.fs.loadDirectoryChildrenSync(fullPath);
+            realChildren.forEach(c => {
+                if (isDir(c)) {
+                    c.children = [];
+                }
+            });
+            this.pathsInCache[fullPath] = Cached.DIR_SHALLOW;
+            this.cache.replaceChildrenSync(fullPath, realChildren as (File | Directory)[]);
+        }
         return this.cache.loadDirectoryChildrenSync(fullPath);
     }
 
     async stat(fullPath: string): Promise<SimpleStats> {
+        if (this.pathsInCache[fullPath] === undefined) {
+            const stat = await this.fs.stat(fullPath);
+            this.pathsInCache[fullPath] = Cached.STATS;
+            if (stat.type === 'file') {
+                this.cache.saveFileSync(fullPath, '');
+            } else if (stat.type === 'dir') {
+                this.cache.ensureDirectorySync(fullPath);
+            }
+        }
         return this.cache.stat(fullPath);
     }
 
     statSync(fullPath: string): SimpleStats {
+        if (this.isPropagateSyncRead() && this.pathsInCache[fullPath] === undefined) {
+            const stat = this.fs.statSync(fullPath);
+            this.pathsInCache[fullPath] = Cached.STATS;
+            if (stat.type === 'file') {
+                this.cache.saveFileSync(fullPath, '');
+            } else if (stat.type === 'dir') {
+                this.cache.ensureDirectorySync(fullPath);
+            }
+        }
         return this.cache.statSync(fullPath);
     }
 

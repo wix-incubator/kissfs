@@ -13,6 +13,10 @@ import {
     fileName,
 } from './implementation-suite';
 import {spy} from 'sinon';
+import {FileSystemReadSync} from "../src/api";
+
+const existingFileName = 'existing_' + fileName;
+const existingDirName = 'existing_' + dirName;
 
 describe(`the cache file system proxy`, () => {
     const eventMatcherOptions: EventsMatcher.Options = {retries: 15, interval: 2, timeout: 40, noExtraEventsGrace: 10};
@@ -105,8 +109,6 @@ describe(`the cache file system proxy`, () => {
         });
 
         describe('recovering from missed changes in underlying filesystem', () => {
-            const existingFileName = 'existing_' + fileName;
-            const existingDirName = 'existing_' + dirName;
 
             beforeEach('turn off notifications from underlying fs and set up cache', async () => {
                 (original as any).emit = () => false;
@@ -145,17 +147,17 @@ describe(`the cache file system proxy`, () => {
             });
 
             it('emits `directoryCreated` if there is not cached dir after error', async () => {
-                await original.ensureDirectory(existingDirName +'/'+dirName);
+                await original.ensureDirectory(existingDirName + '/' + dirName);
                 await matcher.expect([]);
                 emitErrorFromUnderlyingFs();
-                await matcher.expect([{type: 'directoryCreated', fullPath: existingDirName +'/'+dirName}]);
+                await matcher.expect([{type: 'directoryCreated', fullPath: existingDirName + '/' + dirName}]);
             });
 
             it('emits `directoryDeleted` if there is cached dir and no real dir after error', async () => {
-                await original.deleteDirectory(existingDirName );
+                await original.deleteDirectory(existingDirName);
                 await matcher.expect([]);
                 emitErrorFromUnderlyingFs();
-                await matcher.expect([{type: 'directoryDeleted', fullPath: existingDirName }]);
+                await matcher.expect([{type: 'directoryDeleted', fullPath: existingDirName}]);
             });
 
         });
@@ -196,4 +198,65 @@ describe(`the cache file system proxy`, () => {
             expect(original.loadDirectoryChildren).to.have.been.calledWithExactly('foo');
         });
     });
+
+    describe(`with propagateSyncRead = true`, () => {
+        let fs: CacheFileSystem;
+        let original: MemoryFileSystem;
+        let matcher: EventsMatcher;
+
+        beforeEach(async () => {
+            original = new MemoryFileSystem('', {
+                content: {
+                    [existingDirName]: {},
+                    [existingFileName]: 'foo',
+                }
+            });
+            fs = new CacheFileSystem(original, {propagateSyncRead: true});
+            matcher = new EventsMatcher({
+                retries: 30,
+                interval: 5,
+                noExtraEventsGrace: 150,
+                timeout: 300
+            });
+            matcher.track(fs.events, ...fileSystemEventNames);
+        });
+
+        it('breaks if not provided with non-sync file system', async () => {
+            const nonSyncFs : FileSystem = new SlowFs(1);
+            expect(() => new CacheFileSystem(nonSyncFs, {propagateSyncRead: true})).to.throw(Error)
+        });
+
+        function testCacheReadSyncMethod(methodName : Exclude<keyof FileSystemReadSync, keyof FileSystem>, args: any[]){
+            const originalMethod : Function = original[methodName].bind(original);
+            const cacheMethod : Function = fs[methodName].bind(fs);
+            const spyMethod = spy(originalMethod);
+            original[methodName] = spyMethod;
+            expect(cacheMethod(...args)).to.eql(originalMethod(...args));
+            expect(spyMethod).to.have.callCount(1);
+            spyMethod.resetHistory();
+            expect(cacheMethod(...args)).to.eql(originalMethod(...args));
+            expect(spyMethod).to.have.callCount(0);
+        }
+
+        it('loadTextFileSync', () => {
+            testCacheReadSyncMethod('loadTextFileSync', [existingFileName]);
+        });
+
+        it('loadDirectoryChildrenSync', () => {
+            testCacheReadSyncMethod('loadDirectoryChildrenSync', ['']);
+        });
+
+        it('loadDirectoryTreeSync', () => {
+            testCacheReadSyncMethod('loadDirectoryTreeSync', []);
+        });
+
+        it('statSync', () => {
+            testCacheReadSyncMethod('statSync', [existingFileName]);
+        });
+
+        it('loadDirectoryContentSync', () => {
+            testCacheReadSyncMethod('loadDirectoryContentSync', []);
+        });
+    });
+
 });

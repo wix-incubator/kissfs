@@ -112,3 +112,11 @@ export interface FileSystemReadSync extends FileSystem {
 
     statSync(fullPath: string): SimpleStats;
 }
+
+export function isFileSystemReadSync(fs: FileSystem): fs is FileSystemReadSync {
+    return typeof (fs as any).loadTextFileSync === "function" &&
+        typeof (fs as any).loadDirectoryTreeSync === "function" &&
+        typeof (fs as any).loadDirectoryContentSync === "function" &&
+        typeof (fs as any).loadDirectoryChildrenSync === "function" &&
+        typeof (fs as any).statSync === "function";
+}
