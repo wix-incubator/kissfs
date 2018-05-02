@@ -2,7 +2,13 @@ import {dir} from 'tmp';
 import {mkdirSync, rmdirSync, unlinkSync, writeFileSync} from 'fs';
 import {join} from 'path';
 import {expect} from 'chai';
-import {assertFileSystemContract, content, dirName, fileName} from './implementation-suite'
+import {
+    assertFileSystemContract,
+    assertFileSystemSyncContract,
+    content,
+    dirName,
+    fileName
+} from './implementation-suite'
 import {EventsMatcher} from './events-matcher';
 import {FileSystem, fileSystemEventNames, LocalFileSystem} from '../src/nodejs';
 
@@ -60,6 +66,9 @@ describe(`the local filesystem implementation`, () => {
     }
 
     assertFileSystemContract(getFS, eventMatcherOptions);
+
+    assertFileSystemSyncContract(getFS, eventMatcherOptions);
+
     describe(`Local fs tests`, () => {
         let fs: FileSystem;
         let matcher: EventsMatcher;
