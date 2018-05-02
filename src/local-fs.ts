@@ -1,8 +1,8 @@
 import * as path from 'path';
 import {FSWatcher, watch} from 'chokidar';
 import {retryPromise, RetryPromiseOptions} from './promise-utils';
-import {Correlation, EventEmitter, Events, FileSystem, FileSystemEvent, fileSystemEventNames} from './api';
-import {Directory, File, pathSeparator, ShallowDirectory, SimpleStats} from './model';
+import {Correlation, EventEmitter, Events, FileSystemEvent, fileSystemEventNames, FileSystemReadSync} from './api';
+import {Directory, DirectoryContent, File, pathSeparator, ShallowDirectory, SimpleStats} from './model';
 import {LocalFileSystemCrudOnly} from './local-fs-crud-only';
 import {makeCorrelationId} from "./utils";
 import {EventHandler, EventsManager} from "./events-manager";
@@ -16,7 +16,7 @@ export namespace LocalFileSystem {
 
 const notNoise = new WeakSet<FileSystemEvent>();
 
-export class LocalFileSystem implements FileSystem {
+export class LocalFileSystem implements FileSystemReadSync {
     private readonly eventsManager = new EventsManager();
     public readonly events: EventEmitter = this.eventsManager.events;
     private crud: LocalFileSystemCrudOnly;
@@ -223,5 +223,25 @@ export class LocalFileSystem implements FileSystem {
             },
         };
         this.eventsManager.addEventHandler(correlator, this.options.correlationWindow);
+    }
+
+    loadTextFileSync(fullPath: string): string {
+        return this.crud.loadTextFileSync(fullPath);
+    }
+
+    loadDirectoryTreeSync(fullPath?: string): Directory {
+        return this.crud.loadDirectoryTreeSync(fullPath);
+    }
+
+    loadDirectoryContentSync(fullPath?: string): DirectoryContent {
+        return this.crud.loadDirectoryContentSync(fullPath);
+    }
+
+    loadDirectoryChildrenSync(fullPath: string): Array<File | ShallowDirectory> {
+        return this.crud.loadDirectoryChildrenSync(fullPath);
+    }
+
+    statSync(fullPath: string): SimpleStats {
+        return this.crud.statSync(fullPath);
     }
 }

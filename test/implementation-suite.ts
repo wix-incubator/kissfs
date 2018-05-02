@@ -531,6 +531,11 @@ export function assertFileSystemSyncContract(fsProvider: () => Promise<FileSyste
             return expect(() => fs.loadTextFileSync(fileName)).to.throw(Error);
         });
 
+        it(`loading an existing file - works`, async function () {
+            await fs.saveFile(fileName, content);
+            return expect(fs.loadTextFileSync(fileName)).to.equal(content);
+        });
+
         it(`loading a directory as a file - fails`, function () {
             return fs.ensureDirectory(dirName)
                 .then((correlation) => {

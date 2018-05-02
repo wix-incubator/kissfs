@@ -1,9 +1,10 @@
-import {access, ensureDir, readdir, readFile, remove, rmdir, stat, writeFile} from 'fs-extra';
+import {access, ensureDir, readdir, readdirSync, readFileSync, readFile, remove, rmdir, stat, statSync, writeFile} from 'fs-extra';
 import * as walk from 'klaw';
 import * as path from 'path';
-import {Directory, File, pathSeparator, ShallowDirectory, SimpleStats} from './model';
+import {Directory, DirectoryContent, File, pathSeparator, ShallowDirectory, SimpleStats} from './model';
 import {getPathNodes} from './utils';
 import {MemoryFileSystem} from './memory-fs';
+import klawSync = require("klaw-sync");
 
 export class LocalFileSystemCrudOnly {
 
@@ -64,6 +65,10 @@ export class LocalFileSystemCrudOnly {
         return readFile(path.join(this.baseUrl, relPath), 'utf8');
     }
 
+    loadTextFileSync(relPath: string): string {
+        return readFileSync(path.join(this.baseUrl, relPath), 'utf8');
+    }
+
     async loadDirectoryChildren(fullPath: string): Promise<(File | ShallowDirectory)[]> {
         let rootPath = path.join(this.baseUrl, fullPath);
         let pathPrefix = fullPath ? (fullPath + pathSeparator) : fullPath;
@@ -82,6 +87,28 @@ export class LocalFileSystemCrudOnly {
                 return null;
             }
         }));
+
+        return processedChildren.filter((i): i is File | ShallowDirectory => i !== null);
+    }
+
+    loadDirectoryChildrenSync(fullPath: string): Array<File | ShallowDirectory> {
+        let rootPath = path.join(this.baseUrl, fullPath);
+        let pathPrefix = fullPath ? (fullPath + pathSeparator) : fullPath;
+        const directoryChildren = readdirSync(rootPath);
+
+        const processedChildren = directoryChildren.map(item => {
+            const itemPath = pathPrefix + item;
+            let itemAbsolutePath = path.join(rootPath, item);
+            const itemStats = statSync(itemAbsolutePath);
+            if (itemStats.isDirectory()) {
+                return new ShallowDirectory(item, itemPath);
+            } else if (itemStats.isFile()) {
+                return new File(item, itemPath);
+            } else {
+                console.warn(`Unknown node type at ${itemAbsolutePath}`);
+                return null;
+            }
+        });
 
         return processedChildren.filter((i): i is File | ShallowDirectory => i !== null);
     }
@@ -116,8 +143,39 @@ export class LocalFileSystemCrudOnly {
         });
     }
 
+    loadDirectoryTreeSync(fullPath?: string): Directory {
+        // using an in-memory instance to build the result
+        // if fullPath is not empty, memfs will contain a sub-tree of the real FS but the root is the same
+        const memFs = new MemoryFileSystem();
+        const {baseUrl} = this;
+        const rootPath = fullPath ? path.join(baseUrl, fullPath) : baseUrl;
+        const items = klawSync(rootPath);
+        items.forEach(item => {
+            const itemPath = path.relative(baseUrl, item.path).split(path.sep).join(pathSeparator);
+            if (item.stats.isDirectory()) {
+                memFs.ensureDirectorySync(itemPath);
+            } else if (item.stats.isFile()) {
+                memFs.saveFileSync(itemPath, '');
+            } else {
+                console.warn(`unknown node type at ${itemPath}`, item);
+            }
+        });
+        return memFs.loadDirectoryTreeSync(fullPath);
+    }
+
     async stat(fullPath: string): Promise<SimpleStats> {
         const nodeStat = await stat(path.join(this.baseUrl, fullPath));
+        if (nodeStat.isDirectory()) {
+            return {type: 'dir'};
+        } else if (nodeStat.isFile()) {
+            return {type: 'file'};
+        }
+
+        throw new Error(`Unsupported type ${fullPath}`);
+    }
+
+    statSync(fullPath: string): SimpleStats {
+        const nodeStat = statSync(path.join(this.baseUrl, fullPath));
         if (nodeStat.isDirectory()) {
             return {type: 'dir'};
         } else if (nodeStat.isFile()) {
@@ -140,4 +198,23 @@ export class LocalFileSystemCrudOnly {
         const fullPath = path.join(this.baseUrl, ...pathArr);
         return {fullPath, name}
     }
+
+    loadDirectoryContentSync(fullPath: string = ''): DirectoryContent {
+        const memFs = new MemoryFileSystem();
+        const {baseUrl} = this;
+        const rootPath = fullPath ? path.join(baseUrl, fullPath) : baseUrl;
+        const items = klawSync(rootPath);
+        items.forEach(item => {
+            const itemPath = path.relative(baseUrl, item.path).split(path.sep).join(pathSeparator);
+            if (item.stats.isDirectory()) {
+                memFs.ensureDirectorySync(itemPath);
+            } else if (item.stats.isFile()) {
+                memFs.saveFileSync(itemPath, readFileSync(item.path, 'utf8'));
+            } else {
+                console.warn(`unknown node type at ${itemPath}`, item);
+            }
+        });
+        return memFs.loadDirectoryContentSync(fullPath);
+    }
+
 }
