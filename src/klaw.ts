@@ -1,11 +1,8 @@
-import klawSync = require("klaw-sync");
-import * as walk from 'klaw';
+import * as klaw from 'klaw';
 import {MemoryFileSystem} from './memory-fs';
 import {pathSeparator} from './model';
 import {readFileSync} from 'fs-extra';
 import * as path from 'path';
-
-export const KLAW_SHALLOW_OPTIONS = {depthLimit: 0};
 
 // patching declarations of klaw and klaw-sync to support latest depth feature
 declare module 'klaw' {
@@ -20,7 +17,9 @@ declare module 'klaw-sync' {
     }
 }
 
-export function klawItemsToMemFs(items: ReadonlyArray<klawSync.Item>, baseUrl: string, readFile: boolean) {
+export const KLAW_SHALLOW_OPTIONS = {depthLimit: 0};
+
+export function klawItemsToMemFs(items: ReadonlyArray<klaw.Item>, baseUrl: string, readFile: boolean) {
     const memFs = new MemoryFileSystem();
     items.forEach(item => {
         const itemPath = path.relative(baseUrl, item.path).split(path.sep).join(pathSeparator);
@@ -35,13 +34,13 @@ export function klawItemsToMemFs(items: ReadonlyArray<klawSync.Item>, baseUrl: s
     return memFs;
 }
 
-export function klawAsPromised(rootPath: string, options?: walk.Options): Promise<walk.Item[]> {
-    return new Promise<walk.Item[]>((resolve, reject) => {
-        const items: walk.Item[] = [];
-        const walker = walk(rootPath, options);
+export function klawAsPromised(rootPath: string, options?: klaw.Options): Promise<klaw.Item[]> {
+    return new Promise<klaw.Item[]>((resolve, reject) => {
+        const items: klaw.Item[] = [];
+        const walker = klaw(rootPath, options);
         walker
             .on('readable', function () {
-                let item: walk.Item;
+                let item: klaw.Item;
                 while ((item = walker.read())) {
                     items.push(item);
                 }
