@@ -1,4 +1,4 @@
-import {EventEmitter} from 'eventemitter3';
+import EventEmitter from 'eventemitter3';
 import {Correlation, EventEmitter as FSEvents} from './api';
 import {File, pathSeparator, ShallowDirectory} from "./model";
 
@@ -33,7 +33,7 @@ export function checkExistsInDir(expectedType: 'file' | 'dir', dirContent: Array
 export type InternalEventsEmitter = FSEvents & EventEmitter;
 
 export function makeEventsEmitter(): InternalEventsEmitter {
-    return (new EventEmitter()) as any as InternalEventsEmitter;
+    return new EventEmitter() as InternalEventsEmitter;
 }
 
 export function makeCorrelationId(): Correlation {
