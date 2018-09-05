@@ -7,6 +7,7 @@ const universalTestFiles = glob.sync(path.join(__dirname, 'test', '**', '*.spec.
 // const browserTestFiles = glob.sync(path.join(__dirname, 'test', '**', '*.spec.browser.ts?(x)'));
 
 module.exports = {
+    mode: 'development',
     context: __dirname,
     entry: {
         test: [...polyfills, ...testsSetup, ...universalTestFiles.map(fileName => `mocha-loader!${fileName}`)]
