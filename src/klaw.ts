@@ -1,15 +1,10 @@
-import * as klaw from 'klaw';
+import path from 'path';
+import klaw from 'klaw';
+import {readFileSync} from 'fs-extra';
 import {MemoryFileSystem} from './memory-fs';
 import {pathSeparator} from './model';
-import {readFileSync} from 'fs-extra';
-import * as path from 'path';
 
-// patching declarations of klaw and klaw-sync to support latest depth feature
-declare module 'klaw' {
-    export interface Options {
-        depthLimit?: number;
-    }
-}
+// patching declarations of klaw-sync to support latest depth feature
 
 declare module 'klaw-sync' {
     export interface Options {

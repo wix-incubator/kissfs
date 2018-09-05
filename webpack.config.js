@@ -2,17 +2,17 @@ const path = require('path');
 const glob = require("glob");
 const NODE_MODULES_PATH = path.resolve(__dirname, 'node_modules');
 const polyfills = ['core-js/es6/array', 'core-js/es6/number', 'core-js/es6/promise', 'core-js/es6/symbol'];
-const testsSetup = [path.join(__dirname, 'test', 'setup.ts')];
+const testsSetup = `mocha-loader!${path.join(__dirname, 'test', 'setup.ts')}`;
 const universalTestFiles = glob.sync(path.join(__dirname, 'test', '**', '*.spec.ts?(x)'));
 // const browserTestFiles = glob.sync(path.join(__dirname, 'test', '**', '*.spec.browser.ts?(x)'));
 
 module.exports = {
     mode: 'development',
+    devtool: 'source-map',
     context: __dirname,
     entry: {
-        test: [...polyfills, ...testsSetup, ...universalTestFiles.map(fileName => `mocha-loader!${fileName}`)]
+        test: [...polyfills, testsSetup, ...universalTestFiles]
     },
-    devtool: 'eval',
     module: {
         rules: [
             {
@@ -21,17 +21,18 @@ module.exports = {
                 exclude : NODE_MODULES_PATH,
                 options: {
                     compilerOptions: {
-                        'declaration': false
+                        declaration: false,
+                        declarationMap: false
                     }
                 }
             },
             {
                 test: /\.js$/,
-                include: [
-                    path.resolve(__dirname, 'node_modules/chai-as-promised'),
-                    path.resolve(__dirname, 'node_modules/cbor')
-                ],
                 loader: 'ts-loader',
+                include: [
+                    path.dirname(require.resolve('chai-as-promised/package.json')),
+                    path.dirname(require.resolve('cbor/package.json'))
+                ],
                 options: {
                     // needed so it has a separate transpilation instance
                     instance: 'lib-compat',
@@ -42,13 +43,11 @@ module.exports = {
         noParse: /\.min\.js$/
     },
     output: {
-        path: __dirname + '/dist',
         filename: '[name].bundle.js',
         libraryTarget: 'umd',
-        library: '[name]',
-        pathinfo: true
+        library: '[name]'
     },
     resolve: {
-        extensions: ['.ts', '.js']
+        extensions: ['.ts', '.js', '.json']
     }
 };

@@ -1,5 +1,5 @@
 import {EventsMatcher} from './events-matcher';
-import {EventEmitter} from 'eventemitter3';
+import EventEmitter from 'eventemitter3';
 import {expect} from 'chai';
 
 describe('events test driver', () => {
