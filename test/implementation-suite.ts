@@ -1,5 +1,5 @@
 import {expect} from "chai";
-import {Directory, DirectoryContent, FileSystem, fileSystemEventNames, FileSystemReadSync,} from '../src/universal';
+import {Directory, DirectoryContent, FileSystem, fileSystemEventNames, FileSystemReadSync, isDisposable} from '../src/universal';
 import {EventsMatcher} from './events-matcher';
 
 export const dirName = 'foo';
@@ -11,13 +11,16 @@ export function assertFileSystemContract(fsProvider: () => Promise<FileSystem>, 
     describe(`filesystem contract`, () => {
         let fs: FileSystem;
         let matcher: EventsMatcher;
-        beforeEach(() => {
+        beforeEach(async () => {
             matcher = new EventsMatcher(options);
-            return fsProvider()
-                .then(newFs => {
-                    fs = newFs;
-                    matcher.track(fs.events, ...fileSystemEventNames);
-                });
+            fs = await fsProvider();
+            matcher.track(fs.events, ...fileSystemEventNames);
+        });
+
+        afterEach(() => {
+            if (isDisposable(fs)) {
+                fs.dispose();
+            }
         });
 
         it(`initially empty`, function () {
@@ -503,17 +506,6 @@ export function assertFileSystemContract(fsProvider: () => Promise<FileSystem>, 
 }
 
 export function assertFileSystemSyncContract(fsProvider: () => Promise<FileSystemReadSync>, options: EventsMatcher.Options) {
-    let fs: FileSystemReadSync;
-    let matcher: EventsMatcher;
-    beforeEach(() => {
-        matcher = new EventsMatcher(options);
-        return fsProvider()
-            .then(newFs => {
-                fs = newFs;
-                matcher.track(fs.events, ...fileSystemEventNames);
-            });
-    });
-
     describe(`filesystem sync contract`, () => {
         let fs: FileSystemReadSync;
         let matcher: EventsMatcher;
@@ -525,6 +517,12 @@ export function assertFileSystemSyncContract(fsProvider: () => Promise<FileSyste
                     matcher.track(fs.events, ...fileSystemEventNames);
                 });
         });
+
+        afterEach(() => {
+            if (isDisposable(fs)) {
+                fs.dispose()
+            }
+        })
 
 
         it(`loading a non-existing file - fails`, function () {
