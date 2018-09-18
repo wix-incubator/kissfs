@@ -3,7 +3,7 @@ import * as path from 'path';
 import {Directory, DirectoryContent, File, ShallowDirectory, SimpleStats} from './model';
 import {getPathNodes} from './utils';
 import {KLAW_SHALLOW_OPTIONS, klawAsPromised, klawItemsToMemFs} from "./klaw";
-import klawSync = require("klaw-sync");
+import klawSync from "klaw-sync";
 import {Stats} from "fs";
 
 function statToSimpleStat(nodeStat: Stats, fullPath:string): SimpleStats{

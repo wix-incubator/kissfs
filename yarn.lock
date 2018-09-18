@@ -20,7 +20,7 @@
   dependencies:
     array-from "^2.1.1"
 
-"@sinonjs/samsam@^2.1.0":
+"@sinonjs/samsam@^2.1.1":
   version "2.1.1"
   resolved "https://registry.yarnpkg.com/@sinonjs/samsam/-/samsam-2.1.1.tgz#f352621c24c9e9ab2ed293a7655e8d46bfd64c16"
   dependencies:
@@ -65,9 +65,9 @@
   dependencies:
     "@types/node" "*"
 
-"@types/klaw-sync@^2.0.0":
-  version "2.0.0"
-  resolved "https://registry.yarnpkg.com/@types/klaw-sync/-/klaw-sync-2.0.0.tgz#772dd00d3ddf14c7a734ce95c5ae0fcda1fc7690"
+"@types/klaw-sync@^5.0.0":
+  version "5.0.0"
+  resolved "https://registry.yarnpkg.com/@types/klaw-sync/-/klaw-sync-5.0.0.tgz#e4b16ea075a1223b66ea4c3a71f007d0711e1749"
   dependencies:
     "@types/node" "*"
 
@@ -86,8 +86,8 @@
   resolved "https://registry.yarnpkg.com/@types/mocha/-/mocha-5.2.5.tgz#8a4accfc403c124a0bafe8a9fc61a05ec1032073"
 
 "@types/node@*":
-  version "10.9.4"
-  resolved "https://registry.yarnpkg.com/@types/node/-/node-10.9.4.tgz#0f4cb2dc7c1de6096055357f70179043c33e9897"
+  version "10.10.1"
+  resolved "https://registry.yarnpkg.com/@types/node/-/node-10.10.1.tgz#d5c96ca246a418404914d180b7fdd625ad18eca6"
 
 "@types/node@8":
   version "8.10.29"
@@ -534,10 +534,10 @@ bignumber.js@^7.2.1:
   resolved "https://registry.yarnpkg.com/bignumber.js/-/bignumber.js-7.2.1.tgz#80c048759d826800807c4bfd521e50edbba57a5f"
 
 binary-extensions@^1.0.0:
-  version "1.11.0"
-  resolved "https://registry.yarnpkg.com/binary-extensions/-/binary-extensions-1.11.0.tgz#46aa1751fb6a2f93ee5e689bb1087d4b14c6c205"
+  version "1.12.0"
+  resolved "https://registry.yarnpkg.com/binary-extensions/-/binary-extensions-1.12.0.tgz#c2d780f53d45bba8317a8902d4ceeaf3a6385b14"
 
-bl@^2.0.0:
+bl@^2.0.1:
   version "2.0.1"
   resolved "https://registry.yarnpkg.com/bl/-/bl-2.0.1.tgz#1de8346d50c3078d088d6a60c2bbc8c516248bc5"
   dependencies:
@@ -819,8 +819,8 @@ chokidar@^2.0.0, chokidar@^2.0.2, chokidar@^2.0.4:
     fsevents "^1.2.2"
 
 chownr@^1.0.1:
-  version "1.0.1"
-  resolved "https://registry.yarnpkg.com/chownr/-/chownr-1.0.1.tgz#e2a75042a9551908bebd25b8523d5f9769d79181"
+  version "1.1.1"
+  resolved "https://registry.yarnpkg.com/chownr/-/chownr-1.1.1.tgz#54726b8b8fff4df053c42187e801fb4412df1494"
 
 chrome-trace-event@^1.0.0:
   version "1.0.0"
@@ -914,10 +914,10 @@ component-emitter@^1.2.1:
   resolved "https://registry.yarnpkg.com/component-emitter/-/component-emitter-1.2.1.tgz#137918d6d78283f7df7a6b7c5a63e140e69425e6"
 
 compressible@~2.0.14:
-  version "2.0.14"
-  resolved "https://registry.yarnpkg.com/compressible/-/compressible-2.0.14.tgz#326c5f507fbb055f54116782b969a81b67a29da7"
+  version "2.0.15"
+  resolved "https://registry.yarnpkg.com/compressible/-/compressible-2.0.15.tgz#857a9ab0a7e5a07d8d837ed43fe2defff64fe212"
   dependencies:
-    mime-db ">= 1.34.0 < 2"
+    mime-db ">= 1.36.0 < 2"
 
 compression@^1.5.2:
   version "1.7.3"
@@ -2585,7 +2585,7 @@ miller-rabin@^4.0.0:
     bn.js "^4.0.0"
     brorand "^1.0.1"
 
-"mime-db@>= 1.34.0 < 2", mime-db@~1.36.0:
+"mime-db@>= 1.36.0 < 2", mime-db@~1.36.0:
   version "1.36.0"
   resolved "https://registry.yarnpkg.com/mime-db/-/mime-db-1.36.0.tgz#5020478db3c7fe93aad7bbcc4dcf869c43363397"
 
@@ -2731,10 +2731,10 @@ ms@^2.1.1:
   resolved "https://registry.yarnpkg.com/ms/-/ms-2.1.1.tgz#30a5864eb3ebb0a66f2ebe6d727af06a09d86e0a"
 
 "msgpack5@>= 3.6.0":
-  version "4.2.0"
-  resolved "https://registry.yarnpkg.com/msgpack5/-/msgpack5-4.2.0.tgz#e005ec893b71e1140bb177f2d1f4b7f290169611"
+  version "4.2.1"
+  resolved "https://registry.yarnpkg.com/msgpack5/-/msgpack5-4.2.1.tgz#007233691af34c4168cea9477cb3236aae854f03"
   dependencies:
-    bl "^2.0.0"
+    bl "^2.0.1"
     inherits "^2.0.3"
     readable-stream "^2.3.6"
     safe-buffer "^5.1.2"
@@ -2855,9 +2855,9 @@ node-pre-gyp@^0.10.0:
     semver "^5.3.0"
     tar "^4"
 
-node-typescript-service@^0.4.4:
-  version "0.4.4"
-  resolved "https://registry.yarnpkg.com/node-typescript-service/-/node-typescript-service-0.4.4.tgz#bced583e0ea7ed6836058943adfad74a6b4515aa"
+node-typescript-service@^0.4.5:
+  version "0.4.5"
+  resolved "https://registry.yarnpkg.com/node-typescript-service/-/node-typescript-service-0.4.5.tgz#c0960ac0724fff0d7572339efe72e3b4cfff369a"
 
 nofilter@^0.0.3:
   version "0.0.3"
@@ -3748,13 +3748,13 @@ sinon-chai@^3.2.0:
   version "3.2.0"
   resolved "https://registry.yarnpkg.com/sinon-chai/-/sinon-chai-3.2.0.tgz#ed995e13a8a3cfccec18f218d9b767edc47e0715"
 
-sinon@^6.3.3:
-  version "6.3.3"
-  resolved "https://registry.yarnpkg.com/sinon/-/sinon-6.3.3.tgz#c3a55b7046174c139e87a3c94c922cbf4323a4e7"
+sinon@^6.3.4:
+  version "6.3.4"
+  resolved "https://registry.yarnpkg.com/sinon/-/sinon-6.3.4.tgz#6f076d7ddcf381af6c16468ac83d30333a756ec8"
   dependencies:
     "@sinonjs/commons" "^1.0.2"
     "@sinonjs/formatio" "^3.0.0"
-    "@sinonjs/samsam" "^2.1.0"
+    "@sinonjs/samsam" "^2.1.1"
     diff "^3.5.0"
     lodash.get "^4.4.2"
     lolex "^2.7.4"
@@ -4177,11 +4177,11 @@ typedarray@^0.0.6:
   version "0.0.6"
   resolved "https://registry.yarnpkg.com/typedarray/-/typedarray-0.0.6.tgz#867ac74e3864187b1d3d47d996a78ec5c8830777"
 
-typescript-support@^0.5.4:
-  version "0.5.4"
-  resolved "https://registry.yarnpkg.com/typescript-support/-/typescript-support-0.5.4.tgz#b4569a2895a3f6dd167ab04aad8079b8dff97e0b"
+typescript-support@^0.5.5:
+  version "0.5.5"
+  resolved "https://registry.yarnpkg.com/typescript-support/-/typescript-support-0.5.5.tgz#0793aa52bca186e3401aca487808e72dd19b038b"
   dependencies:
-    node-typescript-service "^0.4.4"
+    node-typescript-service "^0.4.5"
     source-map-support "^0.5.9"
 
 typescript@~3.0.3:
@@ -4445,9 +4445,9 @@ webpack-sources@^1.1.0, webpack-sources@^1.2.0:
     source-list-map "^2.0.0"
     source-map "~0.6.1"
 
-webpack@^4.19.0:
-  version "4.19.0"
-  resolved "https://registry.yarnpkg.com/webpack/-/webpack-4.19.0.tgz#252296c8af2d21c0994911007defdb3913a7bc66"
+webpack@^4.19.1:
+  version "4.19.1"
+  resolved "https://registry.yarnpkg.com/webpack/-/webpack-4.19.1.tgz#096674bc3b573f8756c762754366e5b333d6576f"
   dependencies:
     "@webassemblyjs/ast" "1.7.6"
     "@webassemblyjs/helper-module-context" "1.7.6"

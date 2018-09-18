@@ -4,14 +4,6 @@ import {readFileSync} from 'fs-extra';
 import {MemoryFileSystem} from './memory-fs';
 import {pathSeparator} from './model';
 
-// patching declarations of klaw-sync to support latest depth feature
-
-declare module 'klaw-sync' {
-    export interface Options {
-        depthLimit?: number;
-    }
-}
-
 export const KLAW_SHALLOW_OPTIONS = {depthLimit: 0};
 
 export function klawItemsToMemFs(items: ReadonlyArray<klaw.Item>, baseUrl: string, readFile: boolean) {
