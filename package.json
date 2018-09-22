@@ -10,7 +10,7 @@
     "build": "tsc",
     "prepublishOnly": "run-s clean build",
     "test": "run-s test:node test:browser:run",
-    "test:node": "mocha -r typescript-support -r test/setup.ts --reporter mocha-env-reporter --timeout 4000 test/**/*.spec.ts test/**/*.spec.node.ts",
+    "test:node": "mocha -r @ts-tools/node -r test/setup.ts --reporter mocha-env-reporter --timeout 4000 test/**/*.spec.ts test/**/*.spec.node.ts",
     "test:browser:run": "run-p -r start test:browser:run2",
     "test:browser:run2": "run-s start:wait test:browser",
     "test:browser": "mocha-headless-chrome -t 120000 -f http://localhost:8080/test.bundle",
@@ -45,6 +45,7 @@
     "wamp-server": "^0.0.8"
   },
   "devDependencies": {
+    "@ts-tools/node": "^0.6.2",
     "@types/autobahn": "^0.9.39",
     "@types/chai": "^4.1.5",
     "@types/chai-as-promised": "^7.1.0",
@@ -74,7 +75,6 @@
     "tmp": "^0.0.33",
     "ts-loader": "^5.1.1",
     "typescript": "~3.0.3",
-    "typescript-support": "^0.5.5",
     "wait-on": "^3.0.1",
     "webpack": "^4.19.1",
     "webpack-cli": "^3.1.0",
