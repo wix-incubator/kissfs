@@ -123,6 +123,6 @@ export class LocalFileSystemCrudOnly {
         const pathArr = getPathNodes(relPath);
         const name = pathArr.pop() || '';
         const fullPath = path.join(this.baseUrl, ...pathArr);
-        return {fullPath, name}
+        return {fullPath, name};
     }
 }

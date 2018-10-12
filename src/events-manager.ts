@@ -16,7 +16,7 @@ interface RegisteredEventHandler extends EventHandler<any> {
 
 export namespace EventsManager {
     export interface Options {
-        delay?: number
+        delay?: number;
     }
 }
 

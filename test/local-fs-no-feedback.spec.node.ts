@@ -1,7 +1,7 @@
 import {dir} from 'tmp';
 import {mkdirSync, writeFileSync} from 'fs';
 import {join} from 'path';
-import {content, fileName} from './implementation-suite'
+import {content, fileName} from './implementation-suite';
 import {EventsMatcher} from './events-matcher';
 import {FileSystem, fileSystemEventNames, LocalFileSystem} from '../src/nodejs';
 import {NoFeedbackEventsFileSystem} from '../src/no-feedback-events-fs';
@@ -27,7 +27,7 @@ describe(`integration of the local filesystem with nofeedbackFS`, () => {
             dirCleanup = cleanupCallback;
             rootPath = path;
             done();
-        })
+        });
     });
     after(() => {
         try {
@@ -84,7 +84,7 @@ describe(`integration of the local filesystem with nofeedbackFS`, () => {
                 fullPath: fileName,
                 newContent: 'content:' + i,
                 correlation: '' + i
-            })
+            });
         }
         try {
             await nofeedMatcher.expect([]);

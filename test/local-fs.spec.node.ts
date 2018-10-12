@@ -8,7 +8,7 @@ import {
     content,
     dirName,
     fileName
-} from './implementation-suite'
+} from './implementation-suite';
 import {EventsMatcher} from './events-matcher';
 import {FileSystem, fileSystemEventNames, LocalFileSystem} from '../src/nodejs';
 
@@ -39,7 +39,7 @@ describe(`the local filesystem implementation`, () => {
             dirCleanup = cleanupCallback;
             rootPath = path;
             done();
-        })
+        });
     });
     after(() => {
         try {

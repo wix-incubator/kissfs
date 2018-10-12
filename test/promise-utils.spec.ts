@@ -11,7 +11,7 @@ describe('Promise utilities', () => {
             await delayedPromise(delay);
 
             expect(Date.now(), 'verify delay').to.be.gte(startTime + (delay * accuracyFactor));
-        })
+        });
     });
 
     describe('timeoutPromise', () => {

@@ -1,6 +1,6 @@
 import {expect} from 'chai';
 import {FileSystem} from '../src/api';
-import {assertFileSystemContract, content, dirName, fileName} from '../test/implementation-suite'
+import {assertFileSystemContract, content, dirName, fileName} from '../test/implementation-suite';
 import {SlowFs} from './slow-fs';
 
 describe('the slow (delayed) file system implementation', () => {

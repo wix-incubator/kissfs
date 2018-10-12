@@ -34,7 +34,7 @@ export function assertFileSystemContract(fsProvider: () => Promise<FileSystem>, 
         it(`loading a directory as a file - fails`, function () {
             return fs.ensureDirectory(dirName)
                 .then((correlation) => {
-                    return matcher.expect([{type: 'directoryCreated', fullPath: dirName, correlation}])
+                    return matcher.expect([{type: 'directoryCreated', fullPath: dirName, correlation}]);
                 })
                 .then(() => expect(fs.loadTextFile(dirName)).to.be.rejectedWith(Error))
                 .then(() => matcher.expect([]));
@@ -63,7 +63,7 @@ export function assertFileSystemContract(fsProvider: () => Promise<FileSystem>, 
         it(`saving an illegal file name - fails`, function () {
             return expect(fs.saveFile('', content)).to.be.rejectedWith(Error)
                 .then(() => {
-                    return matcher.expect([])
+                    return matcher.expect([]);
                 });
         });
 
@@ -78,7 +78,7 @@ export function assertFileSystemContract(fsProvider: () => Promise<FileSystem>, 
                 .then(() => expect(fs.loadDirectoryTree()).to.become(expectedStructure))
                 .then(() => fs.ensureDirectory(dirName)) //2nd time does nothing
                 .then(() => expect(fs.loadDirectoryTree()).to.become(expectedStructure))
-                .then(() => matcher.expect([]))
+                .then(() => matcher.expect([]));
         });
 
         it(`ensuring existence of directory (supplying correlation)`, function () {
@@ -90,7 +90,7 @@ export function assertFileSystemContract(fsProvider: () => Promise<FileSystem>, 
             return fs.ensureDirectory(dirName, testCorrelation)
                 .then(async (correlation) => {
                     expect(correlation).to.equal(testCorrelation);
-                    await matcher.expect([{type: 'directoryCreated', fullPath: dirName, correlation}])
+                    await matcher.expect([{type: 'directoryCreated', fullPath: dirName, correlation}]);
                 })
                 .then(() => expect(fs.loadDirectoryTree()).to.become(expectedStructure))
                 .then(() => fs.ensureDirectory(dirName)) //2nd time does nothing
@@ -185,7 +185,7 @@ export function assertFileSystemContract(fsProvider: () => Promise<FileSystem>, 
                         fullPath: fileName,
                         newContent: newContent,
                         correlation
-                    }])
+                    }]);
                 })
                 .then(() => expect(fs.loadTextFile(fileName)).to.become(newContent))
                 .then(() => matcher.expect([]));
@@ -223,11 +223,11 @@ export function assertFileSystemContract(fsProvider: () => Promise<FileSystem>, 
                     await matcher.expect([
                         {type: 'directoryCreated', fullPath: dirName, correlation},
                         {type: 'directoryCreated', fullPath: `${dirName}/_${dirName}`, correlation}
-                    ])
+                    ]);
                 })
                 .then(() => fs.deleteDirectory(`${dirName}/_${dirName}`))
                 .then(async (correlation) => {
-                    await matcher.expect([{type: 'directoryDeleted', fullPath: `${dirName}/_${dirName}`, correlation}])
+                    await matcher.expect([{type: 'directoryDeleted', fullPath: `${dirName}/_${dirName}`, correlation}]);
                 })
                 .then(() => expect(fs.loadDirectoryTree()).to.eventually.have.property('children').eql([
                     {children: [], fullPath: dirName, name: dirName, type: 'dir'}]))
@@ -242,7 +242,7 @@ export function assertFileSystemContract(fsProvider: () => Promise<FileSystem>, 
                 .then(() => fs.deleteDirectory(`${dirName}/_${dirName}`, false, testCorrelation))
                 .then((correlation) => {
                     expect(correlation).to.equal(testCorrelation);
-                    return matcher.expect([{type: 'directoryDeleted', fullPath: `${dirName}/_${dirName}`, correlation}])
+                    return matcher.expect([{type: 'directoryDeleted', fullPath: `${dirName}/_${dirName}`, correlation}]);
                 })
                 .then(() => expect(fs.loadDirectoryTree()).to.eventually.have.property('children').eql([
                     {children: [], fullPath: dirName, name: dirName, type: 'dir'}]))
@@ -363,7 +363,7 @@ export function assertFileSystemContract(fsProvider: () => Promise<FileSystem>, 
             return fs.saveFile(`${dirName}/_${dirName}/${fileName}`, content)
                 .then(() => expect(fs.loadDirectoryTree()).to.eventually.eql(expected))
                 .then(() => expect(fs.loadDirectoryTree(dirName), `loadDirectoryTree('${dirName}')`).to.eventually.eql(expected.children[0]))
-                .then(() => expect(fs.loadDirectoryTree(`${dirName}/_${dirName}`), `loadDirectoryTree('${dirName}/_${dirName}')`).to.eventually.eql(expected.children[0].children[0]))
+                .then(() => expect(fs.loadDirectoryTree(`${dirName}/_${dirName}`), `loadDirectoryTree('${dirName}/_${dirName}')`).to.eventually.eql(expected.children[0].children[0]));
 
         });
 
@@ -520,9 +520,9 @@ export function assertFileSystemSyncContract(fsProvider: () => Promise<FileSyste
 
         afterEach(() => {
             if (isDisposable(fs)) {
-                fs.dispose()
+                fs.dispose();
             }
-        })
+        });
 
 
         it(`loading a non-existing file - fails`, function () {
@@ -537,7 +537,7 @@ export function assertFileSystemSyncContract(fsProvider: () => Promise<FileSyste
         it(`loading a directory as a file - fails`, function () {
             return fs.ensureDirectory(dirName)
                 .then((correlation) => {
-                    return matcher.expect([{type: 'directoryCreated', fullPath: dirName, correlation}])
+                    return matcher.expect([{type: 'directoryCreated', fullPath: dirName, correlation}]);
                 })
                 .then(() => expect(() => fs.loadTextFileSync(dirName)).to.throw(Error))
                 .then(() => matcher.expect([]));
@@ -579,9 +579,9 @@ export function assertFileSystemSyncContract(fsProvider: () => Promise<FileSyste
             return fs.saveFile(`${dirName}/_${dirName}/${fileName}`, content)
                 .then(() => {
                     expect(fs.loadDirectoryTreeSync()).to.eql(expected);
-                    expect(fs.loadDirectoryTreeSync(dirName), `loadDirectoryTreeSync('${dirName}')`).to.eql(expected.children[0])
-                    expect(fs.loadDirectoryTreeSync(`${dirName}/_${dirName}`), `loadDirectoryTreeSync('${dirName}/_${dirName}')`).to.eql(expected.children[0].children[0])
-                })
+                    expect(fs.loadDirectoryTreeSync(dirName), `loadDirectoryTreeSync('${dirName}')`).to.eql(expected.children[0]);
+                    expect(fs.loadDirectoryTreeSync(`${dirName}/_${dirName}`), `loadDirectoryTreeSync('${dirName}/_${dirName}')`).to.eql(expected.children[0].children[0]);
+                });
 
         });
 
@@ -600,8 +600,8 @@ export function assertFileSystemSyncContract(fsProvider: () => Promise<FileSyste
                     expect(fs.loadDirectoryChildrenSync(dirName), `loadDirectoryChildrenSync('${dirName}')`).to.have.deep.members(
                         [{fullPath: `${dirName}/_${dirName}`, name: `_${dirName}`, type: 'dir'}]);
                     expect(fs.loadDirectoryChildrenSync(`${dirName}/_${dirName}`), `loadDirectoryChildrenSync('${dirName}/_${dirName}')`).to.have.deep.members(
-                        [{fullPath: `${dirName}/_${dirName}/${fileName}`, name: fileName, type: 'file'}])
-                })
+                        [{fullPath: `${dirName}/_${dirName}/${fileName}`, name: fileName, type: 'file'}]);
+                });
         });
 
         it(`loadDirectoryChildrenSync on an illegal sub-path`, function () {
@@ -626,7 +626,7 @@ export function assertFileSystemSyncContract(fsProvider: () => Promise<FileSyste
                     expect(fs.loadDirectoryContentSync()).to.eql(expected);
                     expect(fs.loadDirectoryContentSync(dirName), `loadDirectoryContentSync('${dirName}')`).to.eql(expected[dirName]);
                     expect(fs.loadDirectoryContentSync(`${dirName}/_${dirName}`), `loadDirectoryContentSync('${dirName}/_${dirName}')`).to.eql((expected[dirName] as DirectoryContent)['_' + dirName]);
-                })
+                });
 
         });
 

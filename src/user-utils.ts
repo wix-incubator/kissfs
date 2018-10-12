@@ -6,7 +6,7 @@ export function checkExistsSync(expectedType: 'file' | 'dir', fs: FileSystemRead
     const {name, parentPath} = splitPathToDirAndFile(targetPath);
     try {
         let dirContent = fs.loadDirectoryChildrenSync(parentPath);
-        return checkExistsInDir(expectedType, dirContent, name)
+        return checkExistsInDir(expectedType, dirContent, name);
     } catch (error) {
         return false;
     }
@@ -16,7 +16,7 @@ export async function checkExists(expectedType: 'file' | 'dir', fs: FileSystem, 
     const {name, parentPath} = splitPathToDirAndFile(targetPath);
     try {
         let dirContent = await fs.loadDirectoryChildren(parentPath);
-        return checkExistsInDir(expectedType, dirContent, name)
+        return checkExistsInDir(expectedType, dirContent, name);
     } catch (error) {
         return false;
     }

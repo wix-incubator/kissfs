@@ -41,13 +41,13 @@ type PathInCache = {
 };
 
 interface FileSystemNodesMap {
-    [key: string]: FileSystemNode
+    [key: string]: FileSystemNode;
 }
 
 interface TreesDiff {
-    toAdd: FileSystemNode[],
-    toDelete: FileSystemNode[],
-    toChange: string[]
+    toAdd: FileSystemNode[];
+    toDelete: FileSystemNode[];
+    toChange: string[];
 }
 
 function nodesToMap(tree: FileSystemNode[] | undefined, accumulator: FileSystemNodesMap = {}): FileSystemNodesMap {
@@ -80,7 +80,7 @@ function transformAndReport(oldMap: FileSystemNodesMap, newMap: FileSystemNodesM
             if (isFile(newNode) && newNode.content === undefined) {
                 newNode.content = oldNode.content;
             } else if (oldNode.content) {
-                diff.toChange.push(oldPath)
+                diff.toChange.push(oldPath);
             }
         }
     });
@@ -164,7 +164,7 @@ class MemFsForCache extends MemoryFileSystem {
         } else {
             const parent = Directory.getSubDir(this.root, pathArr.slice(0, pathArr.length - 1));
             if (!parent) {
-                throw new Error('directory parent missing: ' + pathArr.slice(0, pathArr.length - 1).join('/'))
+                throw new Error('directory parent missing: ' + pathArr.slice(0, pathArr.length - 1).join('/'));
             } else {
                 parent.children = parent.children.map((child) => child.name === newDir.name ? newDir : child);
             }
@@ -204,7 +204,7 @@ export class CacheFileSystem implements FileSystemReadSync, FileSystem {
         this.options.reSyncOnError ?
             this.reSyncOnError() :
             this.emit('unexpectedError', {stack});
-    };
+    }
 
     constructor(fs: FileSystem, private options: CacheFileSystem.Options = {}) {
         this.fs = fs;
@@ -212,7 +212,7 @@ export class CacheFileSystem implements FileSystemReadSync, FileSystem {
             this.options.reSyncOnError = true;
         }
         if (this.options.propagateSyncRead && !isFileSystemReadSync(fs)) {
-            throw new Error('propagateSyncRead option set to true but file system is not FileSystemReadSync')
+            throw new Error('propagateSyncRead option set to true but file system is not FileSystemReadSync');
         }
         this.baseUrl = fs.baseUrl;
 
@@ -222,7 +222,7 @@ export class CacheFileSystem implements FileSystemReadSync, FileSystem {
             try {
                 this.cacheTextFile(event.fullPath, event.newContent, event.correlation);
             } catch (e) {
-                this.onFsError(e)
+                this.onFsError(e);
             }
         };
         this.fs.events.on('fileCreated', fileChangeCreatedHandler);
@@ -231,7 +231,7 @@ export class CacheFileSystem implements FileSystemReadSync, FileSystem {
             try {
                 this.cacheFileGone(event.fullPath, event.correlation);
             } catch (e) {
-                this.onFsError(e)
+                this.onFsError(e);
             }
         });
 
@@ -239,7 +239,7 @@ export class CacheFileSystem implements FileSystemReadSync, FileSystem {
             try {
                 this.cacheDirectoryExists(event.fullPath, event.correlation);
             } catch (e) {
-                this.onFsError(e)
+                this.onFsError(e);
             }
         });
 
@@ -247,7 +247,7 @@ export class CacheFileSystem implements FileSystemReadSync, FileSystem {
             try {
                 this.cacheDirectoryGone(true, event.fullPath, event.correlation);
             } catch (e) {
-                this.onFsError(e)
+                this.onFsError(e);
             }
         });
     }

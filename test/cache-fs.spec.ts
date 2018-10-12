@@ -116,7 +116,7 @@ describe(`the cache file system proxy`, () => {
         const options = {propagateSyncRead: true};
         it('breaks if not provided with sync file system', async () => {
             const nonSyncFs: FileSystem = new SlowFs(1);
-            expect(() => new CacheFileSystem(nonSyncFs, options)).to.throw(Error)
+            expect(() => new CacheFileSystem(nonSyncFs, options)).to.throw(Error);
         });
         testCacheReadMethod(options, 'loadTextFileSync', [existingFileName]);
         testCacheReadMethod(options, 'loadDirectoryChildrenSync', ['']);

@@ -21,7 +21,7 @@ function proxy<T extends FileSystem>(Proxy: { new (fs: FileSystemReadSync): T },
             return hybrid;
         }
         return proxy;
-    }
+    };
 }
 
 describe(`the no-feedback-events file system proxy`, () => {
@@ -62,7 +62,7 @@ describe(`the no-feedback-events file system proxy`, () => {
             const memFs = new MemoryFileSystem();
             MemoryFileSystem.addContent(memFs, {
                 'aFile': 'gaga'
-            })
+            });
             const noFeed = new NoFeedbackEventsFileSystem(memFs, {delayEvents: 0, correlationWindow: 100});
 
             const spy = sinon.spy();
@@ -76,7 +76,7 @@ describe(`the no-feedback-events file system proxy`, () => {
             const memFs = new MemoryFileSystem();
             MemoryFileSystem.addContent(memFs, {
                 'aFile': 'gaga'
-            })
+            });
             const noFeed = new NoFeedbackEventsFileSystem(memFs, {delayEvents: 0, correlationWindow: 100});
 
             const spy = sinon.spy();

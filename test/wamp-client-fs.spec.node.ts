@@ -4,7 +4,7 @@ import { wampRealm, WampFsServer, wampServerOverFs } from '../src/nodejs';
 import { MemoryFileSystem, WampClientFileSystem } from '../src/universal';
 import { noConnectionError } from '../src/wamp-client-fs';
 import { EventsMatcher } from './events-matcher';
-import { assertFileSystemContract } from './implementation-suite'
+import { assertFileSystemContract } from './implementation-suite';
 import { fileSystemAsyncMethods } from '../src/api';
 import { spy } from 'sinon';
 
@@ -51,7 +51,7 @@ describe(`the wamp client filesystem proxy`, () => {
 
     fileSystemAsyncMethods.forEach(asyncMethodName => {
         describe(`${asyncMethodName} method`, () => {
-            let fs: WampClientFileSystem | undefined
+            let fs: WampClientFileSystem | undefined;
 
             afterEach(() => {
                 if (fs) {
@@ -60,7 +60,7 @@ describe(`the wamp client filesystem proxy`, () => {
             });
 
             it(`fails when not inited`, async () => {
-                const withoutInit = await getFS()
+                const withoutInit = await getFS();
                 return expect((withoutInit[asyncMethodName] as Function)(...fakeArgs)).to.eventually.be.rejectedWith(noConnectionError);
             });
 
@@ -76,7 +76,7 @@ describe(`the wamp client filesystem proxy`, () => {
             it(`reports original error messages`, async () => {
                 fs = await getInitedFS();
                 (underlyingFs as any)[asyncMethodName] = async () => {
-                    throw new Error(msg)
+                    throw new Error(msg);
                 };
                 await expect((fs[asyncMethodName] as Function)(...fakeArgs)).to.eventually.be.rejectedWith(msg);
             });

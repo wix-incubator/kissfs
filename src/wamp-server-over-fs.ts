@@ -7,9 +7,9 @@ import WampServer from 'wamp-server';
 export interface WampFsServer {
     router: {
         close(): void
-    },
-    connection: Connection
-};
+    };
+    connection: Connection;
+}
 
 export function wampServerOverFs(fs: FileSystem, port = 3000): Promise<WampFsServer> {
     return new Promise<WampFsServer>(resolve => {

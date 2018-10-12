@@ -112,7 +112,7 @@ export class LocalFileSystem implements FileSystemReadSync {
                                     fullPath,
                                     newContent: await this.loadTextFile(relPath)
                                 })
-                            , this.options)
+                            , this.options);
                     } catch (e) {
                         this.eventsManager.emit({type: 'unexpectedError', fullPath, stack: e.stack});
                     }
@@ -127,7 +127,7 @@ export class LocalFileSystem implements FileSystemReadSync {
                                     fullPath,
                                     newContent: await this.loadTextFile(relPath)
                                 })
-                            , this.options)
+                            , this.options);
                     } catch (e) {
                         this.eventsManager.emit({type: 'unexpectedError', fullPath, stack: e.stack});
                     }

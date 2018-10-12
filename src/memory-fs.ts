@@ -98,7 +98,7 @@ export class MemoryFileSystem implements FileSystemReadSync, FileSystem {
 
         if (isFile(existingChild)) {
             if (existingChild.content !== newContent) {
-                existingChild.content = newContent
+                existingChild.content = newContent;
                 const type = 'fileChanged';
                 this.emit(type, {type, fullPath, newContent, correlation});
             }
@@ -140,7 +140,7 @@ export class MemoryFileSystem implements FileSystemReadSync, FileSystem {
                     throw new Error(`Directory is not empty '${fullPath}'`);
                 } else {
                     parent.children = parent.children.filter(({name}) => name !== node.name);
-                    this.recursiveEmitDeletion(node, correlation)
+                    this.recursiveEmitDeletion(node, correlation);
                 }
             }
         }
@@ -228,6 +228,6 @@ export class MemoryFileSystem implements FileSystemReadSync, FileSystem {
         node.children.forEach(child => {
             if (isDir(child)) this.recursiveEmitDeletion(child, correlation);
             this.emit('fileDeleted', {type: 'fileDeleted', fullPath: child.fullPath, correlation});
-        })
+        });
     }
 }

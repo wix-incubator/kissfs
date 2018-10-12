@@ -2,15 +2,15 @@ import {endsWith, getPathNodes, normalizePathNodes} from './utils';
 
 export const pathSeparator = '/';
 
-export type DirectoryContent = { [key: string]: string | DirectoryContent }
+export type DirectoryContent = { [key: string]: string | DirectoryContent };
 
 export interface SimpleStats {
     type: 'dir' | 'file';
 }
 
 export interface FileSystemNode extends SimpleStats {
-    name: string,
-    fullPath: string,
+    name: string;
+    fullPath: string;
 }
 
 export class ShallowDirectory implements FileSystemNode {
@@ -82,7 +82,7 @@ export class Directory implements FileSystemNode {
                     return new File(child.name, normalizePathNodes(childPath), child.content);
                 }
             })
-        )
+        );
     }
 
     static cloneStructure(node: Directory): Directory {
@@ -90,7 +90,7 @@ export class Directory implements FileSystemNode {
             node.name,
             node.fullPath,
             node.children.map(child => isDir(child) ? this.cloneStructure(child) : new File(child.name, child.fullPath))
-        )
+        );
     }
 
     static fromContent(content: DirectoryContent, name: string = '', location: string = ''): Directory {

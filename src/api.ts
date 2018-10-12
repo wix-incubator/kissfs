@@ -34,7 +34,7 @@ export interface DirectoryDeletedEvent extends FileSystemEvent {
 }
 
 export interface Disposable {
-    dispose(): void
+    dispose(): void;
 }
 
 export function isDisposable(fs: any): fs is Disposable {
@@ -51,7 +51,7 @@ export type Events = {
     directoryCreated: DirectoryCreatedEvent;
     directoryDeleted: DirectoryDeletedEvent;
 
-}
+};
 export const fileSystemEventNames: Array<keyof Events> = ['unexpectedError', 'fileCreated', 'fileChanged', 'fileDeleted', 'directoryCreated', 'directoryDeleted'];
 export const fileSystemAsyncMethods: Array<keyof FileSystem> = ['saveFile', 'deleteFile', 'deleteDirectory', 'loadTextFile', 'loadDirectoryTree', 'ensureDirectory', 'loadDirectoryChildren', 'stat'];
 
@@ -74,7 +74,7 @@ export interface EventEmitter {
 
     off<S extends keyof Events>(event: S, fn?: ListenerFn<Events[S]>, context?: any, once?: boolean): this;
 
-    eventNames(): Array<keyof Events>
+    eventNames(): Array<keyof Events>;
 }
 
 

@@ -1,4 +1,4 @@
-import {assertFileSystemContract, assertFileSystemSyncContract} from './implementation-suite'
+import {assertFileSystemContract, assertFileSystemSyncContract} from './implementation-suite';
 import {Directory, MemoryFileSystem} from '../src/universal';
 import {expect} from 'chai';
 

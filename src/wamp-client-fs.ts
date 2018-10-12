@@ -4,7 +4,7 @@ import {InternalEventsEmitter, makeEventsEmitter} from './utils';
 import {timeoutPromise} from './promise-utils';
 import {Directory, File, ShallowDirectory, SimpleStats} from './model';
 
-export const noConnectionError = `WampClientFileSystem hasn't opened connection yet (forgot to init()?).`
+export const noConnectionError = `WampClientFileSystem hasn't opened connection yet (forgot to init()?).`;
 
 export class WampClientFileSystem implements FileSystem {
     public readonly events: InternalEventsEmitter = makeEventsEmitter();
@@ -18,7 +18,7 @@ export class WampClientFileSystem implements FileSystem {
     }
 
     init(): Promise<WampClientFileSystem> {
-        const {baseUrl, initTimeout, connection} = this
+        const {baseUrl, initTimeout, connection} = this;
         return timeoutPromise(new Promise<WampClientFileSystem>(resolve => {
             connection.open();
             connection.onopen = (session: Session) => {
@@ -28,7 +28,7 @@ export class WampClientFileSystem implements FileSystem {
                     session.subscribe(
                         this.realmPrefix + fsEvent,
                         res => this.events.emit(fsEvent, res && res[0])
-                    )
+                    );
                 });
                 resolve(this);
             };

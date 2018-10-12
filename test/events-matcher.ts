@@ -28,7 +28,7 @@ export class EventsMatcher {
         eventNames.forEach(eventName => emitter.on(eventName, (event: EventObj) => {
             expect(event.type, `type of event dispatched as ${eventName}`).to.eql(eventName);
             this.events.push(event);
-        }))
+        }));
     }
 
     async expect(events: Array<EventObj>): Promise<void> {

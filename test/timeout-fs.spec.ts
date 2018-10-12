@@ -1,5 +1,5 @@
 import {expect} from 'chai';
-import {assertFileSystemContract, dirName, fileName} from './implementation-suite'
+import {assertFileSystemContract, dirName, fileName} from './implementation-suite';
 import {SlowFs} from './slow-fs';
 import {FileSystem, MemoryFileSystem, TimeoutFileSystem} from '../src/universal';
 
