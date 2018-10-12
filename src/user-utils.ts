@@ -1,6 +1,6 @@
-import {FileSystem, FileSystemReadSync} from "./api";
-import {checkExistsInDir, splitPathToDirAndFile} from "./utils";
-import {DirectoryContent} from "./model";
+import {FileSystem, FileSystemReadSync} from './api';
+import {checkExistsInDir, splitPathToDirAndFile} from './utils';
+import {DirectoryContent} from './model';
 
 export function checkExistsSync(expectedType: 'file' | 'dir', fs: FileSystemReadSync, targetPath: string): boolean {
     const {name, parentPath} = splitPathToDirAndFile(targetPath);

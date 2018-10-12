@@ -1,7 +1,7 @@
-import {Correlation, Events, FileSystem, FileSystemReadSync} from "./api";
-import {Directory, DirectoryContent, File, isDir, isFile, pathSeparator, ShallowDirectory, SimpleStats} from "./model";
+import {Correlation, Events, FileSystem, FileSystemReadSync} from './api';
+import {Directory, DirectoryContent, File, isDir, isFile, pathSeparator, ShallowDirectory, SimpleStats} from './model';
 
-import {getPathNodes, InternalEventsEmitter, makeCorrelationId, makeEventsEmitter, normalizePathNodes} from "./utils";
+import {getPathNodes, InternalEventsEmitter, makeCorrelationId, makeEventsEmitter, normalizePathNodes} from './utils';
 
 let id = 0;
 

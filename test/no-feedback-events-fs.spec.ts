@@ -6,7 +6,7 @@ import {
     NoFeedbackEventsFileSystemSync
 } from '../src/universal';
 import {assertFileSystemContract, assertFileSystemSyncContract} from './implementation-suite';
-import {FileSystemReadSync} from "../src/api";
+import {FileSystemReadSync} from '../src/api';
 import * as sinon from 'sinon';
 import {expect} from 'chai';
 

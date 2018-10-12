@@ -4,8 +4,8 @@ import {retryPromise, RetryPromiseOptions} from './promise-utils';
 import {Correlation, EventEmitter, Events, FileSystemEvent, fileSystemEventNames, FileSystemReadSync} from './api';
 import {Directory, DirectoryContent, File, pathSeparator, ShallowDirectory, SimpleStats} from './model';
 import {LocalFileSystemCrudOnly} from './local-fs-crud-only';
-import {makeCorrelationId} from "./utils";
-import {EventHandler, EventsManager} from "./events-manager";
+import {makeCorrelationId} from './utils';
+import {EventHandler, EventsManager} from './events-manager';
 
 export namespace LocalFileSystem {
     export type Options = RetryPromiseOptions & {

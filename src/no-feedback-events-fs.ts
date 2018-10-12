@@ -1,7 +1,7 @@
-import {Directory, DirectoryContent, File, ShallowDirectory, SimpleStats} from "./model";
-import {Correlation, EventEmitter, FileSystem, fileSystemEventNames, FileSystemReadSync} from "./api";
-import {EventsManager} from "./events-manager";
-import {makeCorrelationId} from "./utils";
+import {Directory, DirectoryContent, File, ShallowDirectory, SimpleStats} from './model';
+import {Correlation, EventEmitter, FileSystem, fileSystemEventNames, FileSystemReadSync} from './api';
+import {EventsManager} from './events-manager';
+import {makeCorrelationId} from './utils';
 
 export namespace NoFeedbackEventsFileSystem {
     export type Options = {

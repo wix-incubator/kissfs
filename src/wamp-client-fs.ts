@@ -1,8 +1,8 @@
 import {Connection, Session} from 'autobahn';
 import {Correlation, FileSystem, fileSystemEventNames} from './api';
-import {InternalEventsEmitter, makeEventsEmitter} from "./utils";
+import {InternalEventsEmitter, makeEventsEmitter} from './utils';
 import {timeoutPromise} from './promise-utils';
-import {Directory, File, ShallowDirectory, SimpleStats} from "./model";
+import {Directory, File, ShallowDirectory, SimpleStats} from './model';
 
 export const noConnectionError = `WampClientFileSystem hasn't opened connection yet (forgot to init()?).`
 

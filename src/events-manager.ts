@@ -1,7 +1,7 @@
-import {makeEventsEmitter} from "./utils";
+import {makeEventsEmitter} from './utils';
 
-import {EventEmitter, Events} from "./api";
-import {delayedPromise} from "./promise-utils";
+import {EventEmitter, Events} from './api';
+import {delayedPromise} from './promise-utils';
 
 
 export interface EventHandler<S extends keyof Events> {

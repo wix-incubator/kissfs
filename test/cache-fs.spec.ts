@@ -13,7 +13,7 @@ import {
     fileName,
 } from './implementation-suite';
 import {spy} from 'sinon';
-import {FileSystemReadSync} from "../src/api";
+import {FileSystemReadSync} from '../src/api';
 
 const existingFileName = 'existing_' + fileName;
 const existingDirName = 'existing_' + dirName;

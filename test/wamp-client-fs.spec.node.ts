@@ -5,7 +5,7 @@ import { MemoryFileSystem, WampClientFileSystem } from '../src/universal';
 import { noConnectionError } from '../src/wamp-client-fs';
 import { EventsMatcher } from './events-matcher';
 import { assertFileSystemContract } from './implementation-suite'
-import { fileSystemAsyncMethods } from "../src/api";
+import { fileSystemAsyncMethods } from '../src/api';
 import { spy } from 'sinon';
 
 const msg = 'foo';

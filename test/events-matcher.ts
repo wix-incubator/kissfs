@@ -1,5 +1,5 @@
 import {expect} from 'chai';
-import {EventEmitter, Events} from "../src/api";
+import {EventEmitter, Events} from '../src/api';
 import {delayedPromise, retryPromise} from '../src/promise-utils';
 
 export interface EventObj {

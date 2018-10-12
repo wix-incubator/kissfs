@@ -1,11 +1,11 @@
-import {checkExistsSync, MemoryFileSystem} from "../src/universal";
-import {expect} from "chai";
-import {checkExists} from "../src/user-utils";
-import {NoFeedbackEventsFileSystem} from "../src/no-feedback-events-fs";
+import {checkExistsSync, MemoryFileSystem} from '../src/universal';
+import {expect} from 'chai';
+import {checkExists} from '../src/user-utils';
+import {NoFeedbackEventsFileSystem} from '../src/no-feedback-events-fs';
 
 describe('user-utils', () => {
     describe('checkExistsSync', () => {
-        const fs = new MemoryFileSystem('', {content: {foo: {bar: {"a.file": 'hello'}}}});
+        const fs = new MemoryFileSystem('', {content: {foo: {bar: {'a.file': 'hello'}}}});
 
         it('true for existing file', () => {
             expect(checkExistsSync('file', fs, 'foo/bar/a.file')).to.eql(true);
@@ -28,7 +28,7 @@ describe('user-utils', () => {
     });
     describe('checkExists', () => {
         // use NoFeedbackEventsFileSystem as a proxy that does not expose sync methods
-        const fs = new NoFeedbackEventsFileSystem(new MemoryFileSystem('', {content: {foo: {bar: {"a.file": 'hello'}}}}));
+        const fs = new NoFeedbackEventsFileSystem(new MemoryFileSystem('', {content: {foo: {bar: {'a.file': 'hello'}}}}));
 
         it('true for existing file', async () => {
             expect(await checkExists('file', fs, 'foo/bar/a.file')).to.eql(true);

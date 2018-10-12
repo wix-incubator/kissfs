@@ -1,37 +1,37 @@
-import {Directory, DirectoryContent} from "../src/universal";
-import {expect} from "chai";
+import {Directory, DirectoryContent} from '../src/universal';
+import {expect} from 'chai';
 
 const emptyContent: DirectoryContent = {};
 
 const content = {
-    "a.file": "hello",
-    "src": {
-        "a.ts": "a",
-        "b.js": "b",
-        "nested": {
-            "file.zag": "nested-file"
+    'a.file': 'hello',
+    'src': {
+        'a.ts': 'a',
+        'b.js': 'b',
+        'nested': {
+            'file.zag': 'nested-file'
         }
     }
 };
 
 const mixinContent = {
-    "b.file": "hello",
-    "src": {
-        "nested": {
-            "file2.zag": "new file"
+    'b.file': 'hello',
+    'src': {
+        'nested': {
+            'file2.zag': 'new file'
         }
     }
 };
 
 const mixedContent = {
-    "a.file": "hello",
-    "b.file": "hello",
-    "src": {
-        "a.ts": "a",
-        "b.js": "b",
-        "nested": {
-            "file.zag": "nested-file",
-            "file2.zag": "new file"
+    'a.file': 'hello',
+    'b.file': 'hello',
+    'src': {
+        'a.ts': 'a',
+        'b.js': 'b',
+        'nested': {
+            'file.zag': 'nested-file',
+            'file2.zag': 'new file'
         }
     }
 };
@@ -40,48 +40,48 @@ describe('model', () => {
     describe('Directory.fromContent', () => {
         it('works on empty input', async () => {
             const emptyDirectory: Directory = {
-                "fullPath": "",
-                "name": "",
-                "type": "dir",
-                "children": []
+                'fullPath': '',
+                'name': '',
+                'type': 'dir',
+                'children': []
             };
             expect(Directory.fromContent(emptyContent)).to.eql(emptyDirectory);
         });
         it('works on input with data', async () => {
             const contentAsDirectory: Directory = {
-                "fullPath": "",
-                "name": "",
-                "type": "dir",
-                "children": [{
-                    "content": "hello",
-                    "fullPath": "a.file",
-                    "name": "a.file",
-                    "type": "file"
+                'fullPath': '',
+                'name': '',
+                'type': 'dir',
+                'children': [{
+                    'content': 'hello',
+                    'fullPath': 'a.file',
+                    'name': 'a.file',
+                    'type': 'file'
                 }, {
-                    "children": [{
-                        "content": "a",
-                        "fullPath": "src/a.ts",
-                        "name": "a.ts",
-                        "type": "file",
+                    'children': [{
+                        'content': 'a',
+                        'fullPath': 'src/a.ts',
+                        'name': 'a.ts',
+                        'type': 'file',
                     }, {
-                        "content": "b",
-                        "fullPath": "src/b.js",
-                        "name": "b.js",
-                        "type": "file",
+                        'content': 'b',
+                        'fullPath': 'src/b.js',
+                        'name': 'b.js',
+                        'type': 'file',
                     }, {
-                        "children": [{
-                            "content": "nested-file",
-                            "fullPath": "src/nested/file.zag",
-                            "name": "file.zag",
-                            "type": "file",
+                        'children': [{
+                            'content': 'nested-file',
+                            'fullPath': 'src/nested/file.zag',
+                            'name': 'file.zag',
+                            'type': 'file',
                         }],
-                        "fullPath": "src/nested",
-                        "name": "nested",
-                        "type": "dir",
+                        'fullPath': 'src/nested',
+                        'name': 'nested',
+                        'type': 'dir',
                     }],
-                    "fullPath": "src",
-                    "name": "src",
-                    "type": "dir"
+                    'fullPath': 'src',
+                    'name': 'src',
+                    'type': 'dir'
                 }]
             };
             expect(Directory.fromContent(content)).to.eql(contentAsDirectory);
@@ -92,42 +92,42 @@ describe('model', () => {
         });
         it('can override name and location', async () => {
             const contentAsDirectory: Directory = {
-                "children": [{
-                    "content": "hello",
-                    "fullPath": "bar/baz/foo/a.file",
-                    "name": "a.file",
-                    "type": "file"
+                'children': [{
+                    'content': 'hello',
+                    'fullPath': 'bar/baz/foo/a.file',
+                    'name': 'a.file',
+                    'type': 'file'
                 }, {
-                    "children": [{
-                        "content": "a",
-                        "fullPath": "bar/baz/foo/src/a.ts",
-                        "name": "a.ts",
-                        "type": "file"
+                    'children': [{
+                        'content': 'a',
+                        'fullPath': 'bar/baz/foo/src/a.ts',
+                        'name': 'a.ts',
+                        'type': 'file'
                     }, {
-                        "content": "b",
-                        "fullPath": "bar/baz/foo/src/b.js",
-                        "name": "b.js",
-                        "type": "file"
+                        'content': 'b',
+                        'fullPath': 'bar/baz/foo/src/b.js',
+                        'name': 'b.js',
+                        'type': 'file'
                     }, {
-                        "children": [{
-                            "content": "nested-file",
-                            "fullPath": "bar/baz/foo/src/nested/file.zag",
-                            "name": "file.zag",
-                            "type": "file"
+                        'children': [{
+                            'content': 'nested-file',
+                            'fullPath': 'bar/baz/foo/src/nested/file.zag',
+                            'name': 'file.zag',
+                            'type': 'file'
                         }],
-                        "fullPath": "bar/baz/foo/src/nested",
-                        "name": "nested",
-                        "type": "dir",
+                        'fullPath': 'bar/baz/foo/src/nested',
+                        'name': 'nested',
+                        'type': 'dir',
                     }
                     ],
-                    "fullPath": "bar/baz/foo/src",
-                    "name": "src",
-                    "type": "dir"
+                    'fullPath': 'bar/baz/foo/src',
+                    'name': 'src',
+                    'type': 'dir'
                 }
                 ],
-                "fullPath": "bar/baz/foo",
-                "name": "foo",
-                "type": "dir"
+                'fullPath': 'bar/baz/foo',
+                'name': 'foo',
+                'type': 'dir'
             };
             expect(Directory.fromContent(content, 'foo', 'bar/baz')).to.eql(contentAsDirectory);
         });
@@ -173,35 +173,35 @@ describe('model', () => {
         });
         it('works on input with data', async () => {
             const contentAsDirectoryStructure: Directory = {
-                "fullPath": "",
-                "name": "",
-                "type": "dir",
-                "children": [{
-                    "fullPath": "a.file",
-                    "name": "a.file",
-                    "type": "file"
+                'fullPath': '',
+                'name': '',
+                'type': 'dir',
+                'children': [{
+                    'fullPath': 'a.file',
+                    'name': 'a.file',
+                    'type': 'file'
                 }, {
-                    "children": [{
-                        "fullPath": "src/a.ts",
-                        "name": "a.ts",
-                        "type": "file",
+                    'children': [{
+                        'fullPath': 'src/a.ts',
+                        'name': 'a.ts',
+                        'type': 'file',
                     }, {
-                        "fullPath": "src/b.js",
-                        "name": "b.js",
-                        "type": "file",
+                        'fullPath': 'src/b.js',
+                        'name': 'b.js',
+                        'type': 'file',
                     }, {
-                        "children": [{
-                            "fullPath": "src/nested/file.zag",
-                            "name": "file.zag",
-                            "type": "file",
+                        'children': [{
+                            'fullPath': 'src/nested/file.zag',
+                            'name': 'file.zag',
+                            'type': 'file',
                         }],
-                        "fullPath": "src/nested",
-                        "name": "nested",
-                        "type": "dir",
+                        'fullPath': 'src/nested',
+                        'name': 'nested',
+                        'type': 'dir',
                     }],
-                    "fullPath": "src",
-                    "name": "src",
-                    "type": "dir"
+                    'fullPath': 'src',
+                    'name': 'src',
+                    'type': 'dir'
                 }]
             };
             expect(Directory.cloneStructure(Directory.fromContent(content))).to.eql(contentAsDirectoryStructure);
@@ -233,7 +233,7 @@ describe('model', () => {
         });
         it('works on mix with different file content', async () => {
             const content2 = Object.create(content);
-            content2["a.file"] = "new content";
+            content2['a.file'] = 'new content';
 
             expect(content2, 'false-positive test! content2 should override existing content file').to.not.containSubset(content);
 

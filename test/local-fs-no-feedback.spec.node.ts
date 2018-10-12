@@ -6,7 +6,7 @@ import {EventsMatcher} from './events-matcher';
 import {FileSystem, fileSystemEventNames, LocalFileSystem} from '../src/nodejs';
 import {NoFeedbackEventsFileSystem} from '../src/no-feedback-events-fs';
 import {delayedPromise} from '../src/promise-utils';
-import {Events} from "../src/api";
+import {Events} from '../src/api';
 
 const eventMatcherOptions: EventsMatcher.Options = {
     retries: 20,

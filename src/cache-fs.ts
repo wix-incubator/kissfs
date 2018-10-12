@@ -6,7 +6,7 @@ import {
     isFileSystemReadSync,
     UnexpectedErrorEvent
 } from './api';
-import {Directory, DirectoryContent, File, FileSystemNode, isDir, isFile, ShallowDirectory, SimpleStats} from "./model";
+import {Directory, DirectoryContent, File, FileSystemNode, isDir, isFile, ShallowDirectory, SimpleStats} from './model';
 
 import {MemoryFileSystem} from './memory-fs';
 import {getPathNodes, InternalEventsEmitter, splitPathToDirAndFile} from './utils';

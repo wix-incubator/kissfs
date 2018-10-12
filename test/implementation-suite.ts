@@ -1,4 +1,4 @@
-import {expect} from "chai";
+import {expect} from 'chai';
 import {Directory, DirectoryContent, FileSystem, fileSystemEventNames, FileSystemReadSync, isDisposable} from '../src/universal';
 import {EventsMatcher} from './events-matcher';
 

@@ -1,14 +1,14 @@
 import {assertFileSystemContract, assertFileSystemSyncContract} from './implementation-suite'
-import {Directory, MemoryFileSystem} from "../src/universal";
-import {expect} from "chai";
+import {Directory, MemoryFileSystem} from '../src/universal';
+import {expect} from 'chai';
 
 const content = {
-    "a.file": "hello",
-    "src": {
-        "a.ts": "a",
-        "b.js": "b",
-        "nested": {
-            "file.zag": "nested-file"
+    'a.file': 'hello',
+    'src': {
+        'a.ts': 'a',
+        'b.js': 'b',
+        'nested': {
+            'file.zag': 'nested-file'
         }
     }
 };
@@ -56,7 +56,7 @@ describe(`the in-memory implementation`, function () {
 
     describe('static addContent()', () => {
         it('adds content to an existing memory files system', async () => {
-            const fs = new MemoryFileSystem('', {content: {"a.file": 'hello'}});
+            const fs = new MemoryFileSystem('', {content: {'a.file': 'hello'}});
             MemoryFileSystem.addContent(fs, content.src, 'src');
             const newContent = fs.loadDirectoryContentSync();
 

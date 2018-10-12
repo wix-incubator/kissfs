@@ -1,4 +1,4 @@
-import {Directory, DirectoryContent, File, ShallowDirectory, SimpleStats} from "./model";
+import {Directory, DirectoryContent, File, ShallowDirectory, SimpleStats} from './model';
 
 export interface FileSystemEvent {
     type: keyof Events;
@@ -114,9 +114,9 @@ export interface FileSystemReadSync extends FileSystem {
 }
 
 export function isFileSystemReadSync(fs: FileSystem): fs is FileSystemReadSync {
-    return typeof (fs as any).loadTextFileSync === "function" &&
-        typeof (fs as any).loadDirectoryTreeSync === "function" &&
-        typeof (fs as any).loadDirectoryContentSync === "function" &&
-        typeof (fs as any).loadDirectoryChildrenSync === "function" &&
-        typeof (fs as any).statSync === "function";
+    return typeof (fs as any).loadTextFileSync === 'function' &&
+        typeof (fs as any).loadDirectoryTreeSync === 'function' &&
+        typeof (fs as any).loadDirectoryContentSync === 'function' &&
+        typeof (fs as any).loadDirectoryChildrenSync === 'function' &&
+        typeof (fs as any).statSync === 'function';
 }

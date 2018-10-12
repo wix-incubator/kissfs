@@ -1,4 +1,4 @@
-import {endsWith, getPathNodes, normalizePathNodes} from "./utils";
+import {endsWith, getPathNodes, normalizePathNodes} from './utils';
 
 export const pathSeparator = '/';
 

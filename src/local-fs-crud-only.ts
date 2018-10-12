@@ -2,9 +2,9 @@ import {access, ensureDir, readFile, readFileSync, remove, rmdir, stat, statSync
 import * as path from 'path';
 import {Directory, DirectoryContent, File, ShallowDirectory, SimpleStats} from './model';
 import {getPathNodes} from './utils';
-import {KLAW_SHALLOW_OPTIONS, klawAsPromised, klawItemsToMemFs} from "./klaw";
-import klawSync from "klaw-sync";
-import {Stats} from "fs";
+import {KLAW_SHALLOW_OPTIONS, klawAsPromised, klawItemsToMemFs} from './klaw';
+import klawSync from 'klaw-sync';
+import {Stats} from 'fs';
 
 function statToSimpleStat(nodeStat: Stats, fullPath:string): SimpleStats{
     if (nodeStat.isDirectory()) {

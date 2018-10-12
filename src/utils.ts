@@ -1,6 +1,6 @@
 import EventEmitter from 'eventemitter3';
 import {Correlation, EventEmitter as FSEvents} from './api';
-import {File, pathSeparator, ShallowDirectory} from "./model";
+import {File, pathSeparator, ShallowDirectory} from './model';
 
 // utility logic for filesystem implementations
 
