@@ -1,6 +1,6 @@
 import { expect } from 'chai';
 import { retryPromise } from '../src/promise-utils';
-import { wampRealm, WampServer, wampServerOverFs } from '../src/nodejs';
+import { wampRealm, WampFsServer, wampServerOverFs } from '../src/nodejs';
 import { MemoryFileSystem, WampClientFileSystem } from '../src/universal';
 import { noConnectionError } from '../src/wamp-client-fs';
 import { EventsMatcher } from './events-matcher';
@@ -12,10 +12,10 @@ const msg = 'foo';
 const fakeArgs = ['foo', 'bar'];
 
 describe(`the wamp client filesystem proxy`, () => {
-    let wampServer: WampServer;
+    let wampServer: WampFsServer;
     let underlyingFs: MemoryFileSystem;
 
-    function server(): Promise<WampServer> {
+    function server(): Promise<WampFsServer> {
         underlyingFs = new MemoryFileSystem();
         return wampServerOverFs(underlyingFs, 3000);
     }

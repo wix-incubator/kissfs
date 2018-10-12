@@ -2,20 +2,18 @@ import {Connection, Session} from 'autobahn';
 import {FileSystem, fileSystemAsyncMethods, fileSystemEventNames, isDisposable} from './api';
 import {wampRealm, wampRealmPrefix} from './constants';
 
-const Router = require('wamp-server');
+import WampServer from 'wamp-server';
 
-export type WampServer = {
-    router: WampRouter,
+export interface WampFsServer {
+    router: {
+        close(): void
+    },
     connection: Connection
 };
 
-export type WampRouter = {
-    close: () => void
-};
-
-export function wampServerOverFs(fs: FileSystem, port = 3000): Promise<WampServer> {
-    return new Promise<WampServer>(resolve => {
-        const router: WampRouter = new Router({
+export function wampServerOverFs(fs: FileSystem, port = 3000): Promise<WampFsServer> {
+    return new Promise<WampFsServer>(resolve => {
+        const router = new WampServer({
             port,
             realms: [wampRealm]
         });
