@@ -22,7 +22,7 @@ export async function checkExists(expectedType: 'file' | 'dir', fs: FileSystem, 
     }
 }
 
-async function addContentAsync(content: DirectoryContent, fs: FileSystem, currentPath: string = '') {
+export async function addContentAsync(content: DirectoryContent, fs: FileSystem, currentPath: string = '') {
     return Promise.all(Object.keys(content).map(async fileOrDirName => {
         const fileOrDir = content[fileOrDirName];
         const newPath = currentPath ? currentPath + '/' + fileOrDirName : fileOrDirName;
