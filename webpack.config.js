@@ -16,28 +16,9 @@ module.exports = {
     module: {
         rules: [
             {
-                test: /\.ts[x]?$/,
-                loader: 'ts-loader',
-                exclude : NODE_MODULES_PATH,
-                options: {
-                    compilerOptions: {
-                        declaration: false,
-                        declarationMap: false
-                    }
-                }
-            },
-            {
-                test: /\.js$/,
-                loader: 'ts-loader',
-                include: [
-                    path.dirname(require.resolve('chai-as-promised/package.json')),
-                    path.dirname(require.resolve('cbor/package.json'))
-                ],
-                options: {
-                    // needed so it has a separate transpilation instance
-                    instance: 'lib-compat',
-                    transpileOnly: true
-                }
+                test: /\.tsx?$/,
+                loader: '@ts-tools/webpack-loader',
+                exclude : NODE_MODULES_PATH
             }
         ],
         noParse: /\.min\.js$/

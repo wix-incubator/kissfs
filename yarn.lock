@@ -41,6 +41,14 @@
   resolved "https://registry.yarnpkg.com/@ts-tools/typescript-service/-/typescript-service-0.7.1.tgz#d0d52e62cd5f4697293a1b62c2ef437f78ba270c"
   integrity sha512-WTePj5zgXrntNMdpdnMFls5Jy+3f2Y7TFAKjShSjz548tMs3ZHZIZLCt8reiax2T3obMQ6ab1ILC/PIsf7PtDA==
 
+"@ts-tools/webpack-loader@^0.3.1":
+  version "0.3.1"
+  resolved "https://registry.yarnpkg.com/@ts-tools/webpack-loader/-/webpack-loader-0.3.1.tgz#973f9d00fc9a4aada12b14b42abe7bbce44f79c3"
+  integrity sha512-lI2og6I9m/LGbtJHrnyEOewZbht89SCNZt6G7BVO6MesMhJMWz7HhL9h2eI3/4HZ4Bgqk3M6SAJYkPgdr/vnJA==
+  dependencies:
+    "@ts-tools/typescript-service" "^0.7.1"
+    loader-utils "^1.1.0"
+
 "@types/autobahn@^0.9.39":
   version "0.9.39"
   resolved "https://registry.yarnpkg.com/@types/autobahn/-/autobahn-0.9.39.tgz#005fa7d8375bde71f1fd401d73958b640e6b8963"
@@ -899,7 +907,7 @@ chai@^4.2.0:
     pathval "^1.1.0"
     type-detect "^4.0.5"
 
-chalk@2.4.1, chalk@^2.1.0, chalk@^2.3.0, chalk@^2.4.1:
+chalk@2.4.1, chalk@^2.1.0, chalk@^2.4.1:
   version "2.4.1"
   resolved "https://registry.yarnpkg.com/chalk/-/chalk-2.4.1.tgz#18c49ab16a037b6eb0152cc83e3471338215b66e"
   integrity sha512-ObN6h1v2fTJSmUXoS3nMQ92LbDK9be4TV+6G+omQlGJFdcUX5heKi1LZ1YnRMIgwTLEj3E24bT6tYni50rlCfQ==
@@ -1515,7 +1523,7 @@ end-of-stream@^1.0.0, end-of-stream@^1.1.0:
   dependencies:
     once "^1.4.0"
 
-enhanced-resolve@^4.0.0, enhanced-resolve@^4.1.0:
+enhanced-resolve@^4.1.0:
   version "4.1.0"
   resolved "https://registry.yarnpkg.com/enhanced-resolve/-/enhanced-resolve-4.1.0.tgz#41c7e0bfdfe74ac1ffe1e57ad6a5c6c9f3742a7f"
   integrity sha512-F/7vkyTtyc/llOIn8oWclcB25KdRaiPBpZYDgJHgh/UHtpgT2p2eldQgtQnLtUvfMKPKxbRaQM/hHkvLHt1Vng==
@@ -4114,7 +4122,7 @@ selfsigned@^1.9.1:
   dependencies:
     node-forge "0.7.5"
 
-"semver@2 || 3 || 4 || 5", semver@^5.0.1, semver@^5.3.0, semver@^5.5.0:
+"semver@2 || 3 || 4 || 5", semver@^5.3.0, semver@^5.5.0:
   version "5.6.0"
   resolved "https://registry.yarnpkg.com/semver/-/semver-5.6.0.tgz#7e74256fbaa49c75aa7c7a205cc22799cac80004"
   integrity sha512-RS9R6R35NYgQn++fkDWaOmqGoj4Ek9gGs+DPxNUZKuwE183xjJroKvyo1IzVFeXvUrvmALy6FWD5xrdJT25gMg==
@@ -4678,17 +4686,6 @@ tough-cookie@~2.4.3:
   dependencies:
     psl "^1.1.24"
     punycode "^1.4.1"
-
-ts-loader@^5.2.1:
-  version "5.2.1"
-  resolved "https://registry.yarnpkg.com/ts-loader/-/ts-loader-5.2.1.tgz#e6815c631dcafc24319ce8be6f8af94908749cf3"
-  integrity sha512-KC0cOvsFVyxBlg5h9jvaMlIL2tNsyQLvT2/OvIlO0AMUBJ4iXTtOfaDEqvmqv2lM/icekQfDsP2PsYBCDHpuOQ==
-  dependencies:
-    chalk "^2.3.0"
-    enhanced-resolve "^4.0.0"
-    loader-utils "^1.0.2"
-    micromatch "^3.1.4"
-    semver "^5.0.1"
 
 tslib@^1.9.0, tslib@^1.9.3:
   version "1.9.3"
