@@ -1,6 +1,6 @@
 {
   "name": "kissfs",
-  "version": "0.7.0",
+  "version": "0.7.1",
   "description": "Extensible and reactive file-system library that keeps it simple",
   "main": "cjs/nodejs.js",
   "module": "esm/nodejs.js",
