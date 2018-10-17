@@ -21,6 +21,9 @@ module.exports = {
         ],
         noParse: /\.min\.js$/
     },
+    output: {
+        filename: '[name].bundle.js'
+    },
     resolve: {
         extensions: ['.ts', '.js', '.json']
     }
