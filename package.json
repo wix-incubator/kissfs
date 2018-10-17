@@ -22,7 +22,9 @@
     "test:browser": "mocha-headless-chrome -t 120000 -f http://localhost:8080/test.bundle",
     "start": "webpack-dev-server --progress",
     "start:wait": "wait-on -t 120000 http://localhost:8080/test.bundle",
-    "reset": "yarn run clean && rimraf ./node_modules && yarn && yarn test"
+    "reset": "yarn run clean && rimraf ./node_modules && yarn && yarn test",
+    "snyk-protect": "snyk protect",
+    "prepare": "npm run snyk-protect"
   },
   "repository": {
     "type": "git",
@@ -48,7 +50,8 @@
     "klaw": "^3.0.0",
     "klaw-sync": "^6.0.0",
     "tslib": "^1.9.3",
-    "wamp-server": "^0.0.9"
+    "wamp-server": "^0.0.9",
+    "snyk": "^1.104.1"
   },
   "devDependencies": {
     "@ts-tools/node": "^0.6.5",
@@ -91,5 +94,6 @@
     "esm",
     "src"
   ],
-  "sideEffects": false
+  "sideEffects": false,
+  "snyk": true
 }
